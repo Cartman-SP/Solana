@@ -1,0 +1,77 @@
+import asyncio
+import websockets
+import json
+import os
+import sys
+import django
+
+# Настройка Django
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from mainapp.models import UserDev, Token
+from asgiref.sync import sync_to_async
+
+async def create_user_and_token(data):
+    """Создает UserDev и Token из полученных данных"""
+    try:
+        # Извлекаем данные
+        source = data.get('source', '')
+        mint = data.get('mint', '')
+        user = data.get('user', '')
+        name = data.get('name', '')
+        symbol = data.get('symbol', '')
+        uri = data.get('uri', '')
+        
+        # Создаем или получаем UserDev (асинхронно)
+        user_dev, created = await sync_to_async(UserDev.objects.get_or_create)(
+            adress=user,
+            defaults={
+                'total_tokens': 0,
+                'whitelist': False,
+                'blacklist': False,
+                'ath': 0,
+                'uri': uri,
+                'processed': False
+            }
+        )
+        
+        # Создаем Token (асинхронно)
+        token, token_created = await sync_to_async(Token.objects.get_or_create)(
+            address=mint,
+            defaults={
+                'dev': user_dev,
+                'scam': False,
+                'ath': 0,
+                'migrated': False
+            }
+        )
+        
+        if token_created:
+            # Увеличиваем счетчик токенов у пользователя (асинхронно)
+            user_dev.total_tokens += 1
+            await sync_to_async(user_dev.save)()
+            
+    except:
+        pass
+
+async def listen_to_websocket():
+    while True:
+        try:
+            async with websockets.connect("ws://localhost:9393") as websocket:
+                async for message in websocket:
+                    try:
+                        data = json.loads(message)
+                        
+                        # Создаем записи в базе данных
+                        await create_user_and_token(data)
+                        
+                    except:
+                        pass
+                        
+        except:
+            await asyncio.sleep(2)
+
+if __name__ == "__main__":
+    asyncio.run(listen_to_websocket()) 

@@ -1,0 +1,588 @@
+2025-08-05 19:05:30,237 - INFO - server listening on 0.0.0.0:8765
+2025-08-05 19:05:30,240 - INFO - WebSocket server started on ws://0.0.0.0:8765
+2025-08-05 19:05:30,241 - INFO - Public WebSocket URL: wss://goodelivery.ru/ws/
+2025-08-05 19:05:30,245 - INFO - Connected to main WebSocket
+2025-08-05 19:05:40,241 - INFO - Broadcast data: PUMPFUN | Useless Hat
+2025-08-05 19:05:43,151 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:05:44,743 - INFO - Broadcast data: PUMPFUN | Chiquito 
+2025-08-05 19:05:46,796 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:05:47,397 - INFO - Broadcast data: PUMPFUN | 404hat
+2025-08-05 19:05:47,796 - INFO - Broadcast data: PUMPFUN | Tariffcoin
+2025-08-05 19:05:51,432 - INFO - Broadcast data: BONK | fries wif that?
+2025-08-05 19:05:54,554 - INFO - Broadcast data: PUMPFUN | Demon
+2025-08-05 19:05:59,816 - INFO - Broadcast data: PUMPFUN | Hazmat Suits
+2025-08-05 19:06:04,060 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:04,451 - INFO - Broadcast data: BONK | ACTION FIGURE
+2025-08-05 19:06:11,038 - INFO - Broadcast data: PUMPFUN | TARIFF INDEX 6900
+2025-08-05 19:06:12,122 - INFO - Broadcast data: PUMPFUN | WIFOUT
+2025-08-05 19:06:20,010 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:23,243 - INFO - Broadcast data: PUMPFUN | alonwifhat
+2025-08-05 19:06:24,475 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:35,489 - INFO - Broadcast data: PUMPFUN | TROLLBUBU
+2025-08-05 19:06:36,842 - INFO - Broadcast data: PUMPFUN | Flus
+2025-08-05 19:06:40,287 - INFO - Broadcast data: PUMPFUN | Leon
+2025-08-05 19:06:40,657 - INFO - Broadcast data: PUMPFUN | DEAD
+2025-08-05 19:06:44,442 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:46,319 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:06:50,219 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:50,224 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:50,671 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:50,905 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:52,813 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:55,962 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:06:59,135 - INFO - Broadcast data: PUMPFUN | It goes higher with every bid
+2025-08-05 19:06:59,428 - INFO - Broadcast data: BONK | Hazmat Suits
+2025-08-05 19:07:06,464 - INFO - Broadcast data: BONK | Are u okay do u need help
+2025-08-05 19:07:17,739 - INFO - Broadcast data: PUMPFUN | Pump Cult
+2025-08-05 19:07:24,704 - INFO - Broadcast data: PUMPFUN | The 0 Figure Hat
+2025-08-05 19:07:27,834 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:32,178 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:36,093 - INFO - Broadcast data: PUMPFUN | HAT wif hat 
+2025-08-05 19:07:36,774 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:38,614 - INFO - Broadcast data: PUMPFUN | The Hazmat Cult
+2025-08-05 19:07:41,008 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:45,266 - INFO - Broadcast data: PUMPFUN | TROLLESS COIN
+2025-08-05 19:07:47,434 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:49,556 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:07:50,474 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:07:51,492 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:07:52,216 - INFO - Broadcast data: PUMPFUN | It gets zero bids
+2025-08-05 19:07:54,460 - INFO - Broadcast data: BONK | Stinks
+2025-08-05 19:07:58,101 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:08:09,839 - INFO - Connected to main WebSocket
+2025-08-05 19:08:09,841 - INFO - server listening on 127.0.0.1:8765
+2025-08-05 19:08:09,841 - INFO - WebSocket server started on ws://0.0.0.0:8765
+2025-08-05 19:08:09,841 - INFO - Public WebSocket URL: wss://goodelivery.ru/ws/
+2025-08-05 19:08:12,457 - INFO - Broadcast data: PUMPFUN | HAT
+2025-08-05 19:08:17,041 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:08:18,825 - INFO - Broadcast data: PUMPFUN | Useless Hat
+2025-08-05 19:08:24,177 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:08:26,819 - INFO - Broadcast data: PUMPFUN | Jew Hat
+2025-08-05 19:08:29,481 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:08:29,552 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:08:33,277 - INFO - Broadcast data: BONK | Useless Hat
+2025-08-05 19:08:35,431 - INFO - Broadcast data: BONK | The alphabet
+2025-08-05 19:08:36,849 - INFO - Broadcast data: PUMPFUN | Dogless
+2025-08-05 19:08:40,522 - INFO - Broadcast data: BONK | Hugging Face Language Model
+2025-08-05 19:08:40,900 - INFO - Broadcast data: BONK | Hugging Face Language Model
+2025-08-05 19:08:41,623 - INFO - Broadcast data: BONK | Hugging Face Language Model
+2025-08-05 19:08:50,772 - INFO - Broadcast data: PUMPFUN | Shout
+2025-08-05 19:08:51,306 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:08:58,215 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:01,672 - INFO - Broadcast data: PUMPFUN | dogwifbag
+2025-08-05 19:09:07,342 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:07,767 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:08,303 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:10,249 - INFO - Broadcast data: PUMPFUN | Trollhouse
+2025-08-05 19:09:16,337 - INFO - Broadcast data: PUMPFUN | alonwifhat
+2025-08-05 19:09:18,193 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:20,423 - INFO - Broadcast data: PUMPFUN | The $200 Hat
+2025-08-05 19:09:22,287 - INFO - Broadcast data: BONK | listener
+2025-08-05 19:09:23,766 - INFO - Broadcast data: PUMPFUN | Poop Hat
+2025-08-05 19:09:27,110 - INFO - Broadcast data: BONK | wojakless
+2025-08-05 19:09:27,482 - INFO - Broadcast data: BONK | Are u okay do u need help
+2025-08-05 19:09:29,929 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:35,001 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:38,070 - INFO - Broadcast data: BONK | Are u okay do u need help
+2025-08-05 19:09:39,972 - INFO - Broadcast data: PUMPFUN | UselessHouseWifHatTypeRunner
+2025-08-05 19:09:41,747 - INFO - Broadcast data: BONK | AES
+2025-08-05 19:09:41,951 - INFO - Broadcast data: PUMPFUN | UselessHouseWifHatTypeRunner
+2025-08-05 19:09:45,824 - INFO - Broadcast data: BONK | t00fy
+2025-08-05 19:09:48,446 - INFO - Broadcast data: PUMPFUN | Dogwifhat
+2025-08-05 19:09:50,000 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:50,006 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:51,375 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:52,676 - INFO - Broadcast data: PUMPFUN | TATE
+2025-08-05 19:09:54,533 - INFO - Broadcast data: PUMPFUN | just buy 2 sol worth of this hat
+2025-08-05 19:09:55,523 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:09:56,737 - INFO - Broadcast data: PUMPFUN | UselessHouseWifHatTypeRunner
+2025-08-05 19:09:58,135 - INFO - Broadcast data: PUMPFUN | AUCTION coin
+2025-08-05 19:10:07,238 - INFO - server listening on 127.0.0.1:8765
+2025-08-05 19:10:07,239 - INFO - WebSocket server started on ws://0.0.0.0:8765
+2025-08-05 19:10:07,240 - INFO - Public WebSocket URL: wss://goodelivery.ru/ws/
+2025-08-05 19:10:07,245 - INFO - Connected to main WebSocket
+2025-08-05 19:10:08,231 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:09,469 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:10,145 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:15,939 - INFO - Broadcast data: PUMPFUN | Bitcafe
+2025-08-05 19:10:17,940 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:17,949 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:28,554 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:32,680 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:33,350 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:35,545 - INFO - Broadcast data: PUMPFUN | Hat Coin
+2025-08-05 19:10:37,308 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:37,349 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:39,125 - INFO - connection failed (400 Bad Request)
+2025-08-05 19:10:39,125 - INFO - connection closed
+2025-08-05 19:10:46,091 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:48,887 - INFO - Broadcast data: PUMPFUN | DogWifKippah
+2025-08-05 19:10:49,787 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:54,515 - INFO - connection failed (400 Bad Request)
+2025-08-05 19:10:54,515 - INFO - connection closed
+2025-08-05 19:10:56,403 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:10:56,888 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:05,539 - INFO - Broadcast data: PUMPFUN | The 30 Dollar Hat
+2025-08-05 19:11:08,930 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:09,472 - INFO - Broadcast data: PUMPFUN | GRUMPCOIN 
+2025-08-05 19:11:10,952 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:14,131 - INFO - Broadcast data: PUMPFUN | Pump The Dog
+2025-08-05 19:11:17,118 - INFO - Broadcast data: PUMPFUN | TrollKing
+2025-08-05 19:11:18,543 - INFO - Broadcast data: PUMPFUN | Useless Auction
+2025-08-05 19:11:18,865 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:20,231 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:20,725 - INFO - Broadcast data: PUMPFUN | coinwifhat
+2025-08-05 19:11:22,563 - INFO - Broadcast data: PUMPFUN | Unbiased Coin
+2025-08-05 19:11:22,982 - INFO - Broadcast data: PUMPFUN | Hatless Coin
+2025-08-05 19:11:31,431 - INFO - Broadcast data: PUMPFUN | The 5 Figure Hat
+2025-08-05 19:11:32,027 - INFO - Broadcast data: BONK | Original Hat from Dogwifhat Meme
+2025-08-05 19:11:34,313 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:35,823 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:11:36,624 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:11:37,369 - INFO - Broadcast data: BONK | Hatless Coin
+2025-08-05 19:11:38,393 - INFO - Broadcast data: PUMPFUN | USELESS DOG
+2025-08-05 19:11:41,583 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:11:45,226 - INFO - Broadcast data: PUMPFUN | BABY
+2025-08-05 19:11:47,124 - INFO - Broadcast data: PUMPFUN | usercoin
+2025-08-05 19:11:47,594 - INFO - Broadcast data: PUMPFUN | Hatless Coin
+2025-08-05 19:11:50,139 - INFO - Broadcast data: BONK | of course
+2025-08-05 19:11:55,539 - INFO - Broadcast data: PUMPFUN | dogwifkrustykrabhat
+2025-08-05 19:11:56,907 - INFO - Broadcast data: PUMPFUN | USELESS HAT
+2025-08-05 19:12:04,554 - INFO - Broadcast data: PUMPFUN | dog wif kippah
+2025-08-05 19:12:05,516 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:06,182 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:08,045 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:14,051 - INFO - Broadcast data: PUMPFUN | PumpProphecy
+2025-08-05 19:12:21,826 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:22,550 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:25,116 - INFO - Broadcast data: PUMPFUN | DogWifBeanie
+2025-08-05 19:12:26,532 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:39,749 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:41,001 - INFO - Broadcast data: PUMPFUN | Vylar the Smiling Dog
+2025-08-05 19:12:43,082 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:12:43,818 - INFO - Broadcast data: PUMPFUN | NoBullBillie
+2025-08-05 19:12:43,931 - INFO - Broadcast data: PUMPFUN | NoBullBillie
+2025-08-05 19:12:44,316 - INFO - Broadcast data: PUMPFUN | NoBullBillie
+2025-08-05 19:12:44,730 - INFO - Broadcast data: PUMPFUN | May the Force be Wif you
+2025-08-05 19:12:59,720 - INFO - server listening on 127.0.0.1:8765
+2025-08-05 19:12:59,722 - INFO - WebSocket server started on ws://0.0.0.0:8765
+2025-08-05 19:12:59,722 - INFO - Public WebSocket URL: wss://goodelivery.ru/ws/
+2025-08-05 19:12:59,726 - INFO - Connected to main WebSocket
+2025-08-05 19:13:01,110 - INFO - Broadcast data: PUMPFUN | Open Souls
+2025-08-05 19:13:02,365 - INFO - Broadcast data: BONK | Rastadog
+2025-08-05 19:13:03,828 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:13:06,177 - INFO - Broadcast data: PUMPFUN | dog wif kippah
+2025-08-05 19:13:09,818 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:17,359 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:21,191 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:13:22,509 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:22,807 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:24,798 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:25,520 - INFO - Broadcast data: PUMPFUN | ta-da were rich
+2025-08-05 19:13:36,640 - INFO - Broadcast data: PUMPFUN | Wif2
+2025-08-05 19:13:38,084 - INFO - Broadcast data: PUMPFUN | Mao
+2025-08-05 19:13:46,661 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:13:52,864 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:13:54,243 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:13:57,000 - INFO - Broadcast data: BONK | Slot Machine
+2025-08-05 19:14:00,509 - INFO - Broadcast data: PUMPFUN | dogwifhat
+2025-08-05 19:14:02,237 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:03,533 - INFO - Broadcast data: PUMPFUN | PumpCoin
+2025-08-05 19:14:03,662 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:14:06,244 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:06,353 - INFO - Broadcast data: PUMPFUN | Wif2
+2025-08-05 19:14:07,411 - INFO - Broadcast data: PUMPFUN | Fart Pump
+2025-08-05 19:14:07,541 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:14:07,981 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:14:09,408 - INFO - Broadcast data: PUMPFUN | HEUNGBU
+2025-08-05 19:14:13,950 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:18,603 - INFO - Broadcast data: PUMPFUN | dogwifhat
+2025-08-05 19:14:19,446 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:14:22,532 - INFO - Broadcast data: PUMPFUN | hatwifnodog
+2025-08-05 19:14:22,676 - INFO - Broadcast data: PUMPFUN | SOLANA ROBOTICS
+2025-08-05 19:14:23,240 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:25,459 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:28,005 - INFO - Broadcast data: PUMPFUN | dogwfi2hats
+2025-08-05 19:14:28,128 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:14:28,314 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:14:28,621 - INFO - Broadcast data: PUMPFUN | dog wif pill
+2025-08-05 19:14:28,730 - INFO - Broadcast data: PUMPFUN | dogwifhat2
+2025-08-05 19:14:30,015 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:38,562 - INFO - Broadcast data: PUMPFUN |  shibawifhat
+2025-08-05 19:14:39,656 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:40,030 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:46,637 - INFO - Broadcast data: PUMPFUN | dogwifhat
+2025-08-05 19:14:49,011 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:50,897 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:53,130 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:14:53,928 - INFO - Broadcast data: BONK | BONKCAST
+2025-08-05 19:14:56,212 - INFO - Broadcast data: PUMPFUN | ROLEX
+2025-08-05 19:14:57,492 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:14:59,675 - INFO - Broadcast data: BONK | Tech industry]
+2025-08-05 19:15:01,156 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:15:01,333 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:15:03,512 - INFO - Broadcast data: PUMPFUN | dogwifhat
+2025-08-05 19:15:06,775 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:09,924 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:11,038 - INFO - Broadcast data: PUMPFUN | the 30$ hat
+2025-08-05 19:15:14,689 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:18,453 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:19,290 - INFO - Broadcast data: PUMPFUN | The 4 Figure Hat
+2025-08-05 19:15:28,233 - INFO - server listening on 127.0.0.1:8765
+2025-08-05 19:15:28,234 - INFO - WebSocket server started on ws://0.0.0.0:8765
+2025-08-05 19:15:28,234 - INFO - Public WebSocket URL: wss://goodelivery.ru/ws/
+2025-08-05 19:15:28,240 - INFO - Connected to main WebSocket
+2025-08-05 19:15:31,864 - INFO - Broadcast data: PUMPFUN | INFLA-TION
+2025-08-05 19:15:33,904 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:38,405 - INFO - Broadcast data: PUMPFUN | 2 Coins 1 Cup
+2025-08-05 19:15:38,938 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:15:40,512 - INFO - Broadcast data: PUMPFUN | Fart Pump
+2025-08-05 19:15:50,298 - INFO - Broadcast data: PUMPFUN | the $30 hat
+2025-08-05 19:15:52,035 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:15:52,337 - INFO - Broadcast data: PUMPFUN | JEWBOCCA
+2025-08-05 19:15:54,981 - INFO - Broadcast data: PUMPFUN | ORDCITY
+2025-08-05 19:15:55,303 - INFO - Broadcast data: PUMPFUN | SKYWALKER
+2025-08-05 19:15:56,442 - INFO - Broadcast data: PUMPFUN | Ocean Beach Guy
+2025-08-05 19:16:01,479 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:16:11,199 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:16:12,238 - INFO - Broadcast data: PUMPFUN | The $227.24 Hat
+2025-08-05 19:16:15,854 - INFO - Broadcast data: PUMPFUN | The $227.25 Figure Hat
+2025-08-05 19:16:18,308 - INFO - Broadcast data: PUMPFUN | WIFWIF
+2025-08-05 19:16:27,798 - INFO - Broadcast data: PUMPFUN | dogwifhat3
+2025-08-05 19:16:29,848 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:29,968 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:30,104 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:30,221 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:30,367 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:33,380 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:34,159 - INFO - Broadcast data: PUMPFUN | Normie
+2025-08-05 19:16:37,095 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:16:40,500 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:16:41,297 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:16:52,268 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:16:54,205 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:16:54,500 - INFO - Broadcast data: PUMPFUN | The 5 Figure Hat
+2025-08-05 19:16:54,623 - INFO - Broadcast data: PUMPFUN | Wif3
+2025-08-05 19:17:01,099 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:17:01,342 - INFO - Broadcast data: PUMPFUN | Normie
+2025-08-05 19:17:04,601 - INFO - Broadcast data: PUMPFUN | Rizzmas
+2025-08-05 19:17:06,971 - INFO - Broadcast data: PUMPFUN | The 3 Figure Hat
+2025-08-05 19:17:07,754 - INFO - Broadcast data: PUMPFUN | Rizzmas
+2025-08-05 19:17:09,871 - INFO - Broadcast data: PUMPFUN | Is wif a hat
+2025-08-05 19:17:18,529 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:19,020 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:17:19,123 - INFO - Broadcast data: PUMPFUN | Test Token
+2025-08-05 19:17:19,872 - INFO - Broadcast data: PUMPFUN | Duolingo's dreaded Ow
+2025-08-05 19:17:20,035 - INFO - Broadcast data: PUMPFUN | WifWall
+2025-08-05 19:17:23,403 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:27,426 - INFO - Broadcast data: PUMPFUN | Rizzmas2
+2025-08-05 19:17:28,317 - INFO - Broadcast data: PUMPFUN | The 3 Figure Dog
+2025-08-05 19:17:30,095 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:31,435 - INFO - Broadcast data: BONK | Dreaded owl
+2025-08-05 19:17:32,626 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:34,602 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:37,267 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:40,636 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:42,590 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:43,747 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:17:46,135 - INFO - Broadcast data: PUMPFUN | wifwall
+2025-08-05 19:17:50,511 - INFO - Broadcast data: PUMPFUN | Graphite
+2025-08-05 19:17:52,747 - INFO - Broadcast data: PUMPFUN | Rizzmas2
+2025-08-05 19:17:53,312 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:00,280 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:02,311 - INFO - Broadcast data: PUMPFUN | uni
+2025-08-05 19:18:05,865 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:18:06,097 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:06,111 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:06,523 - INFO - Broadcast data: PUMPFUN | Dog Wif Dreams
+2025-08-05 19:18:06,670 - INFO - Broadcast data: PUMPFUN | Pumpia
+2025-08-05 19:18:07,005 - INFO - Broadcast data: PUMPFUN | monke2
+2025-08-05 19:18:07,940 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:13,614 - INFO - Broadcast data: PUMPFUN | pump and dump
+2025-08-05 19:18:15,348 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:18:17,218 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:19,126 - INFO - Broadcast data: BONK | The Ear Theory
+2025-08-05 19:18:23,850 - INFO - Broadcast data: PUMPFUN | ShibaWifHat
+2025-08-05 19:18:24,879 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:28,259 - INFO - Broadcast data: BONK | jpg.fun
+2025-08-05 19:18:28,415 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:30,176 - INFO - Broadcast data: PUMPFUN | Dog Wif Everything
+2025-08-05 19:18:30,435 - INFO - Broadcast data: PUMPFUN | Resume Gap
+2025-08-05 19:18:34,447 - INFO - Broadcast data: PUMPFUN | Bonkrupt
+2025-08-05 19:18:39,231 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:45,532 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:54,110 - INFO - Broadcast data: PUMPFUN | FLY
+2025-08-05 19:18:54,705 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:18:58,403 - INFO - Broadcast data: PUMPFUN | Non Meme Coin
+2025-08-05 19:19:10,105 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:11,054 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:19:16,314 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:18,521 - INFO - Broadcast data: PUMPFUN | 65$
+2025-08-05 19:19:18,975 - INFO - Broadcast data: PUMPFUN | 65$
+2025-08-05 19:19:19,942 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:19:21,116 - INFO - Broadcast data: BONK | Chinese Troll
+2025-08-05 19:19:23,765 - INFO - Broadcast data: BONK | uni
+2025-08-05 19:19:29,512 - INFO - Broadcast data: PUMPFUN | APP
+2025-08-05 19:19:30,080 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:40,410 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:40,603 - INFO - Broadcast data: PUMPFUN | sydney sweeney economy
+2025-08-05 19:19:41,778 - INFO - Broadcast data: BONK | Inu Meme Protocol
+2025-08-05 19:19:42,856 - INFO - Broadcast data: PUMPFUN |  High Earners, Not Rich Yet
+2025-08-05 19:19:43,850 - INFO - Broadcast data: PUMPFUN | wifi hat
+2025-08-05 19:19:44,001 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:19:45,113 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:19:46,935 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:19:48,125 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:54,317 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:55,359 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:56,615 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:19:58,351 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:19:58,976 - INFO - Broadcast data: PUMPFUN | pump
+2025-08-05 19:19:59,125 - INFO - Broadcast data: PUMPFUN | WOTHA FOR AFREECA
+2025-08-05 19:19:59,354 - INFO - Broadcast data: BONK | Mental Scraps
+2025-08-05 19:20:00,308 - INFO - Broadcast data: BONK | The Censored Word
+2025-08-05 19:20:00,716 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:02,747 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:03,919 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:16,795 - INFO - Broadcast data: PUMPFUN | HAT
+2025-08-05 19:20:20,324 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:22,451 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:22,841 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:23,151 - INFO - Broadcast data: PUMPFUN | dogwifsolhat
+2025-08-05 19:20:25,973 - INFO - Broadcast data: PUMPFUN | catwithcap
+2025-08-05 19:20:26,121 - INFO - Broadcast data: PUMPFUN | cat wif cap
+2025-08-05 19:20:26,237 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:20:27,677 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:36,023 - INFO - Broadcast data: BONK | 🐐
+2025-08-05 19:20:36,203 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:36,349 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:20:36,494 - INFO - Broadcast data: PUMPFUN | The 7 figure Hat
+2025-08-05 19:20:36,944 - INFO - Broadcast data: BONK | Forever Alone
+2025-08-05 19:20:39,999 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:42,803 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:44,588 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:48,472 - INFO - Broadcast data: PUMPFUN | Those who know💀
+2025-08-05 19:20:49,853 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:20:55,651 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:20:57,196 - INFO - Broadcast data: PUMPFUN | capwifcap
+2025-08-05 19:20:59,109 - INFO - Broadcast data: BONK | catwifcap
+2025-08-05 19:21:00,452 - INFO - Broadcast data: PUMPFUN | FREAK CAT
+2025-08-05 19:21:02,879 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:05,695 - INFO - Broadcast data: PUMPFUN | dog with hat
+2025-08-05 19:21:10,443 - INFO - Broadcast data: PUMPFUN | Goatcoin
+2025-08-05 19:21:11,947 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:21:14,752 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:19,473 - INFO - Broadcast data: BONK | BARSA
+2025-08-05 19:21:21,568 - INFO - Broadcast data: PUMPFUN | Masc`Hot Coin
+2025-08-05 19:21:21,678 - INFO - Broadcast data: BONK | Hazmat Suits
+2025-08-05 19:21:22,435 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:22,633 - INFO - Broadcast data: PUMPFUN | Cat
+2025-08-05 19:21:27,059 - INFO - Broadcast data: PUMPFUN | catwithcap
+2025-08-05 19:21:28,690 - INFO - Broadcast data: BONK | Those who know💀
+2025-08-05 19:21:29,405 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:31,603 - INFO - Broadcast data: PUMPFUN | DogHot
+2025-08-05 19:21:33,076 - INFO - Broadcast data: BONK | catwifcap
+2025-08-05 19:21:34,494 - INFO - Broadcast data: PUMPFUN | cap Cult
+2025-08-05 19:21:34,934 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:36,587 - INFO - Broadcast data: PUMPFUN | catwifcap
+2025-08-05 19:21:39,008 - INFO - Broadcast data: PUMPFUN | token
+2025-08-05 19:21:42,585 - INFO - Broadcast data: PUMPFUN | The 7 Figure Hat
+2025-08-05 19:21:45,537 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:47,830 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:49,789 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:49,914 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:50,536 - INFO - Broadcast data: PUMPFUN | Ginuius
+2025-08-05 19:21:50,710 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:51,594 - INFO - Broadcast data: BONK | Cr7 coin
+2025-08-05 19:21:52,498 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:52,807 - INFO - Broadcast data: PUMPFUN | Goatcoin
+2025-08-05 19:21:53,881 - INFO - Broadcast data: BONK | Cristiano ronaldo coin
+2025-08-05 19:21:55,678 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:55,856 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:56,009 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:21:58,011 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:21:59,892 - INFO - Broadcast data: BONK | Dog Wif Sting
+2025-08-05 19:22:00,244 - INFO - Broadcast data: PUMPFUN | Cristiano
+2025-08-05 19:22:01,600 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:02,958 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:04,095 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:06,563 - INFO - Broadcast data: PUMPFUN | #dogwifhatgang
+2025-08-05 19:22:06,691 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:06,952 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:07,380 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:08,020 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:09,470 - INFO - Broadcast data: PUMPFUN | dogwifstack$
+2025-08-05 19:22:14,397 - INFO - Broadcast data: PUMPFUN | CR7
+2025-08-05 19:22:14,404 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:14,825 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:15,344 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:15,713 - INFO - Broadcast data: PUMPFUN | Hornycoin
+2025-08-05 19:22:15,944 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:16,958 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:19,925 - INFO - Broadcast data: BONK | Cristiano Ronaldo
+2025-08-05 19:22:21,760 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:22,572 - INFO - Broadcast data: PUMPFUN | CR7
+2025-08-05 19:22:23,706 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:23,829 - INFO - Broadcast data: BONK | Official Cristiano Ronaldo Coin
+2025-08-05 19:22:25,082 - INFO - Broadcast data: PUMPFUN | Tickerless
+2025-08-05 19:22:26,518 - INFO - Broadcast data: BONK | Official Ronaldo
+2025-08-05 19:22:27,937 - INFO - Broadcast data: PUMPFUN |   
+2025-08-05 19:22:28,081 - INFO - Broadcast data: PUMPFUN | Kinni
+2025-08-05 19:22:28,251 - INFO - Broadcast data: BONK | Cristiano ronaldo coin
+2025-08-05 19:22:28,717 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:28,922 - INFO - Broadcast data: PUMPFUN | Tickerless
+2025-08-05 19:22:29,228 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:33,667 - INFO - Broadcast data: PUMPFUN | OFFICIAL RONALDO
+2025-08-05 19:22:33,858 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:34,011 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:34,539 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:35,746 - INFO - Broadcast data: BONK | CRISTIANO OFFICIAL
+2025-08-05 19:22:36,146 - INFO - Broadcast data: PUMPFUN | The 12 figure hat
+2025-08-05 19:22:37,670 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:37,942 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:38,127 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:39,284 - INFO - Broadcast data: BONK | Official Cristiano Ronaldo
+2025-08-05 19:22:39,713 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:39,852 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:42,079 - INFO - Broadcast data: PUMPFUN | Cristiano Ronaldo
+2025-08-05 19:22:42,766 - INFO - Broadcast data: PUMPFUN | Official Cristiano Ronaldo
+2025-08-05 19:22:43,243 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:43,380 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:43,908 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:45,011 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:45,729 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:45,863 - INFO - Broadcast data: BONK | SIUUUU SIUUUU SIUUUU
+2025-08-05 19:22:49,516 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:22:51,200 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:54,015 - INFO - Broadcast data: BONK | Hatless Coin
+2025-08-05 19:22:54,454 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:22:59,198 - INFO - Broadcast data: PUMPFUN | OFFICIAL RONALDO
+2025-08-05 19:23:01,201 - INFO - Broadcast data: PUMPFUN | Cristiano Ronaldo
+2025-08-05 19:23:05,001 - INFO - Broadcast data: BONK | SIUUUU SIUUUU SIUUUU
+2025-08-05 19:23:06,633 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:07,873 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:23:08,014 - INFO - Broadcast data: BONK | jam
+2025-08-05 19:23:11,975 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:13,039 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:23:15,885 - INFO - Broadcast data: PUMPFUN | The 7 figure Hat
+2025-08-05 19:23:19,460 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:20,770 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:25,070 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:23:26,559 - INFO - Broadcast data: PUMPFUN | children
+2025-08-05 19:23:27,792 - INFO - Broadcast data: BONK | fap
+2025-08-05 19:23:29,729 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:33,993 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:36,037 - INFO - Broadcast data: PUMPFUN | memecoins
+2025-08-05 19:23:36,938 - INFO - Broadcast data: PUMPFUN | Troll Dog
+2025-08-05 19:23:37,097 - INFO - Broadcast data: BONK | Crashout
+2025-08-05 19:23:37,905 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:39,546 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:42,644 - INFO - Broadcast data: PUMPFUN | nameless
+2025-08-05 19:23:43,298 - INFO - Broadcast data: PUMPFUN | Cristeno Roneldo
+2025-08-05 19:23:45,179 - INFO - Broadcast data: PUMPFUN | SIIUUUUUU
+2025-08-05 19:23:45,360 - INFO - Broadcast data: PUMPFUN | PepeWifHat
+2025-08-05 19:23:46,999 - INFO - Broadcast data: BONK | Jail Hat
+2025-08-05 19:23:47,609 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:23:56,735 - INFO - Broadcast data: PUMPFUN | hatless
+2025-08-05 19:23:58,402 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:23:59,897 - INFO - Broadcast data: BONK | Chinese Wif
+2025-08-05 19:24:00,449 - INFO - Broadcast data: BONK | Terrible investment token
+2025-08-05 19:24:00,933 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:02,127 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:06,028 - INFO - Broadcast data: PUMPFUN | 666DarkLaserDogWifNohat
+2025-08-05 19:24:07,521 - INFO - Broadcast data: PUMPFUN | 3dac
+2025-08-05 19:24:09,322 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:12,641 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:12,666 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:13,014 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:16,329 - INFO - Broadcast data: PUMPFUN | The 4 Figure Hat
+2025-08-05 19:24:22,034 - INFO - Broadcast data: BONK | cOoP
+2025-08-05 19:24:23,175 - INFO - Broadcast data: PUMPFUN | Dog Wif Cat
+2025-08-05 19:24:29,279 - INFO - Broadcast data: BONK | Cristiano Ronaldos cat
+2025-08-05 19:24:30,636 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:31,367 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:31,389 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:33,045 - INFO - Broadcast data: PUMPFUN | The 10 Figure Hat
+2025-08-05 19:24:35,067 - INFO - Broadcast data: PUMPFUN | wif beater
+2025-08-05 19:24:44,184 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:24:45,444 - INFO - Broadcast data: PUMPFUN | LAMUMU
+2025-08-05 19:24:47,005 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:48,714 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:24:49,539 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:24:50,707 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:24:55,707 - INFO - Broadcast data: PUMPFUN | Elons Dog
+2025-08-05 19:24:56,764 - INFO - Broadcast data: PUMPFUN | Yoshi Commits Tax Fraud
+2025-08-05 19:25:02,533 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:25:05,288 - INFO - Broadcast data: PUMPFUN | WIF2
+2025-08-05 19:25:07,881 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:10,773 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:10,925 - INFO - Broadcast data: PUMPFUN | Kaggle
+2025-08-05 19:25:15,916 - INFO - Broadcast data: BONK | Ronajak
+2025-08-05 19:25:20,813 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:25:21,589 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:25:21,750 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:25:22,613 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:25:22,730 - INFO - Broadcast data: BONK | Messi
+2025-08-05 19:25:22,950 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:25:25,324 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:26,308 - INFO - Broadcast data: PUMPFUN | PUMP FUCKS
+2025-08-05 19:25:26,943 - INFO - Broadcast data: BONK | Elon dog
+2025-08-05 19:25:27,061 - INFO - Broadcast data: PUMPFUN | the big meowski
+2025-08-05 19:25:30,314 - INFO - Broadcast data: PUMPFUN | The 11 Figure Hat
+2025-08-05 19:25:30,742 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:32,649 - INFO - Broadcast data: PUMPFUN | HONEST DEV
+2025-08-05 19:25:34,709 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:35,284 - INFO - Broadcast data: PUMPFUN |   Alzheimer's Coin
+2025-08-05 19:25:36,697 - INFO - Broadcast data: BONK | dogwifinu
+2025-08-05 19:25:36,853 - INFO - Broadcast data: BONK | dogwifhair
+2025-08-05 19:25:37,456 - INFO - Broadcast data: BONK | Marvin
+2025-08-05 19:25:37,844 - INFO - Broadcast data: PUMPFUN | pilly
+2025-08-05 19:25:40,105 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:25:47,270 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:25:47,736 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:25:50,619 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:52,316 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:25:57,622 - INFO - Broadcast data: PUMPFUN | wifu
+2025-08-05 19:26:02,001 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:02,751 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:02,903 - INFO - Broadcast data: PUMPFUN | dogwifhair
+2025-08-05 19:26:08,200 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:09,499 - INFO - Broadcast data: PUMPFUN | WITH
+2025-08-05 19:26:10,098 - INFO - Broadcast data: PUMPFUN | pig wif wig
+2025-08-05 19:26:11,336 - INFO - Broadcast data: PUMPFUN | This Will Graduate
+2025-08-05 19:26:13,063 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:14,187 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:17,235 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:26:18,111 - INFO - Broadcast data: BONK | HAT WIF BUNDLE
+2025-08-05 19:26:21,276 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:23,228 - INFO - Broadcast data: PUMPFUN | The 4 Figure Hat
+2025-08-05 19:26:23,713 - INFO - Broadcast data: PUMPFUN | The 7 Figure Hat
+2025-08-05 19:26:28,078 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:30,631 - INFO - Broadcast data: PUMPFUN | designer
+2025-08-05 19:26:31,711 - INFO - Broadcast data: PUMPFUN | Tickerless
+2025-08-05 19:26:31,840 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:26:32,038 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:26:32,249 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:26:33,239 - INFO - Broadcast data: PUMPFUN | hatwifbids
+2025-08-05 19:26:35,038 - INFO - Broadcast data: BONK | Wojak Cult
+2025-08-05 19:26:36,935 - INFO - Broadcast data: PUMPFUN | thanks for sharing
+2025-08-05 19:26:37,749 - INFO - Broadcast data: PUMPFUN | Memecoin
+2025-08-05 19:26:39,096 - INFO - Broadcast data: PUMPFUN | thanks for sharing
+2025-08-05 19:26:40,349 - INFO - Broadcast data: PUMPFUN | catwithcap
+2025-08-05 19:26:46,383 - INFO - Broadcast data: PUMPFUN | Tickerless
+2025-08-05 19:26:46,629 - INFO - Broadcast data: PUMPFUN | Yoshi Commits Tax Fraud
+2025-08-05 19:26:46,937 - INFO - Broadcast data: PUMPFUN | The Great Flippening
+2025-08-05 19:26:48,411 - INFO - Broadcast data: PUMPFUN | Cat in Bulletproof Vest
+2025-08-05 19:26:48,932 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:51,393 - INFO - Broadcast data: PUMPFUN | thanks for sharing
+2025-08-05 19:26:53,051 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:53,060 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:56,164 - INFO - Broadcast data: PUMPFUN | The 7 figure hat
+2025-08-05 19:26:57,300 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:26:57,667 - INFO - Broadcast data: PUMPFUN | Dropped a shitter
+2025-08-05 19:26:58,805 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:26:59,826 - INFO - Broadcast data: BONK | N/A
+2025-08-05 19:27:00,432 - ERROR - Error getting user data: UserDev matching query does not exist.
+2025-08-05 19:27:11,308 - INFO - Broadcast data: BONK | inu™
+2025-08-05 19:27:14,286 - INFO - Broadcast data: PUMPFUN | dogwithouthat
+2025-08-05 19:27:14,776 - ERROR - Error getting user data: UserDev matching query does not exist.
