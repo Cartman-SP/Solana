@@ -68,7 +68,7 @@ async def get_user_dev_data(user_address):
         # Получаем последние 100 токенов для расчета процента миграций
         recent_100_tokens = await sync_to_async(list)(
             Token.objects.filter(
-                dev=user_dev
+                dev=user_dev,
                 processed = True
             ).order_by('-created_at')[:100]
         )
@@ -83,7 +83,7 @@ async def get_user_dev_data(user_address):
         # Получаем последние 3 токена разработчика (исключая текущий)
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
-                dev=user_dev
+                dev=user_dev,
                 processed = True
             ).exclude(
                 address=user_address  # Исключаем текущий токен
