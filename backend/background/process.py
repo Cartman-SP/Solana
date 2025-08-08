@@ -190,8 +190,11 @@ async def process_token_complete(token_address: str, session: aiohttp.ClientSess
     try:
         # Сначала проверяем миграцию
         is_migrated = await check_migration_async(token_address, session)
-        ath_value = await calculate_ath_async(token_address, session)
-        return ath_value, is_migrated
+        if is_migrated:
+            return 60000, is_migrated
+        else:
+            ath_value = await calculate_ath_async(token_address, session)
+            return ath_value, is_migrated
             
     except APIError as e:
         print(f"API ошибка при полной обработке токена {token_address}: {e}")
