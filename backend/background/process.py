@@ -220,7 +220,7 @@ async def get_tokens_for_processing():
             dev__total_tokens__lte=300
         ).select_related('dev')[:100]
     )
-    
+    print(len(tokens))
     return tokens
 
 
