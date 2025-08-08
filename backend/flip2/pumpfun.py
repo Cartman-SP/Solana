@@ -49,7 +49,8 @@ def parse_create_instruction(program_data: str) -> dict:
             "uri": uri
         }
         return parsed_data
-    except:
+    except Exception as e:
+        print(e)
         return None
 
 
