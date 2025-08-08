@@ -297,10 +297,10 @@ async def main_processing_loop():
             if processed_count == 0:
                 if CANCEL_PROCESSING:
                     print("Обработка отменена из-за ошибок API. Ожидание 5 минут...")
-                    await asyncio.sleep(300)  # 5 минут при ошибках
+                    await asyncio.sleep(60)  # 5 минут при ошибках
                 else:
                     print("Нет токенов для обработки. Ожидание 5 минут...")
-                    await asyncio.sleep(300)  # 5 минут
+                    await asyncio.sleep(60)  # 5 минут
             else:
                 print(f"Обработано {processed_count} токенов. Ожидание 1 минуту...")
                 await asyncio.sleep(60)  # 1 минута
