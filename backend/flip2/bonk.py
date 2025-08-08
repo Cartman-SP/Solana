@@ -5,7 +5,7 @@ import requests
 import base58
 import struct
 
-HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
+HELIUS_API_KEY = "d25e743a-6bf4-4ff2-a939-08767d664564"
 WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
 RPC_URL = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
 PUMP_PROGRAM = "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj"
