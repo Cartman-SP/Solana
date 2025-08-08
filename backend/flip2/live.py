@@ -55,6 +55,7 @@ async def get_user_dev_data(user_address):
             Token.objects.filter(
                 dev=user_dev,
                 ath__gt=0,
+                processed = True
             ).order_by('-created_at')[:3]
         )
         
@@ -68,6 +69,7 @@ async def get_user_dev_data(user_address):
         recent_100_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 dev=user_dev
+                processed = True
             ).order_by('-created_at')[:100]
         )
         
@@ -82,6 +84,7 @@ async def get_user_dev_data(user_address):
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 dev=user_dev
+                processed = True
             ).exclude(
                 address=user_address  # Исключаем текущий токен
             ).order_by('-created_at')[:3]

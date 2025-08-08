@@ -229,7 +229,8 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
         # Обновляем токен только если не было ошибок API
         await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
         await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
-        
+        await sync_to_async(lambda: setattr(token, 'processed', True))()
+
         # Сохраняем изменения
         await sync_to_async(token.save)()
         
