@@ -106,7 +106,8 @@ async def get_user_dev_data(user_address):
             'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
-    except:
+    except Exception as e:
+        print(e)
         return{
             'ath': 0,
             'total_tokens': 1,
