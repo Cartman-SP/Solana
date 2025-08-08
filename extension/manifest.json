@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Solana Token Monitor",
+  "version": "1.0",
+  "description": "Мониторинг токенов Solana в реальном времени",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://goodelivery.ru/*",
+    "wss://goodelivery.ru/*",
+    "ws://goodelivery.ru/*"
+  ],
+  "action": {
+    "default_title": "Solana Token Monitor"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://trade.padre.gg/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_page": "settings.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon.svg",
+    "48": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  }
+} 

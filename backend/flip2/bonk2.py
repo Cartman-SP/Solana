@@ -7,12 +7,12 @@ import base58
 
 HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
 WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
-PUMP_PROGRAM = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+BONK_PROGRAM = "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj"
 LOCAL_WS_URL = "ws://localhost:9393"
 
 
 def parse_create_instruction(program_data: str) -> dict:
-    """Парсит данные инструкции Create из Pump.fun"""
+    """Парсит данные инструкции Create из BONK.fun"""
     try:
         decoded_data = base64.b64decode(program_data)
         offset = 8  # Пропускаем discriminator
@@ -43,7 +43,7 @@ def parse_create_instruction(program_data: str) -> dict:
         user = base58.b58encode(user_bytes).decode('utf-8')
         
         return {
-            "source": "pumpfun",
+            "source": "bonk",
             "mint": mint,
             "user": user,
             "name": name,
@@ -76,7 +76,7 @@ async def process_logs(logs: list):
             break
         elif 'Program data: ' in log:
             program_data = log.split('Program data: ')[1].strip()
-            
+    print(program_data)        
     if has_create_instruction and program_data:
         parsed_data = parse_create_instruction(program_data)
         if parsed_data:
@@ -84,7 +84,7 @@ async def process_logs(logs: list):
 
 
 async def subscribe_to_mints():
-    """Подписывается на логи Pump.fun программы"""
+    """Подписывается на логи BONK.fun программы"""
     while True:
         try:
             async with websockets.connect(WS_URL) as websocket:
@@ -92,7 +92,7 @@ async def subscribe_to_mints():
                     "jsonrpc": "2.0",
                     "id": 1,
                     "method": "logsSubscribe",
-                    "params": [{"mentions": [PUMP_PROGRAM]}, {"commitment": "processed"}]
+                    "params": [{"mentions": [BONK_PROGRAM]}, {"commitment": "processed"}]
                 }
                 await websocket.send(json.dumps(subscribe_payload))
 

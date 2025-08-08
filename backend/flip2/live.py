@@ -13,9 +13,6 @@ django.setup()
 from mainapp.models import UserDev, Token
 from asgiref.sync import sync_to_async
 
-# Импортируем функцию получения баланса
-from get_balance import get_sol_balance_async
-
 # Хранилище подключенных клиентов расширения
 extension_clients = set()
 
@@ -52,12 +49,59 @@ async def get_user_dev_data(user_address):
         
         if user_dev.blacklist:
             return None
+        
+        # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
+        recent_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                dev=user_dev,
+                ath__gt=0,
+            ).order_by('-created_at')[:3]
+        )
+        
+        # Рассчитываем средний ATH
+        if recent_tokens:
+            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
+        else:
+            avg_ath = 0
+        
+        # Получаем последние 100 токенов для расчета процента миграций
+        recent_100_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                dev=user_dev
+            ).order_by('-created_at')[:100]
+        )
+        
+        # Рассчитываем процент мигрированных токенов
+        if recent_100_tokens:
+            migrated_count = sum(1 for token in recent_100_tokens if token.migrated)
+            migration_percentage = (migrated_count / len(recent_100_tokens)) * 100
+        else:
+            migration_percentage = 0
+        
+        # Получаем последние 3 токена разработчика (исключая текущий)
+        recent_dev_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                dev=user_dev
+            ).exclude(
+                address=user_address  # Исключаем текущий токен
+            ).order_by('-created_at')[:3]
+        )
+        
+        # Формируем список последних токенов
+        recent_tokens_info = []
+        for token in recent_dev_tokens:
+            recent_tokens_info.append({
+                'name': token.address[:8] + '...',  # Сокращенное название
+                'ath': token.ath
+            })
             
         return {
-            'ath': user_dev.ath,
+            'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_tokens': user_dev.total_tokens,
             'whitelist': user_dev.whitelist,
-            'blacklist': user_dev.blacklist
+            'blacklist': user_dev.blacklist,
+            'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
+            'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except:
         return{
@@ -65,6 +109,8 @@ async def get_user_dev_data(user_address):
             'total_tokens': 1,
             'whitelist': False,
             'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': []
         }
 
 
@@ -83,12 +129,6 @@ async def process_token_data(data):
         if user_dev_data is None:
             return
         
-        sol_balance = await get_sol_balance_async(user)
-        if sol_balance is None:
-            sol_balance = 'N/A'
-        else:
-            sol_balance = f"{sol_balance:.4f}"
-        
         extension_data = {
             'mint': mint,
             'user': user,
@@ -96,7 +136,8 @@ async def process_token_data(data):
             'symbol': symbol,
             'total_tokens': user_dev_data['total_tokens'],
             'ath': user_dev_data['ath'],
-            'sol_balance': sol_balance,
+            'migrations': user_dev_data['migrations'],
+            'recent_tokens': user_dev_data['recent_tokens'],
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
             'user_whitelisted': user_dev_data['whitelist'],
@@ -106,7 +147,8 @@ async def process_token_data(data):
         await broadcast_to_extension(extension_data)
         
         # Единственный вывод с оформленными данными
-        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['name']} ({extension_data['symbol']}) | ATH: {extension_data['ath']} | Total Tokens: {extension_data['total_tokens']} | SOL Balance: {extension_data['sol_balance']} | User: {extension_data['user'][:8]}...")
+        recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
+        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['name']} ({extension_data['symbol']}) | Avg ATH: {extension_data['ath']} | Total Tokens: {extension_data['total_tokens']} | Migrations: {extension_data['migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
         
     except:
         pass

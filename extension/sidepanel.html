@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Token Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 Solana Monitor</h1>
+            <div class="header-controls">
+                <div class="status">
+                    <span id="connection-status" class="status-indicator offline">Отключено</span>
+                </div>
+                <button id="flow-direction-btn" class="flow-direction-btn" title="Изменить направление потока данных">
+                    <svg class="flow-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                </button>
+                <button id="clear-all-btn" class="clear-all-btn">Очистить всё</button>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div id="tokens-container">
+                <!-- Токены будут добавляться сюда -->
+            </div>
+            
+            <div id="no-data" class="no-data">
+                <div class="no-data-icon">📊</div>
+                <p>Ожидание новых токенов...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="sidepanel.js"></script>
+</body>
+</html> 
