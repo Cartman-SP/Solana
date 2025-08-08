@@ -37,16 +37,16 @@ async def create_user_and_token(data):
             }
         )
         
-        # Создаем Token (асинхронно)
-        token, token_created = await sync_to_async(Token.objects.get_or_create)(
-            address=mint,
-            defaults={
-                'dev': user_dev,
-                'scam': False,
-                'ath': 0,
-                'migrated': False
-            }
-        )
+        if(user_dev.blacklist == False):
+            token, token_created = await sync_to_async(Token.objects.get_or_create)(
+                address=mint,
+                defaults={
+                    'dev': user_dev,
+                    'scam': False,
+                    'ath': 0,
+                    'migrated': False
+                }
+            )
         
         if token_created:
             # Увеличиваем счетчик токенов у пользователя (асинхронно)
