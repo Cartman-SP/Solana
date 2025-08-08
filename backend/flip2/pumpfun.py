@@ -15,34 +15,32 @@ def parse_create_instruction(program_data: str) -> dict:
     """Парсит данные инструкции Create из Pump.fun"""
     try:
         decoded_data = base64.b64decode(program_data)
-        offset = 8  # Пропускаем discriminator
-        
-        # Читаем name
+        offset = 0
+        discriminator = decoded_data[offset:offset + 8].hex()
+        offset += 8
         name_len = struct.unpack_from('<I', decoded_data, offset)[0]
         offset += 4
         name = decoded_data[offset:offset + name_len].decode('utf-8').rstrip('\x00')
         offset += name_len
-        
-        # Читаем symbol
         symbol_len = struct.unpack_from('<I', decoded_data, offset)[0]
         offset += 4
         symbol = decoded_data[offset:offset + symbol_len].decode('utf-8').rstrip('\x00')
         offset += symbol_len
-        
-        # Читаем uri
         uri_len = struct.unpack_from('<I', decoded_data, offset)[0]
         offset += 4
         uri = decoded_data[offset:offset + uri_len].decode('utf-8').rstrip('\x00')
         offset += uri_len
-        
-        # Читаем mint и user
         mint_bytes = decoded_data[offset:offset + 32]
         mint = base58.b58encode(mint_bytes).decode('utf-8')
-        offset += 64  # Пропускаем bonding_curve и associated_bonding_curve
+        offset += 32
+        bonding_curve_bytes = decoded_data[offset:offset + 32]
+        offset += 32
+        associated_bonding_curve_bytes = decoded_data[offset:offset + 32]
+        offset += 32
         user_bytes = decoded_data[offset:offset + 32]
         user = base58.b58encode(user_bytes).decode('utf-8')
         
-        return {
+        parsed_data = {
             "source": "pumpfun",
             "mint": mint,
             "user": user,
@@ -50,6 +48,7 @@ def parse_create_instruction(program_data: str) -> dict:
             "symbol": symbol,
             "uri": uri
         }
+        return parsed_data
     except:
         return None
 
