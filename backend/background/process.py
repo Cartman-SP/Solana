@@ -214,6 +214,7 @@ async def get_tokens_for_processing():
     tokens = await sync_to_async(list)(
         Token.objects.filter(
             ath=0,
+            processed = Flase,
             created_at__lt=sixty_minutes_ago,
             dev__blacklist=False,
             dev__total_tokens__lte=300
