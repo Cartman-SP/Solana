@@ -16,10 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from mainapp.views import blacklist_user, whitelist_user
+from mainapp.views import blacklist_user, whitelist_user, bonk_webhook
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/blacklist/', blacklist_user, name='blacklist_user'),
     path('api/whitelist/', whitelist_user, name='whitelist_user'),
+    path('api/bonk/', bonk_webhook, name='bonk_webhook'),
 ]

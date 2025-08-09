@@ -5,6 +5,8 @@ from django.views.decorators.http import require_http_methods
 import json
 from .models import UserDev
 from django.views.decorators.http import require_http_methods
+import os
+from datetime import datetime
 
 # Create your views here.
 
@@ -149,6 +151,65 @@ def whitelist_user(request):
         }, status=400)
         response["Access-Control-Allow-Origin"] = "*"
         return response
+    except Exception as e:
+        response = JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def bonk_webhook(request):
+    """API эндпоинт для приема вебхуков и записи их в файл webhooks.txt"""
+    
+    # Обработка CORS preflight запроса
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    
+    try:
+        # Получаем содержимое запроса
+        if request.content_type == 'application/json':
+            # Если это JSON
+            webhook_data = json.loads(request.body)
+            webhook_content = json.dumps(webhook_data, indent=2, ensure_ascii=False)
+        else:
+            # Если это обычный текст или другие форматы
+            webhook_content = request.body.decode('utf-8', errors='ignore')
+        
+        # Создаем временную метку
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Формируем запись для файла
+        log_entry = f"\n{'='*50}\n"
+        log_entry += f"Timestamp: {timestamp}\n"
+        log_entry += f"Content-Type: {request.content_type}\n"
+        log_entry += f"Method: {request.method}\n"
+        log_entry += f"Headers: {dict(request.headers)}\n"
+        log_entry += f"Body:\n{webhook_content}\n"
+        log_entry += f"{'='*50}\n"
+        
+        # Путь к файлу webhooks.txt (создаем в корне backend)
+        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webhooks.txt')
+        
+        # Записываем в файл
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(log_entry)
+        
+        response = JsonResponse({
+            'success': True,
+            'message': 'Webhook received and logged successfully',
+            'timestamp': timestamp
+        })
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+        
     except Exception as e:
         response = JsonResponse({
             'success': False,
