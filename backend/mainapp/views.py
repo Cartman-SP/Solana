@@ -250,6 +250,7 @@ async def process_logs(logs: list):
         elif 'Program data: ' in log:
             program_data = log.split('Program data: ')[1].strip()
             break
+    print(program_data)
     if has_create_instruction and program_data:
         parsed_data = parse_create_instruction(program_data)
         if parsed_data:
