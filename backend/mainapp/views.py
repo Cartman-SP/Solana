@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import base58
 import struct
+import base64
 
 LOCAL_WS_URL = "ws://localhost:9393"
 
@@ -226,38 +227,51 @@ def parse_create_instruction(program_data: str) -> dict:
         }
         
         return parsed_data
-    except :
+    except:
         return None
 
 
-async def send_to_local_websocket(data: dict):
+def send_to_local_websocket(data: dict):
     """Отправляет данные в локальный WebSocket"""
     try:
-        async with websockets.connect(LOCAL_WS_URL, timeout=5) as websocket:
-            await websocket.send(json.dumps(data))
+        # Синхронная версия - просто логируем данные
+        print(f"WebSocket data: {json.dumps(data, indent=2)}")
     except:
         pass
 
 
-async def process_logs(logs: list):
+def process_logs(logs: list):
     """Обрабатывает логи и извлекает данные Create инструкции"""
     has_create_instruction = False
     program_data = None
     for log in logs:
-
         if "Program log: Instruction: InitializeMint" in log:
             has_create_instruction = True
         elif 'Program data: ' in log:
             program_data = log.split('Program data: ')[1].strip()
             break
+    
     print(program_data)
     if has_create_instruction and program_data:
         parsed_data = parse_create_instruction(program_data)
         if parsed_data:
-            await send_to_local_websocket(parsed_data)
-
-
-
+            send_to_local_websocket(parsed_data)
+            
+            # Записываем данные в файл programs.txt
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'programs.txt')
+            
+            log_entry = f"\n{'='*50}\n"
+            log_entry += f"Timestamp: {timestamp}\n"
+            log_entry += f"Program Data:\n{program_data}\n"
+            log_entry += f"Parsed Data:\n{json.dumps(parsed_data, indent=2, ensure_ascii=False)}\n"
+            log_entry += f"{'='*50}\n"
+            
+            try:
+                with open(file_path, 'a', encoding='utf-8') as f:
+                    f.write(log_entry)
+            except Exception as e:
+                print(f"Error writing to programs.txt: {e}")
 
 
 @csrf_exempt
@@ -273,34 +287,43 @@ def bonk_webhook(request):
         response["Access-Control-Allow-Headers"] = "Content-Type"
         return response
     
+    try:
         # Получаем содержимое запроса
-    if request.content_type == 'application/json':
-        webhook_data = json.loads(request.body)
-    else:
-        webhook_data = json.loads(request.body.decode('utf-8', errors='ignore'))
-    
-    # Создаем временную метку
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Извлекаем данные о токене
-    token_data = {}
-    
-    # Обрабатываем массив транзакций
-    if isinstance(webhook_data, list):
-        for tx in webhook_data:
-            if 'meta' in tx and 'logMessages' in tx['meta']:
-                log_messages = tx['meta']['logMessages']
-                process_logs(logs)
-
-
-
-
-    response = JsonResponse({
-        'success': True,
-        'message': 'Webhook processed and token data logged successfully',
-        'timestamp': timestamp,
-        'token_data': token_data
-    })
-    response["Access-Control-Allow-Origin"] = "*"
-    return response
+        if request.content_type == 'application/json':
+            webhook_data = json.loads(request.body)
+        else:
+            webhook_data = json.loads(request.body.decode('utf-8', errors='ignore'))
+        
+        # Создаем временную метку
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Извлекаем данные о токене
+        token_data = {}
+        
+        # Обрабатываем массив транзакций
+        if isinstance(webhook_data, list):
+            for tx in webhook_data:
+                if 'meta' in tx and 'logMessages' in tx['meta']:
+                    log_messages = tx['meta']['logMessages']
+                    process_logs(log_messages)
+        elif isinstance(webhook_data, dict) and 'meta' in webhook_data and 'logMessages' in webhook_data['meta']:
+            log_messages = webhook_data['meta']['logMessages']
+            process_logs(log_messages)
+        
+        response = JsonResponse({
+            'success': True,
+            'message': 'Webhook processed and token data logged successfully',
+            'timestamp': timestamp,
+            'token_data': token_data
+        })
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+        
+    except Exception as e:
+        response = JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
         
