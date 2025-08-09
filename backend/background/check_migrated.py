@@ -19,27 +19,16 @@ def get_migrated_tokens_with_single_dev():
     # Получаем все токены с migrated=True
     migrated_tokens = list(Token.objects.filter(migrated=True))
     
-    # Словарь для подсчета токенов для каждого UserDev
-    dev_token_counts = {}
-    
-    # Подсчитываем токены для каждого UserDev
+    # Фильтруем токены, у которых у UserDev total_tokens <= 1
+    filtered_tokens = []
     for token in migrated_tokens:
-        dev_id = token.dev.id
-        if dev_id not in dev_token_counts:
-            dev_token_counts[dev_id] = 0
-        dev_token_counts[dev_id] += 1
+        if token.dev.total_tokens <= 1:
+            filtered_tokens.append(token)
     
-    # Фильтруем UserDev с не больше 1 токена
-    single_token_devs = []
-    for dev_id, count in dev_token_counts.items():
-        if count <= 1:
-            single_token_devs.append(dev_id)
-    
-    # Получаем адреса UserDev
+    # Получаем адреса UserDev из отфильтрованных токенов
     dev_addresses = []
-    for dev_id in single_token_devs:
-        dev = UserDev.objects.get(id=dev_id)
-        dev_addresses.append(dev.adress)
+    for token in filtered_tokens:
+        dev_addresses.append(token.dev.adress)
     
     return dev_addresses
 
