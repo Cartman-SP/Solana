@@ -240,6 +240,24 @@ def send_to_local_websocket(data: dict):
         pass
 
 
+def write_to_programs_file(program_data: str, parsed_data: dict):
+    """Записывает program_data и parsed_data в файл programs.txt"""
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'programs.txt')
+        
+        log_entry = f"\n{'='*50}\n"
+        log_entry += f"Timestamp: {timestamp}\n"
+        log_entry += f"Program Data:\n{program_data}\n"
+        log_entry += f"Parsed Data:\n{json.dumps(parsed_data, indent=2, ensure_ascii=False)}\n"
+        log_entry += f"{'='*50}\n"
+        
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(log_entry)
+    except Exception as e:
+        print(f"Error writing to programs.txt: {e}")
+
+
 def process_logs(logs: list):
     """Обрабатывает логи и извлекает данные Create инструкции"""
     has_create_instruction = False
@@ -258,20 +276,23 @@ def process_logs(logs: list):
             send_to_local_websocket(parsed_data)
             
             # Записываем данные в файл programs.txt
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'programs.txt')
-            
-            log_entry = f"\n{'='*50}\n"
-            log_entry += f"Timestamp: {timestamp}\n"
-            log_entry += f"Program Data:\n{program_data}\n"
-            log_entry += f"Parsed Data:\n{json.dumps(parsed_data, indent=2, ensure_ascii=False)}\n"
-            log_entry += f"{'='*50}\n"
-            
-            try:
-                with open(file_path, 'a', encoding='utf-8') as f:
-                    f.write(log_entry)
-            except Exception as e:
-                print(f"Error writing to programs.txt: {e}")
+
+
+def write_to_webhooks_file(webhook_data):
+    """Записывает весь вебхук в файл webhooks.txt"""
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webhooks.txt')
+        
+        log_entry = f"\n{'='*50}\n"
+        log_entry += f"Timestamp: {timestamp}\n"
+        log_entry += f"Webhook Data:\n{json.dumps(webhook_data, indent=2, ensure_ascii=False)}\n"
+        log_entry += f"{'='*50}\n"
+        
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(log_entry)
+    except Exception as e:
+        print(f"Error writing to webhooks.txt: {e}")
 
 
 @csrf_exempt
@@ -294,6 +315,9 @@ def bonk_webhook(request):
         else:
             webhook_data = json.loads(request.body.decode('utf-8', errors='ignore'))
         
+        # Записываем весь вебхук в файл
+        write_to_webhooks_file(webhook_data)
+        
         # Создаем временную метку
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -312,7 +336,7 @@ def bonk_webhook(request):
         
         response = JsonResponse({
             'success': True,
-            'message': 'Webhook processed and token data logged successfully',
+            'message': 'Webhook processed and logged successfully',
             'timestamp': timestamp,
             'token_data': token_data
         })
