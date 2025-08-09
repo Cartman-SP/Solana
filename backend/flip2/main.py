@@ -38,7 +38,6 @@ class ProcessManager:
         
         # Запускаем отправителей
         self.start_process("pumpfun.py", "PumpFun монитор")
-        self.start_process("bonk.py", "Bonk монитор")
         
         # Запускаем получателей
         self.start_process("live.py", "Live получатель")

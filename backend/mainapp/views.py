@@ -10,7 +10,8 @@ from datetime import datetime
 import base58
 import struct
 
-# Create your views here.
+LOCAL_WS_URL = "ws://localhost:9393"
+
 
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
@@ -162,93 +163,100 @@ def whitelist_user(request):
         return response
 
 
-def extract_token_data_from_logs(log_messages):
-    """Извлекает данные токена из logMessages"""
-    token_data = {}
-    
+
+
+
+
+def parse_create_instruction(program_data: str) -> dict:
+    """Парсит данные инструкции Create из Pump.fun"""
     try:
-        # Ищем строку с "Program data:"
-        program_data = None
-        for log in log_messages:
-            if log.startswith("Program data:"):
-                program_data = log.replace("Program data:", "").strip()
-                break
+        decoded_data = base64.b64decode(program_data)
+        offset = 0
         
-        if not program_data:
-            return token_data
+        # Парсим discriminator (первые 8 байт)
+        discriminator = decoded_data[offset:offset + 8].hex()
+        offset += 8
         
-        # Декодируем base58 данные
-        try:
-            data_bytes = base58.b58decode(program_data)
-            instruction_data = data_bytes.hex()
-        except:
-            return token_data
+        # Парсим имя токена
+        name_len = struct.unpack_from('<I', decoded_data, offset)[0]
+        offset += 4
+        name = decoded_data[offset:offset + name_len].decode('utf-8').rstrip('\x00')
+        offset += name_len
         
-        # Преобразуем hex в bytes
-        data_bytes = bytes.fromhex(instruction_data)
+        # Парсим символ токена
+        symbol_len = struct.unpack_from('<I', decoded_data, offset)[0]
+        offset += 4
+        symbol = decoded_data[offset:offset + symbol_len].decode('utf-8').rstrip('\x00')
+        offset += symbol_len
         
-        # Извлекаем данные по структуре из bonk.py
-        if len(data_bytes) >= 96:
-            # Pool State (32 bytes)
-            pool_state_bytes = data_bytes[0:32]
-            pool_state = base58.b58encode(pool_state_bytes).decode('utf-8')
-            token_data['Pool State'] = pool_state
+        # Парсим URI токена
+        uri_len = struct.unpack_from('<I', decoded_data, offset)[0]
+        offset += 4
+        uri = decoded_data[offset:offset + uri_len].decode('utf-8').rstrip('\x00')
+        offset += uri_len
+        
+        # Парсим mint account (32 байта)
+        mint_bytes = decoded_data[offset:offset + 32]
+        mint = base58.b58encode(mint_bytes).decode('utf-8')
+        offset += 32
+        
+        # Пропускаем 32 байта (похоже на bonding curve)
+        bonding_curve_bytes = decoded_data[offset:offset + 32]
+        offset += 32
+        
+        # Пропускаем еще 32 байта
+        associated_bonding_curve_bytes = decoded_data[offset:offset + 32]
+        offset += 32
+        
+        # Парсим user account (32 байта)
+        user_bytes = decoded_data[offset:offset + 32]
+        user = base58.b58encode(user_bytes).decode('utf-8')
+        offset += 32
+        
+        # Остальные данные (если есть)
+        remaining_data = decoded_data[offset:]
+        
+        parsed_data = {
+            "source": "bonk",
+            "mint": mint,
+            "user": user,
+            "name": name,
+            "symbol": symbol,
+            "uri": uri,
+        }
+        
+        return parsed_data
+    except :
+        return None
 
-            # Creator (32 bytes)
-            creator_bytes = data_bytes[32:64]
-            creator = base58.b58encode(creator_bytes).decode('utf-8')
-            token_data['Creator'] = creator
 
-            # Config (32 bytes)
-            config_bytes = data_bytes[64:96]
-            config = base58.b58encode(config_bytes).decode('utf-8')
-            token_data['Config'] = config
+async def send_to_local_websocket(data: dict):
+    """Отправляет данные в локальный WebSocket"""
+    try:
+        async with websockets.connect(LOCAL_WS_URL, timeout=5) as websocket:
+            await websocket.send(json.dumps(data))
+    except:
+        pass
 
-            # Curve params (16 bytes) + decimals
-            curve_param_size = 16
-            decimals_start = 96 + curve_param_size
-            
-            if len(data_bytes) > decimals_start:
-                decimals = data_bytes[decimals_start]
-                token_data['Decimals'] = decimals
 
-                # Name
-                name_length_start = decimals_start + 1
-                if len(data_bytes) >= name_length_start + 4:
-                    name_length = struct.unpack('<I', data_bytes[name_length_start:name_length_start + 4])[0]
-                    name_start = name_length_start + 4
-                    name_end = name_start + name_length
-                    
-                    if len(data_bytes) >= name_end:
-                        name = data_bytes[name_start:name_end].decode('utf-8', errors='ignore')
-                        token_data['Token Name'] = name
+async def process_logs(logs: list):
+    """Обрабатывает логи и извлекает данные Create инструкции"""
+    has_create_instruction = False
+    program_data = None
+    for log in logs:
 
-                        # Symbol
-                        symbol_length_start = name_end
-                        if len(data_bytes) >= symbol_length_start + 4:
-                            symbol_length = struct.unpack('<I', data_bytes[symbol_length_start:symbol_length_start + 4])[0]
-                            symbol_start = symbol_length_start + 4
-                            symbol_end = symbol_start + symbol_length
-                            
-                            if len(data_bytes) >= symbol_end:
-                                symbol = data_bytes[symbol_start:symbol_end].decode('utf-8', errors='ignore')
-                                token_data['Token Symbol'] = symbol
+        if "Program log: Instruction: InitializeMint" in log:
+            has_create_instruction = True
+        elif 'Program data: ' in log:
+            program_data = log.split('Program data: ')[1].strip()
+            break
+    if has_create_instruction and program_data:
+        parsed_data = parse_create_instruction(program_data)
+        if parsed_data:
+            await send_to_local_websocket(parsed_data)
 
-                                # URI
-                                uri_length_start = symbol_end
-                                if len(data_bytes) >= uri_length_start + 4:
-                                    uri_length = struct.unpack('<I', data_bytes[uri_length_start:uri_length_start + 4])[0]
-                                    uri_start = uri_length_start + 4
-                                    uri_end = uri_start + uri_length
-                                    
-                                    if len(data_bytes) >= uri_end:
-                                        uri = data_bytes[uri_start:uri_end].decode('utf-8', errors='ignore')
-                                        token_data['Token URI'] = uri
-    
-    except Exception as e:
-        print(f"Error extracting token data: {e}")
-    
-    return token_data
+
+
 
 
 @csrf_exempt
@@ -264,66 +272,34 @@ def bonk_webhook(request):
         response["Access-Control-Allow-Headers"] = "Content-Type"
         return response
     
-    try:
         # Получаем содержимое запроса
-        if request.content_type == 'application/json':
-            webhook_data = json.loads(request.body)
-        else:
-            webhook_data = json.loads(request.body.decode('utf-8', errors='ignore'))
+    if request.content_type == 'application/json':
+        webhook_data = json.loads(request.body)
+    else:
+        webhook_data = json.loads(request.body.decode('utf-8', errors='ignore'))
+    
+    # Создаем временную метку
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Извлекаем данные о токене
+    token_data = {}
+    
+    # Обрабатываем массив транзакций
+    if isinstance(webhook_data, list):
+        for tx in webhook_data:
+            if 'meta' in tx and 'logMessages' in tx['meta']:
+                log_messages = tx['meta']['logMessages']
+                process_logs(logs)
+
+
+
+
+    response = JsonResponse({
+        'success': True,
+        'message': 'Webhook processed and token data logged successfully',
+        'timestamp': timestamp,
+        'token_data': token_data
+    })
+    response["Access-Control-Allow-Origin"] = "*"
+    return response
         
-        # Создаем временную метку
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Извлекаем данные о токене
-        token_data = {}
-        
-        # Обрабатываем массив транзакций
-        if isinstance(webhook_data, list):
-            for tx in webhook_data:
-                if 'meta' in tx and 'logMessages' in tx['meta']:
-                    log_messages = tx['meta']['logMessages']
-                    tx_token_data = extract_token_data_from_logs(log_messages)
-                    if tx_token_data:
-                        token_data.update(tx_token_data)
-                        break  # Берем данные из первой транзакции с данными токена
-        elif isinstance(webhook_data, dict) and 'meta' in webhook_data and 'logMessages' in webhook_data['meta']:
-            log_messages = webhook_data['meta']['logMessages']
-            token_data = extract_token_data_from_logs(log_messages)
-        
-        # Формируем запись для файла
-        if token_data:
-            log_entry = f"\n{'='*50}\n"
-            log_entry += f"Timestamp: {timestamp}\n"
-            log_entry += f"Token Data:\n"
-            for key, value in token_data.items():
-                log_entry += f"  {key}: {value}\n"
-            log_entry += f"{'='*50}\n"
-        else:
-            log_entry = f"\n{'='*50}\n"
-            log_entry += f"Timestamp: {timestamp}\n"
-            log_entry += f"No token data found in webhook\n"
-            log_entry += f"{'='*50}\n"
-        
-        # Путь к файлу webhooks.txt (создаем в корне backend)
-        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webhooks.txt')
-        
-        # Записываем в файл
-        with open(file_path, 'a', encoding='utf-8') as f:
-            f.write(log_entry)
-        
-        response = JsonResponse({
-            'success': True,
-            'message': 'Webhook processed and token data logged successfully',
-            'timestamp': timestamp,
-            'token_data': token_data
-        })
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-        
-    except Exception as e:
-        response = JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
