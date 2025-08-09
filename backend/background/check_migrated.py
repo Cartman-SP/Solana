@@ -11,14 +11,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from mainapp.models import UserDev, Token
-from asgiref.sync import sync_to_async
 
-async def get_migrated_tokens_with_single_dev():
+def get_migrated_tokens_with_single_dev():
     """
     Получает все токены с migrated=True, у которых у привязанного UserDev не больше 1 токена
     """
     # Получаем все токены с migrated=True
-    migrated_tokens = await sync_to_async(list)(Token.objects.filter(migrated=True))
+    migrated_tokens = list(Token.objects.filter(migrated=True))
     
     # Словарь для подсчета токенов для каждого UserDev
     dev_token_counts = {}
@@ -39,12 +38,12 @@ async def get_migrated_tokens_with_single_dev():
     # Получаем адреса UserDev
     dev_addresses = []
     for dev_id in single_token_devs:
-        dev = await sync_to_async(UserDev.objects.get)(id=dev_id)
+        dev = UserDev.objects.get(id=dev_id)
         dev_addresses.append(dev.adress)
     
     return dev_addresses
 
-async def main():
+def main():
     """
     Основная функция для выполнения задачи
     """
@@ -52,7 +51,7 @@ async def main():
         print("Поиск токенов с migrated=True, у которых у UserDev не больше 1 токена...")
         
         # Получаем адреса UserDev
-        dev_addresses = await get_migrated_tokens_with_single_dev()
+        dev_addresses = get_migrated_tokens_with_single_dev()
         
         if dev_addresses:
             print(f"\nНайдено {len(dev_addresses)} UserDev с не больше 1 токеном:")
@@ -66,4 +65,4 @@ async def main():
         print(f"Ошибка: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
