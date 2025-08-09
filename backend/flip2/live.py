@@ -22,7 +22,21 @@ async def handler(websocket, path):
     
     try:
         async for message in websocket:
-            pass
+            try:
+                data = json.loads(message)
+                
+                # Обработка ping сообщений
+                if data.get('type') == 'ping':
+                    # Отправляем pong ответ
+                    pong_response = {
+                        'type': 'pong',
+                        'timestamp': data.get('timestamp', 0)
+                    }
+                    await websocket.send(json.dumps(pong_response))
+                    
+            except json.JSONDecodeError:
+                # Если сообщение не является JSON, игнорируем его
+                pass
     except:
         pass
     finally:

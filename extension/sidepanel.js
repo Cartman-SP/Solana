@@ -5,6 +5,9 @@ class TokenMonitor {
         this.tokens = [];
         this.maxTokens = 50; // Увеличиваем максимальное количество токенов
         this.flowDirection = 'top'; // 'top' - новые сверху, 'bottom' - новые снизу
+        this.pingInterval = null;
+        this.lastPingTime = 0;
+        this.pingHistory = [];
         
         this.init();
     }
@@ -24,6 +27,7 @@ class TokenMonitor {
                 console.log('WebSocket соединение установлено');
                 this.isConnected = true;
                 this.updateConnectionStatus();
+                this.startPingMeasurement();
             };
             
             this.ws.onmessage = (event) => {
@@ -31,7 +35,13 @@ class TokenMonitor {
                 try {
                     const data = JSON.parse(event.data);
                     console.log('Данные успешно распарсены:', data);
-                    this.handleTokenData(data);
+                    
+                    // Проверяем, является ли это ответом на пинг
+                    if (data.type === 'pong') {
+                        this.handlePong(data);
+                    } else {
+                        this.handleTokenData(data);
+                    }
                 } catch (error) {
                     console.error('Ошибка парсинга данных:', error);
                 }
@@ -41,6 +51,7 @@ class TokenMonitor {
                 console.log('WebSocket соединение закрыто');
                 this.isConnected = false;
                 this.updateConnectionStatus();
+                this.stopPingMeasurement();
                 
                 // Переподключение через 5 секунд
                 setTimeout(() => {
@@ -52,12 +63,77 @@ class TokenMonitor {
                 console.error('WebSocket ошибка:', error);
                 this.isConnected = false;
                 this.updateConnectionStatus();
+                this.stopPingMeasurement();
             };
             
         } catch (error) {
             console.error('Ошибка подключения к WebSocket:', error);
             this.isConnected = false;
             this.updateConnectionStatus();
+            this.stopPingMeasurement();
+        }
+    }
+    
+    startPingMeasurement() {
+        this.stopPingMeasurement(); // Останавливаем предыдущий интервал
+        
+        this.pingInterval = setInterval(() => {
+            if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.sendPing();
+            }
+        }, 5000); // Измеряем пинг каждые 5 секунд
+    }
+    
+    stopPingMeasurement() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
+    }
+    
+    sendPing() {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.lastPingTime = Date.now();
+            this.ws.send(JSON.stringify({
+                type: 'ping',
+                timestamp: this.lastPingTime
+            }));
+        }
+    }
+    
+    handlePong(data) {
+        const pingTime = Date.now() - this.lastPingTime;
+        this.pingHistory.push(pingTime);
+        
+        // Ограничиваем историю пинга до 10 последних измерений
+        if (this.pingHistory.length > 10) {
+            this.pingHistory = this.pingHistory.slice(-10);
+        }
+        
+        this.updatePingStatus();
+    }
+    
+    updatePingStatus() {
+        const pingElement = document.getElementById('ping-status');
+        
+        if (this.pingHistory.length === 0) {
+            pingElement.textContent = '—';
+            pingElement.className = 'ping-indicator';
+            return;
+        }
+        
+        // Вычисляем средний пинг
+        const avgPing = Math.round(this.pingHistory.reduce((sum, ping) => sum + ping, 0) / this.pingHistory.length);
+        
+        pingElement.textContent = `${avgPing}ms`;
+        
+        // Определяем качество пинга
+        if (avgPing < 100) {
+            pingElement.className = 'ping-indicator good';
+        } else if (avgPing < 300) {
+            pingElement.className = 'ping-indicator warning';
+        } else {
+            pingElement.className = 'ping-indicator poor';
         }
     }
     
@@ -69,6 +145,10 @@ class TokenMonitor {
         } else {
             statusElement.textContent = 'Отключено';
             statusElement.className = 'status-indicator offline';
+            // Сбрасываем пинг при отключении
+            const pingElement = document.getElementById('ping-status');
+            pingElement.textContent = '—';
+            pingElement.className = 'ping-indicator';
         }
     }
     
