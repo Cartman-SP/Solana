@@ -369,8 +369,7 @@ def get_funding_addresses(wallet_address):
     url = f"{base_url}?address={str(wallet_address)}"
     
     try:
-        data = requests.get(url = url, headers=headers)
-        data = data.get('data', [])
+        data = requests.get(url = url, headers=headers).json()
         return data
     except Exception as e:
         print(f"Error: {e}")
