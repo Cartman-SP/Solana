@@ -363,8 +363,8 @@ def get_funding_addresses(wallet_address):
         "token": api_key,
         "User-Agent": "SolanaFlipper/1.0"
     }
-    
-    url = f"{base_url}?address={wallet_address}"
+    print(str(wallet_address))
+    url = f"{base_url}?address={str(wallet_address)}"
     print(f"Requesting URL: {url}")
     
     try:
