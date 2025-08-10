@@ -2,15 +2,26 @@
 
 let walletsData = [];
 let selectedWallets = new Set();
+let isBlockReplaced = false; // Флаг для предотвращения дублирования
 
 function createLoadingSpinner() {
     const spinner = document.createElement('div');
     spinner.className = 'wallet-loading-spinner';
     spinner.innerHTML = `
-        <div class="spinner-ring"></div>
+        <div class="spinner-container">
+            <div class="spinner-dot"></div>
+            <div class="spinner-dot"></div>
+            <div class="spinner-dot"></div>
+        </div>
         <div class="spinner-text">Loading...</div>
     `;
+    
     return spinner;
+}
+
+function truncateAddress(address) {
+    if (address.length <= 10) return address;
+    return address.substring(0, 6) + '...' + address.substring(address.length - 4);
 }
 
 function createWalletCard(wallet) {
@@ -26,7 +37,7 @@ function createWalletCard(wallet) {
     card.innerHTML = `
         <div class="wallet-header">
             <div class="wallet-address">
-                <span class="address-text">${wallet.account_address}</span>
+                <span class="address-text" title="${wallet.account_address}">${truncateAddress(wallet.account_address)}</span>
                 <div class="wallet-actions">
                     <button class="copy-btn" title="Copy address">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -53,8 +64,8 @@ function createWalletCard(wallet) {
             ${wallet.funded_by ? `
                 <div class="funded-by">
                     <div class="funded-label">Funded by:</div>
-                    <div class="funded-address">${wallet.funded_by.funded_by}</div>
-                    ${wallet.funded_by.tx_hash ? `<div class="tx-hash">TX: ${wallet.funded_by.tx_hash.substring(0, 16)}...</div>` : ''}
+                    <div class="funded-address" title="${wallet.funded_by.funded_by}">${truncateAddress(wallet.funded_by.funded_by)}</div>
+                    ${wallet.funded_by.tx_hash ? `<div class="tx-hash" title="${wallet.funded_by.tx_hash}">TX: ${truncateAddress(wallet.funded_by.tx_hash)}</div>` : ''}
                     ${wallet.funded_by.block_time ? `<div class="block-time">Block: ${new Date(wallet.funded_by.block_time * 1000).toLocaleString()}</div>` : ''}
                 </div>
             ` : ''}
@@ -144,7 +155,6 @@ async function loadLinkedWallets(tokenAddress) {
         console.error('Error loading wallets:', error);
         container.innerHTML = `
             <div class="error-message">
-                <div class="error-icon">⚠️</div>
                 <div class="error-text">Failed to load wallets</div>
                 <button class="retry-btn" onclick="retryLoadWallets('${tokenAddress}')">Retry</button>
             </div>
@@ -235,17 +245,18 @@ function retryLoadWallets(tokenAddress) {
 }
 
 function replaceTargetBlock() {
-    // Ищем целевой блок для замены
-    const targetBlock = document.querySelector('div.MuiStack-root.css-1d1x2ui div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation1.MuiAccordion-root.Mui-expanded.css-rt5zsn div.MuiButtonBase-root.MuiAccordionSummary-root.Mui-expanded.css-1ctbyhu');
+    // Проверяем, что замена еще не была выполнена
+    if (isBlockReplaced) {
+        return;
+    }
+    
+    // Ищем целевой блок для замены - берем второй блок
+    const targetBlocks = document.querySelectorAll('div.MuiStack-root.css-1d1x2ui');
+    const targetBlock = targetBlocks[1]; // Берем второй блок
     
     if (!targetBlock) {
         // Если блок не найден, пробуем еще раз через 1 секунду
         setTimeout(replaceTargetBlock, 1000);
-        return;
-    }
-    
-    // Проверяем, что замена еще не была выполнена
-    if (targetBlock.querySelector('.linked-wallets-replacement')) {
         return;
     }
     
@@ -262,33 +273,30 @@ function replaceTargetBlock() {
         return;
     }
     
-    // Создаем новый блок
-    const replacementBlock = document.createElement('div');
-    replacementBlock.className = 'linked-wallets-replacement';
-    replacementBlock.innerHTML = `
-        <div class="replacement-header">
-            <div class="header-title">Linked Wallets</div>
-            <button class="load-wallets-btn">
-                <span class="btn-text">Load Linked Wallets</span>
-                <div class="btn-spinner" style="display: none;">
-                    <div class="spinner-ring"></div>
-                </div>
-            </button>
-        </div>
+    // Полностью заменяем содержимое целевого блока
+    targetBlock.innerHTML = '';
+    targetBlock.className = 'linked-wallets-replacement';
+    
+    // Создаем новый блок с кнопкой по центру
+    targetBlock.innerHTML = `
         <div class="linked-wallets-container">
             <div class="initial-state">
-                <div class="initial-icon">🔍</div>
-                <div class="initial-text">Click "Load Linked Wallets" to find connected addresses</div>
+                <button class="load-wallets-btn">
+                    <span class="btn-text">Load Linked Wallets</span>
+                    <div class="btn-spinner" style="display: none;">
+                        <div class="btn-spinner-dots">
+                            <div class="btn-spinner-dot"></div>
+                            <div class="btn-spinner-dot"></div>
+                            <div class="btn-spinner-dot"></div>
+                        </div>
+                    </div>
+                </button>
             </div>
         </div>
     `;
     
-    // Заменяем содержимое целевого блока
-    targetBlock.innerHTML = '';
-    targetBlock.appendChild(replacementBlock);
-    
     // Добавляем обработчик для кнопки загрузки
-    const loadButton = replacementBlock.querySelector('.load-wallets-btn');
+    const loadButton = targetBlock.querySelector('.load-wallets-btn');
     loadButton.addEventListener('click', async () => {
         const btnText = loadButton.querySelector('.btn-text');
         const btnSpinner = loadButton.querySelector('.btn-spinner');
@@ -303,6 +311,9 @@ function replaceTargetBlock() {
         btnSpinner.style.display = 'none';
         loadButton.disabled = false;
     });
+    
+    // Устанавливаем флаг, что блок заменен
+    isBlockReplaced = true;
 }
 
 // Функция для добавления кнопок blacklist и whitelist
@@ -520,44 +531,63 @@ function addStyles() {
     style.id = 'extension-wallet-styles';
     style.textContent = `
         .linked-wallets-replacement {
-            padding: 16px;
-            background: #1a1a1a;
+            background: rgb(6, 7, 11) !important;
             border-radius: 8px;
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .replacement-header {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 400px;
+            padding: 16px;
+            box-sizing: border-box;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+            flex-direction: column;
+            overflow: hidden;
         }
         
-        .header-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
+        .linked-wallets-container {
+            flex: 1;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .initial-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .load-wallets-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, rgb(47, 227, 172) 0%, rgb(47, 227, 172) 100%);
+            color: rgb(6, 7, 11);
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            min-width: 200px;
+            justify-content: center;
+            box-sizing: border-box;
         }
         
         .load-wallets-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(47, 227, 172, 0.4);
         }
         
         .load-wallets-btn:disabled {
@@ -566,41 +596,39 @@ function addStyles() {
         }
         
         .btn-spinner {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
         }
         
-        .spinner-ring {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
+        .btn-spinner-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .btn-spinner-dot {
+            width: 6px;
+            height: 6px;
+            background: rgb(6, 7, 11);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: btn-spinner-bounce 1.4s ease-in-out infinite both;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .btn-spinner-dot:nth-child(1) {
+            animation-delay: -0.32s;
         }
         
-        .linked-wallets-container {
-            min-height: 200px;
+        .btn-spinner-dot:nth-child(2) {
+            animation-delay: -0.16s;
         }
         
-        .initial-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #888;
-        }
-        
-        .initial-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        
-        .initial-text {
-            font-size: 16px;
+        @keyframes btn-spinner-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
         }
         
         .wallet-loading-spinner {
@@ -608,35 +636,63 @@ function addStyles() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 80px 20px;
+            flex: 1;
+            width: 100%;
+            box-sizing: border-box;
         }
         
-        .wallet-loading-spinner .spinner-ring {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .spinner-container {
+            display: flex;
+            gap: 8px;
             margin-bottom: 16px;
         }
         
+        .spinner-dot {
+            width: 12px;
+            height: 12px;
+            background: rgb(47, 227, 172);
+            border-radius: 50%;
+            animation: spinner-bounce 1.4s ease-in-out infinite both;
+        }
+        
+        .spinner-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .spinner-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        @keyframes spinner-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+        
         .wallet-loading-spinner .spinner-text {
-            color: #888;
+            color: white;
             font-size: 14px;
         }
         
         .wallets-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .wallet-card {
-            background: #2a2a2a;
+            background: rgb(24, 24, 26);
             border: 2px solid transparent;
             border-radius: 8px;
             padding: 16px;
@@ -644,17 +700,20 @@ function addStyles() {
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
         }
         
         .wallet-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(47, 227, 172, 0.2);
+            border-color: rgb(47, 227, 172);
         }
         
         .wallet-card.selected {
-            border-color: #4CAF50;
-            background: linear-gradient(135deg, #2a2a2a 0%, #1e3a1e 100%);
+            border-color: rgb(47, 227, 172);
+            background: linear-gradient(135deg, rgb(24, 24, 26) 0%, rgba(47, 227, 172, 0.1) 100%);
             transform: scale(1.02);
         }
         
@@ -663,8 +722,8 @@ function addStyles() {
             position: absolute;
             top: 8px;
             right: 8px;
-            background: #4CAF50;
-            color: white;
+            background: rgb(47, 227, 172);
+            color: rgb(6, 7, 11);
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -677,24 +736,30 @@ function addStyles() {
         
         .wallet-header {
             margin-bottom: 12px;
+            width: 100%;
         }
         
         .wallet-address {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            width: 100%;
+            gap: 8px;
         }
         
         .address-text {
             font-family: 'Courier New', monospace;
             font-size: 12px;
-            color: #ddd;
+            color: white;
             word-break: break-all;
+            flex: 1;
+            min-width: 0;
         }
         
         .wallet-actions {
             display: flex;
             gap: 8px;
+            flex-shrink: 0;
         }
         
         .copy-btn, .open-btn {
@@ -704,27 +769,31 @@ function addStyles() {
             padding: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
-            color: #ccc;
+            color: white;
+            flex-shrink: 0;
         }
         
         .copy-btn:hover, .open-btn:hover {
             background: rgba(255, 255, 255, 0.2);
-            color: white;
+            color: rgb(47, 227, 172);
             transform: scale(1.1);
         }
         
         .wallet-details {
             font-size: 12px;
-            color: #bbb;
+            color: rgba(255, 255, 255, 0.8);
+            width: 100%;
         }
         
         .wallet-details > div {
             margin-bottom: 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .wallet-label {
             font-weight: 600;
-            color: #4CAF50;
+            color: rgb(47, 227, 172);
         }
         
         .wallet-icon img {
@@ -738,18 +807,20 @@ function addStyles() {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            width: 100%;
         }
         
         .tag {
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
+            background: rgba(47, 227, 172, 0.2);
+            color: rgb(47, 227, 172);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 10px;
+            white-space: nowrap;
         }
         
         .wallet-type {
-            color: #888;
+            color: rgba(255, 255, 255, 0.6);
         }
         
         .funded-by {
@@ -757,29 +828,33 @@ function addStyles() {
             padding: 8px;
             border-radius: 4px;
             margin-top: 8px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .funded-label {
             font-weight: 600;
-            color: #ff9800;
+            color: rgb(47, 227, 172);
             margin-bottom: 4px;
         }
         
         .funded-address {
             font-family: 'Courier New', monospace;
-            color: #ddd;
+            color: white;
             margin-bottom: 4px;
+            word-break: break-all;
         }
         
         .tx-hash, .block-time {
             font-size: 10px;
-            color: #888;
+            color: rgba(255, 255, 255, 0.6);
+            word-break: break-all;
         }
         
         .send-to-server-btn {
             width: 100%;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
+            background: linear-gradient(135deg, rgb(47, 227, 172) 0%, rgb(47, 227, 172) 100%);
+            color: rgb(6, 7, 11);
             border: none;
             padding: 12px 24px;
             border-radius: 6px;
@@ -787,11 +862,13 @@ function addStyles() {
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            margin-top: auto;
+            box-sizing: border-box;
         }
         
         .send-to-server-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 8px 25px rgba(47, 227, 172, 0.4);
         }
         
         .send-to-server-btn:disabled {
@@ -802,13 +879,15 @@ function addStyles() {
         
         .error-message {
             text-align: center;
-            padding: 40px 20px;
-            color: #f44336;
-        }
-        
-        .error-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
+            padding: 80px 20px;
+            color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .error-text {
@@ -817,8 +896,8 @@ function addStyles() {
         }
         
         .retry-btn {
-            background: #f44336;
-            color: white;
+            background: rgb(47, 227, 172);
+            color: rgb(6, 7, 11);
             border: none;
             padding: 8px 16px;
             border-radius: 4px;
@@ -827,28 +906,37 @@ function addStyles() {
         }
         
         .retry-btn:hover {
-            background: #d32f2f;
+            background: rgba(47, 227, 172, 0.8);
         }
         
         .no-wallets {
             text-align: center;
-            padding: 40px 20px;
-            color: #888;
+            padding: 80px 20px;
+            color: white;
             font-size: 16px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .toast {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #333;
-            color: white;
+            background: rgb(6, 7, 11);
+            color: rgb(47, 227, 172);
             padding: 12px 20px;
             border-radius: 6px;
             font-size: 14px;
             z-index: 10000;
             transform: translateX(100%);
             transition: transform 0.3s ease;
+            border: 1px solid rgb(47, 227, 172);
+            max-width: 300px;
+            word-wrap: break-word;
         }
         
         .toast.show {
@@ -866,12 +954,38 @@ function addStyles() {
         }
         
         .wallets-grid::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(47, 227, 172, 0.3);
             border-radius: 4px;
         }
         
         .wallets-grid::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(47, 227, 172, 0.5);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .linked-wallets-replacement {
+                padding: 12px;
+                min-height: 350px;
+            }
+            
+            .linked-wallets-container {
+                min-height: 300px;
+            }
+            
+            .initial-state, .wallet-loading-spinner, .error-message, .no-wallets {
+                padding: 60px 20px;
+            }
+            
+            .wallets-grid {
+                grid-template-columns: 1fr;
+                max-height: 400px;
+            }
+            
+            .load-wallets-btn {
+                min-width: 160px;
+                padding: 12px 24px;
+            }
         }
     `;
     
@@ -904,7 +1018,9 @@ if (document.readyState === 'loading') {
 
 // Также запускаем при изменениях в DOM (для SPA)
 const observer = new MutationObserver(() => {
-    initializeExtension();
+    if (!isBlockReplaced) {
+        initializeExtension();
+    }
 });
 
 observer.observe(document.body, {

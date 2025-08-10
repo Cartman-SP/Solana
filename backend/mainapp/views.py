@@ -396,7 +396,7 @@ def search_wallet(address):
 @csrf_exempt
 def get_wallets(request):
     token_address = request.GET.get('token_address')
-    token_address = "FaLrsX8KZG8DBhCD4trbH3KdZN2p2SbkpnNaZXtFh7dw"
+    token_address = "5RbT1RN87YSCsDoy2mVz6nKhBBN6SZLWwXnLHzmDT3bv"
     try:
         return JsonResponse({"data":search_wallet(token_address)})
     except Exception as e:
