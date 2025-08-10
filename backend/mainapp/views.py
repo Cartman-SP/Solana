@@ -384,7 +384,10 @@ def search_wallet(address):
     accounts = []
     while counter < limit:
         data = get_funding_addresses(address)
-        address = data['funded_by']['funded_by']
+        try:
+            address = data['funded_by']['funded_by']
+        except:
+            return data
         for i in accounts:
             if address in i['funded_by']['funded_by']:
                 return accounts  
