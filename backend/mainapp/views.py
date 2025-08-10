@@ -399,4 +399,4 @@ def get_wallets(request):
     try:
         return JsonResponse({"data":search_wallet(token_address)})
     except Exception as e:
-        return JsonResponse({"success":"False",'error':str(e)})
+        return JsonResponse({"success":"False",'error':str(e),'token':token_address})
