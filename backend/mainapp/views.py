@@ -366,10 +366,11 @@ def get_funding_addresses(wallet_address):
     }
     
     # Формируем URL для входящих трансферов (flow=in), чтобы получить только фондирующие адреса
-    url = f"{base_url}?address={str(wallet_address)}"
+    url = f"{base_url}?address={wallet_address}"
     
     try:
         data = requests.get(url = url, headers=headers).json()
+        data = data.get('data', [])
         return data
     except Exception as e:
         print(f"Error: {e}")
