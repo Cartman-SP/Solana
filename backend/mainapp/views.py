@@ -411,9 +411,18 @@ def search_wallet(address):
 
 @csrf_exempt
 def get_wallets(request):
-    data = json.loads(request.body)
     try:
-        token_address = data.get('token_address')
-        return JsonResponse({"data":search_wallet(token_address)})
+        # Поддерживаем как GET, так и POST запросы
+        if request.method == "GET":
+            token_address = request.GET.get('token_address')
+        else:
+            data = json.loads(request.body)
+            token_address = data.get('token_address')
+        
+        if not token_address:
+            return JsonResponse({"success": False, "error": "token_address is required"})
+            
+        result = search_wallet(token_address)
+        return JsonResponse({"data": result})
     except Exception as e:
-        return JsonResponse({"success":"False"})
+        return JsonResponse({"success": False, "error": str(e)})
