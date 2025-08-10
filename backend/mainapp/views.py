@@ -350,9 +350,10 @@ def bonk_webhook(request):
         }, status=500)
         response["Access-Control-Allow-Origin"] = "*"
         return response
+        
+
 import requests
 import time
-
 api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTM1NzAxNzU2MjEsImVtYWlsIjoiZGFuaWlsLnNoaXJraW4wMDVAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzUzNTcwMTc1fQ.W2-ic8rt8wQZptdygjc6F3Z5N8CJv1UrCkfqzdwq2vw"
 
 
@@ -363,26 +364,17 @@ def get_funding_addresses(wallet_address):
         "token": api_key,
         "User-Agent": "SolanaFlipper/1.0"
     }
-    print(str(wallet_address))
-    url = f"{base_url}?address={str(wallet_address)}"
-    print(f"Requesting URL: {url}")
+    
+    # Формируем URL для входящих трансферов (flow=in), чтобы получить только фондирующие адреса
+    url = f"{base_url}?address={wallet_address}"
     
     try:
-        response = requests.get(url=url, headers=headers)
-        print(f"Response status: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Response data: {data}")
-            result = data.get('data', {})
-            print(f"Returning: {result} (type: {type(result)})")
-            return result
-        else:
-            print(f"Bad status code: {response.status_code}")
-            return {}
+        data = requests.get(url = url, headers=headers)
+        data = data.get('data', [])
+        return data
     except Exception as e:
-        print(f"Error in get_funding_addresses: {e}")
-        return {}
+        print(f"Error: {e}")
+        return []
 
 
 
@@ -390,61 +382,21 @@ limit = 15
 def search_wallet(address):
     counter = 0
     accounts = []
-    print(f"Starting search_wallet for address: {address}")
-    
     while counter < limit:
         data = get_funding_addresses(address)
-        print(f"Counter: {counter}, Data type: {type(data)}, Data: {data}")
-        
-        # Проверяем, что data не пустой и является словарем
-        if not data or not isinstance(data, dict):
-            print(f"Returning accounts (empty or not dict): {accounts}")
-            return accounts
-            
-        try:
-            # Проверяем существование ключей перед обращением
-            if 'funded_by' in data and 'funded_by' in data['funded_by']:
-                address = data['funded_by']['funded_by']
-                print(f"New address: {address}")
-            else:
-                print(f"No funded_by keys found, returning accounts: {accounts}")
-                return accounts
-        except (KeyError, TypeError) as e:
-            print(f"Exception in search_wallet: {e}")
-            return accounts
-            
-        # Проверяем дубликаты
+        address = data['funded_by']['funded_by']
         for i in accounts:
-            if isinstance(i, dict) and 'funded_by' in i and 'funded_by' in i['funded_by']:
-                if address in i['funded_by']['funded_by']:
-                    print(f"Duplicate found, returning accounts: {accounts}")
-                    return accounts  
+            if address in i['funded_by']['funded_by']:
+                return accounts  
         accounts.append(data)
         counter += 1
     
-    print(f"Limit reached, returning accounts: {accounts}")
     return accounts    
 
 @csrf_exempt
 def get_wallets(request):
+    token_address = request.GET.get('token_address')
     try:
-        # Поддерживаем как GET, так и POST запросы
-        if request.method == "GET":
-            token_address = request.GET.get('token_address')
-        else:
-            data = json.loads(request.body)
-            token_address = data.get('token_address')
-        
-        if not token_address:
-            return JsonResponse({"success": False, "error": "token_address is required"})
-            
-        result = search_wallet(token_address)
-        
-        # Проверяем, что result является списком или словарем
-        if not isinstance(result, (list, dict)):
-            result = []
-            
-        return JsonResponse({"data": result})
+        return JsonResponse({"data":search_wallet(token_address)})
     except Exception as e:
-        print(f"Error in get_wallets: {e}")
-        return JsonResponse({"success": False, "error": str(e)})
+        return JsonResponse({"success":"False"})
