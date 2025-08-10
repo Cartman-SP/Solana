@@ -373,7 +373,7 @@ def get_funding_addresses(wallet_address):
         return data
     except Exception as e:
         print(f"Error: {e}")
-        return e
+        return []
 
 
 
@@ -383,10 +383,7 @@ def search_wallet(address):
     accounts = []
     while counter < limit:
         data = get_funding_addresses(address)
-        try:
-            address = data['funded_by']['funded_by']
-        except:
-            return data
+        ddress = data['funded_by']['funded_by']
         for i in accounts:
             if address in i['funded_by']['funded_by']:
                 return accounts  
