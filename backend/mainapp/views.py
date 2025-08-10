@@ -365,18 +365,16 @@ def get_funding_addresses(wallet_address):
         "User-Agent": "SolanaFlipper/1.0"
     }
     
+    # Формируем URL для входящих трансферов (flow=in), чтобы получить только фондирующие адреса
     url = f"{base_url}?address={wallet_address}"
     
     try:
-        response = requests.get(url=url, headers=headers)
-        if response.status_code == 200:  # Исправлено: status -> status_code
-            data = response.json()
-            return data.get('data', {})  # Возвращаем словарь, а не список
-        else:
-            return {}
+        data = requests.get(url = url, headers=headers)
+        data = data.get('data', [])
+        return data
     except Exception as e:
         print(f"Error: {e}")
-        return {}
+        return []
 
 
 
@@ -386,25 +384,10 @@ def search_wallet(address):
     accounts = []
     while counter < limit:
         data = get_funding_addresses(address)
-        
-        # Проверяем, что data не пустой и является словарем
-        if not data or not isinstance(data, dict):
-            return accounts
-            
-        try:
-            # Проверяем существование ключей перед обращением
-            if 'funded_by' in data and 'funded_by' in data['funded_by']:
-                address = data['funded_by']['funded_by']
-            else:
-                return accounts
-        except (KeyError, TypeError):
-            return accounts
-            
-        # Проверяем дубликаты
+        address = data['funded_by']['funded_by']
         for i in accounts:
-            if isinstance(i, dict) and 'funded_by' in i and 'funded_by' in i['funded_by']:
-                if address in i['funded_by']['funded_by']:
-                    return accounts  
+            if address in i['funded_by']['funded_by']:
+                return accounts  
         accounts.append(data)
         counter += 1
     
