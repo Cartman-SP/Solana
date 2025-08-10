@@ -10,6 +10,7 @@
   ],
   "host_permissions": [
     "https://goodelivery.ru/*",
+    "https://solscan.io/*",
     "wss://goodelivery.ru/*",
     "ws://goodelivery.ru/*"
   ],
