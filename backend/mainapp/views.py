@@ -386,7 +386,7 @@ def search_wallet(address):
         data = get_funding_addresses(address)
         try:
             address = data['funded_by']['funded_by']
-        except
+        except:
             return data
         for i in accounts:
             if address in i['funded_by']['funded_by']:
