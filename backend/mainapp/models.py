@@ -15,7 +15,8 @@ class UserDev(models.Model):
     ath = models.IntegerField(default=0)
     uri = models.CharField(max_length=255, null=True, blank=True)
     processed = models.BooleanField(default=False)
-
+    faunded = models.BooleanField(default=False)
+    
 class Token(models.Model):
     address = models.CharField(max_length=255)
     dev = models.ForeignKey(UserDev, on_delete=models.CASCADE)

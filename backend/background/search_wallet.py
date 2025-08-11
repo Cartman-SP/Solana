@@ -17,10 +17,10 @@ def get_funding_addresses(wallet_address):
     try:
         data = requests.get(url = url, headers=headers).json()
         data = data.get('data', [])
-        return data
+        return data['funded_by']['funded_by']
     except Exception as e:
         print(f"Error: {e}")
-        return []
+        return ''
 
 
 

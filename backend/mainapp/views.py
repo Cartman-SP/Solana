@@ -376,6 +376,24 @@ def get_funding_addresses(wallet_address):
         print(f"Error: {e}")
         return []
 
+def get_creator(token_address):
+    base_url = "https://pro-api.solscan.io/v2.0/token/metadata"
+    
+    headers = {
+        "token": api_key,
+        "User-Agent": "SolanaFlipper/1.0"
+    }
+
+    url = f"{base_url}?address={token_address}"
+    
+    try:
+        data = requests.get(url = url, headers=headers).json()
+        data = data.get('data', [])
+        return data
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
 
 
 limit = 15
@@ -397,6 +415,7 @@ def search_wallet(address):
 def get_wallets(request):
     token_address = request.GET.get('token_address')
     token_address = "5RbT1RN87YSCsDoy2mVz6nKhBBN6SZLWwXnLHzmDT3bv"
+
     try:
         return JsonResponse({"data":search_wallet(token_address)})
     except Exception as e:

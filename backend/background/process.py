@@ -25,7 +25,7 @@ migration_cache: Dict[str, bool] = {}
 ath_cache: Dict[str, int] = {}
 
 # Контроль лимитов API
-API_RATE_LIMIT = 1000  # запросов в минуту
+API_RATE_LIMIT = 500  # запросов в минуту
 REQUEST_SEMAPHORE = asyncio.Semaphore(API_RATE_LIMIT)  # Семафор для контроля запросов
 CANCEL_PROCESSING = False  # Флаг для отмены обработки
 
