@@ -4,6 +4,7 @@ import os
 import requests
 import asyncio
 import time
+import uuid
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 import random
@@ -153,31 +154,44 @@ def get_funding_addresses(wallet_address):
 def process_fund(address):
     arr = []
     count = 0
-    admin = AdminDev.objects.create()
-    admin.save()
+    
+    # Проверяем, есть ли уже AdminDev с пустым twitter или создаем новый
+    try:
+        admin = AdminDev.objects.filter(twitter__isnull=True).first()
+        if not admin:
+            admin = AdminDev.objects.create()
+    except Exception as e:
+        # Если возникла ошибка с уникальностью, создаем AdminDev с уникальным twitter
+        unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
+        admin = AdminDev.objects.create(twitter=unique_twitter)
+    
     arr.append(UserDev.objects.get(adress = address))
-    print(arr)
     fund = address
     while True:
         data = get_funding_addresses(fund)
+        if not data or 'funded_by' not in data or 'funded_by' not in data['funded_by']:
+            break
+            
         fund = data['funded_by']['funded_by']
         tags = []
         try:
             tags = data['account_tags']
         except:
             pass    
-        if check_birzh(fund,tags):
-            return arr,admin
+        if check_birzh(fund, tags):
+            return arr, admin
         dev, created = UserDev.objects.get_or_create(
             adress=fund,
             faunded=True,
         )
-        if(created):
+        if created:
             arr.append(dev)
-            count+=1
+            count += 1
         else:
             if dev.admin:
-                admin.delete()
+                # Если у dev уже есть admin, удаляем созданный и возвращаем существующий
+                if admin.id:
+                    admin.delete()
                 return arr, dev.admin
             else:
                 arr.append(dev)
@@ -187,18 +201,21 @@ def process_fund(address):
 def process_first(address):
     try:
         arr, admin = process_fund(address)
-        admin.save()
-        if admin.id:
-            for i in arr:
-                i.admin = admin
-                i.faunded = True
-                i.save()
-        else:
-            admin = admin.save()
-            for i in arr:
-                i.admin = admin
-                i.faunded = True
-                i.save()
+        
+        if not admin:
+            print(f"Не удалось создать AdminDev для адреса {address}")
+            return [], None
+            
+        # Сохраняем admin если он еще не сохранен
+        if not admin.id:
+            admin.save()
+        
+        # Обновляем все UserDev в массиве
+        for i in arr:
+            i.admin = admin
+            i.faunded = True
+            i.save()
+        
         return arr, admin
     except Exception as e:
         print(f"Ошибка при обработке адреса {address}: {e}")
