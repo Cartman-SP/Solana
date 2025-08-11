@@ -153,7 +153,8 @@ def get_funding_addresses(wallet_address):
 def process_fund(address):
     arr = []
     count = 0
-    admin = AdminDev()
+    admin = AdminDev.objects.create()
+    admin.save()
     arr.append(UserDev.objects.get(adress = address))
     print(arr)
     fund = address
@@ -176,11 +177,13 @@ def process_fund(address):
             count+=1
         else:
             if dev.admin:
+                admin.delete()
                 return arr, dev.admin
             else:
                 arr.append(dev)
                 return arr, admin
     return arr, admin
+    
 def process_first(address):
     try:
         arr, admin = process_fund(address)
