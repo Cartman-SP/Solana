@@ -11,7 +11,7 @@ class AdminDevAdmin(admin.ModelAdmin):
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
     list_display = ('adress', 'admin', 'total_tokens', 'whitelist', 'blacklist', 'ath', 'processed')
-    list_filter = ('whitelist', 'blacklist', 'processed', 'admin')
+    list_filter = ('whitelist', 'blacklist', 'processed')
     search_fields = ('adress', 'uri')
     ordering = ('-total_tokens', 'adress')
     list_per_page = 50
