@@ -1,7 +1,7 @@
 from django.db import models
 
 class AdminDev(models.Model):
-    twitter = models.CharField(max_length=255,null=True, blank=True)
+    twitter = models.CharField(max_length=255,default = "",unique = False)
     blacklist = models.BooleanField(default=False)
     whitelist = models.BooleanField(default=False)
     ath = models.IntegerField(default=0)
