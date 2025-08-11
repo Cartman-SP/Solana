@@ -1,7 +1,7 @@
 from django.db import models
 
 class AdminDev(models.Model):
-    twitter = models.CharField(max_length=255, unique=True)
+    twitter = models.CharField(max_length=255,null=True, blank=True)
     blacklist = models.BooleanField(default=False)
     whitelist = models.BooleanField(default=False)
     ath = models.IntegerField(default=0)
@@ -16,7 +16,7 @@ class UserDev(models.Model):
     uri = models.CharField(max_length=255, null=True, blank=True)
     processed = models.BooleanField(default=False)
     faunded = models.BooleanField(default=False)
-    
+
 class Token(models.Model):
     address = models.CharField(max_length=255)
     dev = models.ForeignKey(UserDev, on_delete=models.CASCADE)
