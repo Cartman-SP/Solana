@@ -154,17 +154,6 @@ def get_funding_addresses(wallet_address):
 def process_fund(address):
     arr = []
     count = 0
-    
-    # Проверяем, есть ли уже AdminDev с пустым twitter или создаем новый
-    try:
-        admin = AdminDev.objects.filter(twitter__isnull=True).first()
-        if not admin:
-            admin = AdminDev.objects.create()
-    except Exception as e:
-        # Если возникла ошибка с уникальностью, создаем AdminDev с уникальным twitter
-        unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
-        admin = AdminDev.objects.create(twitter=unique_twitter)
-    
     arr.append(UserDev.objects.get(adress = address))
     fund = address
     while True:
@@ -179,6 +168,8 @@ def process_fund(address):
         except:
             pass    
         if check_birzh(fund, tags):
+            unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
+            admin = AdminDev.objects.create(twitter=unique_twitter)
             return arr, admin
         dev, created = UserDev.objects.get_or_create(
             adress=fund,
@@ -189,11 +180,10 @@ def process_fund(address):
             count += 1
         else:
             if dev.admin:
-                # Если у dev уже есть admin, удаляем созданный и возвращаем существующий
-                if admin.id:
-                    admin.delete()
                 return arr, dev.admin
             else:
+                unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
+                admin = AdminDev.objects.create(twitter=unique_twitter)
                 arr.append(dev)
                 return arr, admin
     return arr, admin
