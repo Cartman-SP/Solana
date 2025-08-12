@@ -41,3 +41,5 @@ class TokenAdmin(admin.ModelAdmin):
     ordering = ('-created_at', 'address')
     list_per_page = 50
     date_hierarchy = 'created_at'
+
+
