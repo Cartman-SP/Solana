@@ -186,6 +186,8 @@ def process_fund(address):
                 admin = AdminDev.objects.create(twitter=unique_twitter)
                 arr.append(dev)
                 return arr, admin
+    unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
+    admin = AdminDev.objects.create(twitter=unique_twitter
     return arr, admin
     
 def process_first(address):
