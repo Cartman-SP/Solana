@@ -206,6 +206,10 @@ def process_first(address):
             i.faunded = True
             i.save()
         
+        # Обновляем total_devs у AdminDev
+        admin.total_devs += len(arr)
+        admin.save()
+        
         return arr, admin
     except Exception as e:
         print(f"Ошибка при обработке адреса {address}: {e}")
