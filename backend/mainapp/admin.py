@@ -1,18 +1,21 @@
 from django.contrib import admin
 from .models import AdminDev, UserDev, Token
 
-class AdminTwitterFilter(admin.SimpleListFilter):
-    title = 'Twitter админа'
-    parameter_name = 'admin_twitter'
+class HasAdminFilter(admin.SimpleListFilter):
+    title = 'Наличие админа'
+    parameter_name = 'has_admin'
     
     def lookups(self, request, model_admin):
-        # Получаем уникальные Twitter админов
-        admins = AdminDev.objects.exclude(twitter='').values_list('twitter', 'twitter').distinct()
-        return admins
+        return (
+            ('yes', 'Да'),
+            ('no', 'Нет'),
+        )
     
     def queryset(self, request, queryset):
-        if self.value():
-            return queryset.filter(admin__twitter=self.value())
+        if self.value() == 'yes':
+            return queryset.filter(admin__isnull=False)
+        elif self.value() == 'no':
+            return queryset.filter(admin__isnull=True)
         return queryset
 
 @admin.register(AdminDev)
@@ -25,8 +28,8 @@ class AdminDevAdmin(admin.ModelAdmin):
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
     list_display = ('adress', 'admin', 'total_tokens', 'whitelist', 'blacklist', 'ath', 'processed')
-    list_filter = ('whitelist', 'blacklist', 'processed', AdminTwitterFilter)
-    search_fields = ('adress', 'uri')
+    list_filter = ('whitelist', 'blacklist', 'processed', HasAdminFilter)
+    search_fields = ('adress', 'uri', 'admin__twitter')
     ordering = ('-total_tokens', 'adress')
     list_per_page = 50
 
