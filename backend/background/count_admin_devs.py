@@ -10,6 +10,42 @@ django.setup()
 from mainapp.models import UserDev, AdminDev
 from django.db.models import Count
 
+def delete_orphaned_admin_devs():
+    """
+    Удаляет все AdminDev, к которым не привязан ни один UserDev
+    """
+    # Находим админов без UserDev
+    orphaned_admins = AdminDev.objects.filter(userdev__isnull=True)
+    count = orphaned_admins.count()
+    
+    if count == 0:
+        print("Нет AdminDev без UserDev для удаления")
+        return
+    
+    print(f"Найдено {count} AdminDev без UserDev:")
+    print("-" * 60)
+    
+    # Показываем информацию об удаляемых админах
+    for i, admin in enumerate(orphaned_admins, 1):
+        twitter = admin.twitter if admin.twitter else "Нет Twitter"
+        ath = admin.ath
+        total_devs = admin.total_devs
+        
+        print(f"{i:2d}. Twitter: {twitter}")
+        print(f"    ATH: {ath}")
+        print(f"    Общее количество devs: {total_devs}")
+        print("-" * 60)
+    
+    # Подтверждение удаления
+    print(f"\nУдалить {count} AdminDev без UserDev? (y/N): ", end="")
+    confirmation = input().strip().lower()
+    
+    if confirmation == 'y':
+        orphaned_admins.delete()
+        print(f"Успешно удалено {count} AdminDev без UserDev")
+    else:
+        print("Удаление отменено")
+
 def count_admin_devs():
     """
     Подсчитывает количество UserDev для каждого админа и выводит топ-20
@@ -45,4 +81,23 @@ def count_admin_devs():
     print(f"Админов с UserDev: {admins_with_devs}")
 
 if __name__ == "__main__":
-    count_admin_devs()
+    print("Выберите действие:")
+    print("1. Подсчитать админов")
+    print("2. Удалить AdminDev без UserDev")
+    print("3. Выполнить оба действия")
+    print("\nВведите номер (1-3): ", end="")
+    
+    choice = input().strip()
+    
+    if choice == "1":
+        count_admin_devs()
+    elif choice == "2":
+        delete_orphaned_admin_devs()
+    elif choice == "3":
+        print("\n" + "="*60)
+        count_admin_devs()
+        print("\n" + "="*60)
+        delete_orphaned_admin_devs()
+    else:
+        print("Неверный выбор. Выполняю подсчет админов по умолчанию...")
+        count_admin_devs()
