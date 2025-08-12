@@ -26,12 +26,10 @@ def count_admin_devs():
         twitter = admin.twitter if admin.twitter else "Нет Twitter"
         dev_count = admin.dev_count
         ath = admin.ath
-        total_devs = admin.total_devs
         
         print(f"{i:2d}. Twitter: {twitter}")
         print(f"    Количество UserDev: {dev_count}")
         print(f"    ATH: {ath}")
-        print(f"    Общее количество devs: {total_devs}")
         print("-" * 60)
     
     # Общая статистика

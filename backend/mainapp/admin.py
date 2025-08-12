@@ -27,7 +27,7 @@ class AdminDevAdmin(admin.ModelAdmin):
 
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
-    list_display = ('adress', 'admin', 'total_tokens', 'whitelist', 'blacklist', 'ath', 'processed')
+    list_display = ('adress', 'admin' , 'whitelist', 'blacklist', 'ath', 'processed')
     list_filter = ('whitelist', 'blacklist', 'processed', HasAdminFilter)
     search_fields = ('adress', 'uri', 'admin__twitter')
     ordering = ('-total_tokens', 'adress')

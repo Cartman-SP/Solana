@@ -275,8 +275,7 @@ def main():
                         address = future_to_address[future]
                         print(f"Ошибка при обработке адреса {address}: {e}")
             
-            print("Обработка завершена. Ждем 30 секунд перед следующей итерацией...")
-            time.sleep(30)
+            time.sleep(10)
             
         except KeyboardInterrupt:
             print("Получен сигнал остановки. Завершаем работу...")
