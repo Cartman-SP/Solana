@@ -20,10 +20,10 @@ class HasAdminFilter(admin.SimpleListFilter):
 
 @admin.register(AdminDev)
 class AdminDevAdmin(admin.ModelAdmin):
-    list_display = ('twitter', 'blacklist', 'whitelist', 'ath')
+    list_display = ('twitter', 'blacklist', 'whitelist', 'ath',"total_devs")
     list_filter = ('blacklist', 'whitelist')
     search_fields = ('twitter',)
-    ordering = ('twitter',)
+    ordering = ('twitter','total_devs')
 
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
