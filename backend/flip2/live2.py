@@ -113,8 +113,9 @@ async def check_admin(fund):
     data = None
     try:
         user = await sync_to_async(UserDev.objects.get, thread_sensitive=True)(adress=fund)
-    except:
         return None
+    except:
+        pass
     count = 0
     limit = 10
     while count < limit:
