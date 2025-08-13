@@ -12,48 +12,50 @@ LOCAL_WS_URL = "ws://localhost:9393"
 
 
 def parse_create_instruction(program_data: str) -> dict:
-    """Парсит данные инструкции Create из Pump.fun"""
-    try:
-        decoded_data = base64.b64decode(program_data)
-        offset = 0
-        discriminator = decoded_data[offset:offset + 8].hex()
-        offset += 8
-        name_len = struct.unpack_from('<I', decoded_data, offset)[0]
-        offset += 4
-        name = decoded_data[offset:offset + name_len].decode('utf-8').rstrip('\x00')
-        offset += name_len
-        symbol_len = struct.unpack_from('<I', decoded_data, offset)[0]
-        offset += 4
-        symbol = decoded_data[offset:offset + symbol_len].decode('utf-8').rstrip('\x00')
-        offset += symbol_len
-        uri_len = struct.unpack_from('<I', decoded_data, offset)[0]
-        offset += 4
-        uri = decoded_data[offset:offset + uri_len].decode('utf-8').rstrip('\x00')
-        offset += uri_len
-        mint_bytes = decoded_data[offset:offset + 32]
-        mint = base58.b58encode(mint_bytes).decode('utf-8')
-        offset += 32
-        bonding_curve_bytes = decoded_data[offset:offset + 32]
-        offset += 32
-        associated_bonding_curve_bytes = decoded_data[offset:offset + 32]
-        offset += 32
-        user_bytes = decoded_data[offset:offset + 32]
-        user = base58.b58encode(user_bytes).decode('utf-8')
-        
-        parsed_data = {
-            "source": "pumpfun",
-            "mint": mint,
-            "user": user,
-            "name": name,
-            "symbol": symbol,
-            "uri": uri
-        }
-        return parsed_data
-    except Exception as e:
-        with open("errors.txt", "a", encoding="utf-8") as f:
-            f.write(f"{str(e)}\n")
-            f.write('\n',program_data,'\n')
-        print(e)
+    if program_data
+        try:
+            decoded_data = base64.b64decode(program_data)
+            offset = 0
+            discriminator = decoded_data[offset:offset + 8].hex()
+            offset += 8
+            name_len = struct.unpack_from('<I', decoded_data, offset)[0]
+            offset += 4
+            name = decoded_data[offset:offset + name_len].decode('utf-8').rstrip('\x00')
+            offset += name_len
+            symbol_len = struct.unpack_from('<I', decoded_data, offset)[0]
+            offset += 4
+            symbol = decoded_data[offset:offset + symbol_len].decode('utf-8').rstrip('\x00')
+            offset += symbol_len
+            uri_len = struct.unpack_from('<I', decoded_data, offset)[0]
+            offset += 4
+            uri = decoded_data[offset:offset + uri_len].decode('utf-8').rstrip('\x00')
+            offset += uri_len
+            mint_bytes = decoded_data[offset:offset + 32]
+            mint = base58.b58encode(mint_bytes).decode('utf-8')
+            offset += 32
+            bonding_curve_bytes = decoded_data[offset:offset + 32]
+            offset += 32
+            associated_bonding_curve_bytes = decoded_data[offset:offset + 32]
+            offset += 32
+            user_bytes = decoded_data[offset:offset + 32]
+            user = base58.b58encode(user_bytes).decode('utf-8')
+            
+            parsed_data = {
+                "source": "pumpfun",
+                "mint": mint,
+                "user": user,
+                "name": name,
+                "symbol": symbol,
+                "uri": uri
+            }
+            return parsed_data
+        except Exception as e:
+            with open("errors.txt", "a", encoding="utf-8") as f:
+                f.write(f"{str(e)}\n")
+                f.write('\n',program_data,'\n')
+            print(e)
+            return None
+    else:
         return None
 
 
