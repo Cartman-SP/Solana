@@ -202,8 +202,6 @@ async def process_token_data(data):
         print("user_bd:",user_bd)
         if user_bd is None:
             return 
-        elif user_bd.admin.blacklist is False:
-            return
         
 
         extension_data = {
