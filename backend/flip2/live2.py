@@ -200,12 +200,17 @@ async def process_token_data(data):
         symbol = data.get('symbol', '')
         
         user_bd = await check_admin(user)
-        print("user_bd:",user_bd)
+        print("user_bd:", user_bd)
         if user_bd is None:
-            return 
-        elif await sync_to_async(user_bd.admin.blacklist) is False:
             return
-        user_dev_data = await get_admin_data(await sync_to_async(user_bd.admin))
+        # Доступ к связанному admin и его полям выполняем через sync_to_async
+        admin = await sync_to_async(lambda: user_bd.admin, thread_sensitive=True)()
+        admin_blacklist = await sync_to_async(lambda: admin.blacklist, thread_sensitive=True)()
+        if admin_blacklist is False:
+            return
+        admin_whitelist = await sync_to_async(lambda: admin.whitelist, thread_sensitive=True)()
+        admin_twitter = await sync_to_async(lambda: admin.twitter, thread_sensitive=True)()
+        user_dev_data = await get_admin_data(admin)
         print(user_dev_data)
         extension_data = {
             'mint': mint,
@@ -218,9 +223,9 @@ async def process_token_data(data):
             'recent_tokens': user_dev_data['recent_tokens'],
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'user_whitelisted':user_bd.admin.whitelist,
-            'user_blacklisted': user_bd.admin.blacklist,
-            'admin': user_bd.admin.twitter
+            'user_whitelisted': admin_whitelist,
+            'user_blacklisted': admin_blacklist,
+            'admin': admin_twitter
         }
         
         await broadcast_to_extension(extension_data)
