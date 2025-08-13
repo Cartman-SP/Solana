@@ -94,7 +94,7 @@ def minutes_since(timestamp_str):
 
 
 def check_birzh(address, tags):
-    if "exchange_wallet" in tags:
+    if "exchange_wallet" in tags or "deposit_address" in tags:
         return True
     
     base_url = "https://pro-api.solscan.io/v2.0/account/"

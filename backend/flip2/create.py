@@ -23,7 +23,7 @@ async def create_user_and_token(data):
         name = data.get('name', '')
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
-        
+        print(symbol)
         # Создаем или получаем UserDev (асинхронно)
         user_dev, created = await sync_to_async(UserDev.objects.get_or_create)(
             adress=user,
