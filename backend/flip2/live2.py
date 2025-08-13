@@ -56,9 +56,8 @@ def make_api_request(url, headers, max_retries=10):
                 return response.json()
             elif response.status_code == 429:  # Rate limit exceeded
                 print(f"Rate limit exceeded. Попытка {attempt + 1}/{max_retries}")
-                    wait_time = (2 ** attempt) + random.uniform(1, 5)  # Exponential backoff
-                    time.sleep(10)
-                    continue
+                time.sleep(10)
+                continue
             else:
                 print(f"API ошибка {response.status_code}: {response.text}")
                 
