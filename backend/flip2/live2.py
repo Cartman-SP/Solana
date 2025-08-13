@@ -207,7 +207,7 @@ async def process_token_data(data):
         admin = await sync_to_async(lambda: user_bd.admin, thread_sensitive=True)()
         admin_blacklist = await sync_to_async(lambda: admin.blacklist, thread_sensitive=True)()
         print(122)
-        if admin_blacklist is False:
+        if admin_blacklist is True:
             return
         print(111)
         admin_whitelist = await sync_to_async(lambda: admin.whitelist, thread_sensitive=True)()
