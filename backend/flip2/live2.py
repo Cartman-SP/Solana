@@ -60,7 +60,7 @@ async def broadcast_to_extension(data):
     extension_clients.difference_update(disconnected_clients)
 
 
-async async def get_funding_addresses(wallet_address):
+async def get_funding_addresses(wallet_address):
     base_url = "https://pro-api.solscan.io/v2.0/account/metadata"
     
     headers = {
