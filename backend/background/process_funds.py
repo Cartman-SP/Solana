@@ -238,7 +238,7 @@ def main():
             unprocessed_devs = UserDev.objects.filter(
                 blacklist=False,
                 faunded=False
-            )[:100]
+            ).order_by('-id')[:100]
             
             if not unprocessed_devs.exists():
                 print("Нет необработанных dev'ов. Ждем 60 секунд...")
@@ -251,7 +251,7 @@ def main():
             addresses = [dev.adress for dev in unprocessed_devs]
             
             # Обрабатываем все адреса одновременно используя ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=100) as executor:
                 # Запускаем все задачи одновременно
                 future_to_address = {
                     executor.submit(process_dev_async, addr): addr 
