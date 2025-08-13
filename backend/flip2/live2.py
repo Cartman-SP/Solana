@@ -64,7 +64,7 @@ async def get_funding_addresses(wallet_address):
     base_url = "https://pro-api.solscan.io/v2.0/account/metadata"
     
     headers = {
-        "token": API_KEY
+        "token": API_KEY,
         "User-Agent": "SolanaFlipper/1.0"
     }
     
