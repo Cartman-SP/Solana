@@ -10,6 +10,11 @@ from datetime import datetime
 import base58
 import struct
 import base64
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from .models import AdminDev, Token
+from django.shortcuts import redirect
 
 LOCAL_WS_URL = "ws://localhost:9393"
 
@@ -420,3 +425,115 @@ def get_wallets(request):
         return JsonResponse({"data":search_wallet(token_address)})
     except Exception as e:
         return JsonResponse({"success":"False",'error':str(e),'token':token_address})
+
+def search_page(request):
+    """Главная страница с поисковой строкой"""
+    return render(request, 'mainapp/search.html')
+
+def search_results(request):
+    """Обработка поиска и редирект на соответствующую страницу"""
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return render(request, 'mainapp/search.html', {'error': 'Введите поисковый запрос'})
+    
+    # Поиск по AdminDev.twitter
+    try:
+        admin = AdminDev.objects.get(twitter__iexact=query)
+        return redirect('admindev_detail', twitter=admin.twitter)
+    except AdminDev.DoesNotExist:
+        pass
+    
+    # Поиск по UserDev.adress
+    try:
+        user_dev = UserDev.objects.get(adress__iexact=query)
+        return redirect('userdev_detail', adress=user_dev.adress)
+    except UserDev.DoesNotExist:
+        pass
+    
+    # Поиск по Token.address
+    try:
+        token = Token.objects.get(address__iexact=query)
+        return redirect('token_detail', address=token.address)
+    except Token.DoesNotExist:
+        pass
+    
+    # Если ничего не найдено
+    return render(request, 'mainapp/search.html', {
+        'error': f'Ничего не найдено по запросу: {query}',
+        'query': query
+    })
+
+def admindev_detail(request, twitter):
+    """Страница с информацией об админе и списком UserDev"""
+    admin = get_object_or_404(AdminDev, twitter=twitter)
+    
+    # Получаем все UserDev для этого админа
+    user_devs = UserDev.objects.filter(admin=admin)
+    
+    # Сортировка
+    sort_by = request.GET.get('sort', 'id')
+    order = request.GET.get('order', 'desc')
+    
+    if order == 'desc':
+        user_devs = user_devs.order_by(f'-{sort_by}')
+    else:
+        user_devs = user_devs.order_by(sort_by)
+    
+    # Пагинация
+    paginator = Paginator(user_devs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'admin': admin,
+        'page_obj': page_obj,
+        'sort_by': sort_by,
+        'order': order,
+        'total_devs': user_devs.count()
+    }
+    
+    return render(request, 'mainapp/admindev_detail.html', context)
+
+def userdev_detail(request, adress):
+    """Страница с информацией о UserDev и списком токенов"""
+    user_dev = get_object_or_404(UserDev, adress=adress)
+    
+    # Получаем все токены для этого UserDev
+    tokens = Token.objects.filter(dev=user_dev)
+    
+    # Сортировка
+    sort_by = request.GET.get('sort', 'created_at')
+    order = request.GET.get('order', 'desc')
+    
+    if order == 'desc':
+        tokens = tokens.order_by(f'-{sort_by}')
+    else:
+        tokens = tokens.order_by(sort_by)
+    
+    # Пагинация
+    paginator = Paginator(tokens, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'user_dev': user_dev,
+        'page_obj': page_obj,
+        'sort_by': sort_by,
+        'order': order,
+        'total_tokens': tokens.count()
+    }
+    
+    return render(request, 'mainapp/userdev_detail.html', context)
+
+def token_detail(request, address):
+    """Страница с информацией о токене"""
+    token = get_object_or_404(Token, address=address)
+    
+    context = {
+        'token': token,
+        'user_dev': token.dev,
+        'admin': token.dev.admin if token.dev.admin else None
+    }
+    
+    return render(request, 'mainapp/token_detail.html', context)

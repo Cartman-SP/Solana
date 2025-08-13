@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UserDev: {{ user_dev.adress }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .userdev-info {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .userdev-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .userdev-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .userdev-details h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+        
+        .userdev-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+        
+        .status-whitelist {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-blacklist {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .admin-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            text-decoration: underline;
+        }
+        
+        .tokens-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .sort-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .sort-select, .order-select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        
+        .tokens-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .tokens-table th,
+        .tokens-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tokens-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .tokens-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .token-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .token-link:hover {
+            text-decoration: underline;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .page-link {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .page-link:hover {
+            background: #f8f9fa;
+        }
+        
+        .page-current {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .page-disabled {
+            color: #ccc;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .userdev-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .sort-controls {
+                justify-content: center;
+            }
+            
+            .tokens-table {
+                font-size: 0.9rem;
+            }
+            
+            .tokens-table th,
+            .tokens-table td {
+                padding: 0.5rem;
+            }
+            
+            .userdev-details h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <a href="{% url 'search_page' %}" class="back-link">← Назад к поиску</a>
+            <div class="userdev-info">
+                <div class="userdev-header">
+                    <div class="userdev-avatar">💼</div>
+                    <div class="userdev-details">
+                        <h1>{{ user_dev.adress }}</h1>
+                        <div>
+                            {% if user_dev.whitelist %}
+                                <span class="status-badge status-whitelist">Whitelist</span>
+                            {% endif %}
+                            {% if user_dev.blacklist %}
+                                <span class="status-badge status-blacklist">Blacklist</span>
+                            {% endif %}
+                        </div>
+                        {% if user_dev.admin %}
+                            <div style="margin-top: 1rem;">
+                                <span style="color: #ccc; margin-right: 0.5rem;">Admin:</span>
+                                <a href="{% url 'admindev_detail' twitter=user_dev.admin.twitter %}" class="admin-link">
+                                    @{{ user_dev.admin.twitter }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="userdev-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ user_dev.total_tokens }}</div>
+                        <div class="stat-label">Всего токенов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ user_dev.ath }}</div>
+                        <div class="stat-label">ATH</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ total_tokens }}</div>
+                        <div class="stat-label">Токенов в БД</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            {% if user_dev.processed %}Да{% else %}Нет{% endif %}
+                        </div>
+                        <div class="stat-label">Обработано</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">
+                            {% if user_dev.faunded %}Да{% else %}Нет{% endif %}
+                        </div>
+                        <div class="stat-label">Фондирован</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="tokens-section">
+            <div class="section-header">
+                <h2>Токены ({{ total_tokens }})</h2>
+                <div class="sort-controls">
+                    <label>Сортировка:</label>
+                    <select class="sort-select" onchange="updateSort(this.value)">
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Дата создания</option>
+                        <option value="address" {% if sort_by == 'address' %}selected{% endif %}>Адрес</option>
+                        <option value="ath" {% if sort_by == 'ath' %}selected{% endif %}>ATH</option>
+                        <option value="processed" {% if sort_by == 'processed' %}selected{% endif %}>Обработано</option>
+                        <option value="migrated" {% if sort_by == 'migrated' %}selected{% endif %}>Мигрирован</option>
+                        <option value="scam" {% if sort_by == 'scam' %}selected{% endif %}>Scam</option>
+                    </select>
+                    <select class="order-select" onchange="updateOrder(this.value)">
+                        <option value="desc" {% if order == 'desc' %}selected{% endif %}>По убыванию</option>
+                        <option value="asc" {% if order == 'asc' %}selected{% endif %}>По возрастанию</option>
+                    </select>
+                </div>
+            </div>
+            
+            {% if page_obj %}
+                <table class="tokens-table">
+                    <thead>
+                        <tr>
+                            <th>Адрес токена</th>
+                            <th>ATH</th>
+                            <th>Дата создания</th>
+                            <th>Статус</th>
+                            <th>Мигрирован</th>
+                            <th>Scam</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in page_obj %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'token_detail' address=token.address %}" class="token-link">
+                                    {{ token.address|truncatechars:20 }}
+                                </a>
+                            </td>
+                            <td>{{ token.ath }}</td>
+                            <td>{{ token.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if token.processed %}
+                                    <span class="status-badge status-whitelist">Обработан</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #e9ecef; color: #6c757d;">Не обработан</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if token.migrated %}
+                                    <span class="status-badge status-whitelist">Да</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #e9ecef; color: #6c757d;">Нет</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if token.scam %}
+                                    <span class="status-badge status-blacklist">Да</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #e9ecef; color: #6c757d;">Нет</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1&sort={{ sort_by }}&order={{ order }}" class="page-link">« Первая</a>
+                        <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}&order={{ order }}" class="page-link">‹ Предыдущая</a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="page-link page-current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}&sort={{ sort_by }}&order={{ order }}" class="page-link">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}&order={{ order }}" class="page-link">Следующая ›</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_by }}&order={{ order }}" class="page-link">Последняя »</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <p style="text-align: center; color: #666; padding: 2rem;">Токены не найдены</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function updateSort(value) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('sort', value);
+            window.location.search = urlParams.toString();
+        }
+        
+        function updateOrder(value) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('order', value);
+            window.location.search = urlParams.toString();
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token: {{ token.address }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .token-info {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .token-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .token-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .token-details h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+        
+        .token-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+        
+        .status-whitelist {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-blacklist {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .link-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .link-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .link-card:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .link-info h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .link-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .link-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .link-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .copy-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-button:hover {
+            background: #5a6268;
+        }
+        
+        .copy-button.copied {
+            background: #28a745;
+        }
+        
+        @media (max-width: 768px) {
+            .token-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .link-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .token-details h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <a href="{% url 'search_page' %}" class="back-link">← Назад к поиску</a>
+            <div class="token-info">
+                <div class="token-header">
+                    <div class="token-avatar">🪙</div>
+                    <div class="token-details">
+                        <h1>{{ token.address }}</h1>
+                        <div>
+                            {% if token.processed %}
+                                <span class="status-badge status-whitelist">Обработан</span>
+                            {% else %}
+                                <span class="status-badge" style="background: #e9ecef; color: #6c757d;">Не обработан</span>
+                            {% endif %}
+                            {% if token.migrated %}
+                                <span class="status-badge status-whitelist">Мигрирован</span>
+                            {% endif %}
+                            {% if token.scam %}
+                                <span class="status-badge status-blacklist">Scam</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="token-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ token.ath }}</div>
+                        <div class="stat-label">ATH</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ token.created_at|date:"d.m.Y" }}</div>
+                        <div class="stat-label">Дата создания</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ token.created_at|date:"H:i" }}</div>
+                        <div class="stat-label">Время создания</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="link-section">
+            <h2 style="margin-bottom: 1.5rem;">Связанные объекты</h2>
+            
+            {% if user_dev %}
+            <div class="link-card">
+                <div class="link-info">
+                    <h3>👤 Разработчик</h3>
+                    <p>Адрес: {{ user_dev.adress }}</p>
+                    <div style="margin-top: 0.5rem;">
+                        {% if user_dev.whitelist %}
+                            <span class="status-badge status-whitelist">Whitelist</span>
+                        {% endif %}
+                        {% if user_dev.blacklist %}
+                            <span class="status-badge status-blacklist">Blacklist</span>
+                        {% endif %}
+                        {% if user_dev.processed %}
+                            <span class="status-badge status-whitelist">Обработан</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <a href="{% url 'userdev_detail' adress=user_dev.adress %}" class="link-button">
+                        Перейти к разработчику
+                    </a>
+                    <button class="copy-button" onclick="copyToClipboard('{{ user_dev.adress }}')">
+                        Копировать адрес
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if admin %}
+            <div class="link-card">
+                <div class="link-info">
+                    <h3>👑 Администратор</h3>
+                    <p>Twitter: @{{ admin.twitter }}</p>
+                    <div style="margin-top: 0.5rem;">
+                        {% if admin.whitelist %}
+                            <span class="status-badge status-whitelist">Whitelist</span>
+                        {% endif %}
+                        {% if admin.blacklist %}
+                            <span class="status-badge status-blacklist">Blacklist</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <a href="{% url 'admindev_detail' twitter=admin.twitter %}" class="link-button">
+                        Перейти к администратору
+                    </a>
+                    <button class="copy-button" onclick="copyToClipboard('{{ admin.twitter }}')">
+                        Копировать Twitter
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="link-card">
+                <div class="link-info">
+                    <h3>🔗 Адрес токена</h3>
+                    <p>{{ token.address }}</p>
+                </div>
+                <div>
+                    <button class="copy-button" onclick="copyToClipboard('{{ token.address }}')">
+                        Копировать адрес токена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Скопировано!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Ошибка копирования: ', err);
+                alert('Ошибка копирования в буфер обмена');
+            });
+        }
+    </script>
+</body>
+</html> 

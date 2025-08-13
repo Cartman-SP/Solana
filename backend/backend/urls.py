@@ -16,9 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from mainapp.views import blacklist_user, whitelist_user, bonk_webhook, get_wallets
+from mainapp.views import (
+    blacklist_user, whitelist_user, bonk_webhook, get_wallets,
+    search_page, search_results, admindev_detail, userdev_detail, token_detail
+)
 
 urlpatterns = [
+    path('', search_page, name='search_page'),
+    path('search/', search_results, name='search_results'),
+    path('admindev/<str:twitter>/', admindev_detail, name='admindev_detail'),
+    path('userdev/<str:adress>/', userdev_detail, name='userdev_detail'),
+    path('token/<str:address>/', token_detail, name='token_detail'),
     path('admin/', admin.site.urls),
     path('api/blacklist/', blacklist_user, name='blacklist_user'),
     path('api/whitelist/', whitelist_user, name='whitelist_user'),

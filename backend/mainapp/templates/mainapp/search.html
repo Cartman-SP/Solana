@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .search-form {
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .search-button {
+            margin-top: 1rem;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-types {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .search-type {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 15px;
+            flex: 1;
+            min-width: 150px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .search-type:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+        
+        .search-type h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .search-type p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .query-display {
+            background: #e8f4fd;
+            color: #0066cc;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .search-types {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔍 Solana Search</div>
+        <div class="subtitle">Поиск по адресам, токенам и Twitter аккаунтам</div>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        {% if query %}
+        <div class="query-display">Поисковый запрос: {{ query }}</div>
+        {% endif %}
+        
+        <form class="search-form" method="GET" action="{% url 'search_results' %}">
+            <input 
+                type="text" 
+                name="q" 
+                class="search-input" 
+                placeholder="Введите адрес кошелька, токена или Twitter аккаунт..."
+                value="{{ query|default:'' }}"
+                required
+            >
+            <button type="submit" class="search-button">🔍 Найти</button>
+        </form>
+        
+        <div class="search-types">
+            <div class="search-type">
+                <h3>👤 AdminDev</h3>
+                <p>Поиск по Twitter аккаунту администратора</p>
+            </div>
+            <div class="search-type">
+                <h3>💼 UserDev</h3>
+                <p>Поиск по адресу кошелька разработчика</p>
+            </div>
+            <div class="search-type">
+                <h3>🪙 Token</h3>
+                <p>Поиск по адресу токена</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
