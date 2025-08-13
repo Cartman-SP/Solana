@@ -12,7 +12,7 @@ LOCAL_WS_URL = "ws://localhost:9393"
 
 
 def parse_create_instruction(program_data: str) -> dict:
-    if program_data
+    if program_data:
         try:
             decoded_data = base64.b64decode(program_data)
             offset = 0
