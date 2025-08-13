@@ -6,6 +6,10 @@ class AdminDev(models.Model):
     whitelist = models.BooleanField(default=False)
     ath = models.IntegerField(default=0)
     total_devs = models.IntegerField(default=0)
+
+    def __name__:
+        return self.twitter
+        
 class UserDev(models.Model):
     admin = models.ForeignKey(AdminDev, on_delete=models.CASCADE, null=True, blank=True)
     adress = models.CharField(max_length=255)
