@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #messages {
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .status {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <p>Подключение к: <code>ws://goodelivery.ru:9393</code></p>
+    
+    <div id="status" class="status">Подключение...</div>
+    
+    <div id="messages"></div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
