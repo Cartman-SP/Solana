@@ -52,7 +52,7 @@ async def create_user_and_token(data):
             # Увеличиваем счетчик токенов у пользователя (асинхронно)
             user_dev.total_tokens += 1
             await sync_to_async(user_dev.save)()
-            
+            print("dev saved:",symbol)
     except Exception as e:
         print(e)
         pass
