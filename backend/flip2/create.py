@@ -24,6 +24,10 @@ async def create_user_and_token(data):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
         print(symbol)
+        
+        # Инициализируем переменную
+        token_created = False
+        
         # Создаем или получаем UserDev (асинхронно)
         user_dev, created = await sync_to_async(UserDev.objects.get_or_create)(
             adress=user,
@@ -36,8 +40,8 @@ async def create_user_and_token(data):
                 'processed': False
             }
         )
-        token_created = True
-        if(user_dev.blacklist == False):
+        
+        if user_dev.blacklist == False:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                 address=mint,
                 defaults={
@@ -52,7 +56,7 @@ async def create_user_and_token(data):
             # Увеличиваем счетчик токенов у пользователя (асинхронно)
             user_dev.total_tokens += 1
             await sync_to_async(user_dev.save)()
-            print("dev saved:",symbol)
+            print("dev saved:", symbol)
     except Exception as e:
         print(e)
         pass
