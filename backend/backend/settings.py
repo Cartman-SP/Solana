@@ -123,7 +123,10 @@ DATABASES = {
         'PORT': '5432',
         'OPTIONS': {
             'options': '-c search_path=djangoschema,public'  # Или только public
-        }
+        },
+        # Настройки для управления соединениями:
+        'CONN_MAX_AGE': 0,  # Закрывать соединения после каждого запроса
+        'CONN_HEALTH_CHECKS': True,  # Проверять здоровье соединений
     }
 }
 # Password validation
