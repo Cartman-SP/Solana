@@ -60,9 +60,8 @@ def parse_create_instruction(program_data: str) -> dict:
 
 
 async def send_to_local_websocket(data: dict):
-    with open("websockets.txt", "a", encoding="utf-8") as f:
-        f.write(f"{data}\n")
-
+    with open("websocket.txt", "a", encoding="utf-8") as f:
+        f.write(f"{str(json.dumps(data))}\n")
     try:
         async with websockets.connect(LOCAL_WS_URL, timeout=5) as websocket:
             await websocket.send(json.dumps(data))
@@ -75,6 +74,9 @@ async def process_logs(logs: list):
     has_create_instruction = False
     program_data = None
     for log in logs:
+
+        if "Program log: Instruction: Create" in log:
+            has_create_instruction = True
         elif 'Program data: ' in log:
             program_data = log.split('Program data: ')[1].strip()
             break
