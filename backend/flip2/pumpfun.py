@@ -60,7 +60,7 @@ def parse_create_instruction(program_data: str) -> dict:
 
 
 async def send_to_local_websocket(data: dict):
-    with open("errors.txt", "a", encoding="utf-8") as f:
+    with open("websockets.txt", "a", encoding="utf-8") as f:
         f.write(f"{data}\n")
 
     try:
