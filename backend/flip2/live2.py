@@ -283,7 +283,7 @@ async def listen_to_websocket():
 
 async def start_extension_server():
     """Запускает веб-сокет сервер для расширения"""
-    async with websockets.serve(handler, "0.0.0.0", 8766):
+    async with websockets.serve(handler, "0.0.0.0", 8765):
         await asyncio.Future()
 
 async def main():
