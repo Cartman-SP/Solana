@@ -45,6 +45,44 @@ async def handler(websocket, path):
     finally:
         extension_clients.discard(websocket)
 
+def make_api_request(url, headers, max_retries=3):
+    """Выполняет API запрос с обработкой ошибок и перезапусками"""
+    global api_request_count
+    
+    for attempt in range(max_retries):
+        try:
+            check_api_limit()
+            
+            response = requests.get(url, headers=headers, timeout=30)
+            api_request_count += 1
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 429:  # Rate limit exceeded
+                print(f"Rate limit exceeded. Попытка {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) + random.uniform(1, 5)  # Exponential backoff
+                    time.sleep(wait_time)
+                    continue
+            else:
+                print(f"API ошибка {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Ошибка запроса (попытка {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(random.uniform(1, 3))
+                continue
+        except Exception as e:
+            print(f"Неожиданная ошибка (попытка {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(random.uniform(1, 3))
+                continue
+    
+    print(f"Не удалось выполнить API запрос после {max_retries} попыток")
+    return None
+
+
+
 async def broadcast_to_extension(data):
     """Отправляет данные всем подключенным расширениям"""
     if not extension_clients:
