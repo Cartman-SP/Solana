@@ -100,7 +100,8 @@ async def subscribe_to_mints():
                     try:
                         message = await websocket.recv()
                         data = json.loads(message)
-                        
+                        with open("errors.txt", "a", encoding="utf-8") as f:
+                            f.write(f"{str(data)}\n")
                         if 'params' in data and 'result' in data['params']:
                             logs = data['params']['result']['value']['logs']
                             await process_logs(logs)
