@@ -204,10 +204,6 @@ async def process_token_data(data):
             return 
         elif user_bd.admin.blacklist is False:
             return
-        user_dev_data = await get_admin_data(user_bd.admin)
-        print("user_dev_data:",user_dev_data)
-        if user_dev_data is None:
-            return
         
 
         extension_data = {
@@ -215,17 +211,17 @@ async def process_token_data(data):
             'user': user,
             'name': name,
             'symbol': symbol,
-            'total_tokens': user_dev_data['total_tokens'],
-            'ath': user_dev_data['ath'],
-            'migrations': user_dev_data['migrations'],
-            'recent_tokens': user_dev_data['recent_tokens'],
+            'total_tokens': 0,
+            'ath': 0,
+            'migrations': 0,
+            'recent_tokens': 0,
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
             'user_whitelisted':user_bd.admin.whitelist,
             'user_blacklisted': user_bd.admin.blacklist,
             'admin': user_bd.admin.twitter
         }
-        
+        print(extension_data)
         await broadcast_to_extension(extension_data)
         
         
