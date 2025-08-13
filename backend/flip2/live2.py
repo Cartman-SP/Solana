@@ -202,7 +202,7 @@ async def process_token_data(data):
         print("user_bd:",user_bd)
         if user_bd is None:
             return 
-        
+        print(123)
 
         extension_data = {
             'mint': mint,
