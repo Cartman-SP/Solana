@@ -36,7 +36,7 @@ async def create_user_and_token(data):
                 'processed': False
             }
         )
-        
+        token_created = True
         if(user_dev.blacklist == False):
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                 address=mint,
