@@ -157,8 +157,9 @@ async def check_admin(fund):
         user = await sync_to_async(UserDev.objects.get, thread_sensitive=True)(adress=fund)
     except:
         return None
-
-    while True:
+    count = 0
+    limit = 10
+    while count < limit:
         data = await get_funding_addresses(fund)
         fund = data.get('funded_by', {}).get('funded_by', '')
         tags = []
@@ -175,6 +176,7 @@ async def check_admin(fund):
             pass
         except Exception:
             pass
+        count+=1
 
 
 async def get_admin_data(admin):
