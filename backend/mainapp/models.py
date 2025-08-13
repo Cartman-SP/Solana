@@ -7,7 +7,7 @@ class AdminDev(models.Model):
     ath = models.IntegerField(default=0)
     total_devs = models.IntegerField(default=0)
 
-    def __str__():
+    def __str__(self):
         return self.twitter
 
 class UserDev(models.Model):
