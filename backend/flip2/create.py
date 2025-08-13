@@ -53,7 +53,8 @@ async def create_user_and_token(data):
             user_dev.total_tokens += 1
             await sync_to_async(user_dev.save)()
             
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 async def listen_to_websocket():
