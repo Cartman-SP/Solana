@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import django
+import random
 from datetime import datetime
 import requests
 import time
@@ -99,12 +100,14 @@ async def get_funding_addresses(wallet_address):
     url = f"{base_url}?address={wallet_address}"
     
     try:
-        data = await make_api_request(url, headers)
-        data = data.get('data', [])
+        data = await asyncio.to_thread(make_api_request, url, headers)
+        if not data:
+            return {}
+        data = data.get('data', {})
         return data
     except Exception as e:
         print(f"Error: {e}")
-        return []
+        return {}
 
 async def check_birzh(address, tags):
     if "exchange_wallet" in tags:
@@ -152,7 +155,7 @@ async def check_admin(fund):
     data = None
     while True:
         data = await get_funding_addresses(fund)
-        fund = data.get('funded_by', []).get('funded_by', [])
+        fund = data.get('funded_by', {}).get('funded_by', '')
         tags = []
         try:
             tags = data.get('account_tags')
