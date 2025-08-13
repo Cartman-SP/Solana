@@ -201,29 +201,33 @@ async def process_token_data(data):
         
         user_bd = await check_admin(user)
         print("user_bd:",user_bd)
-        if user_bd is None or user_bd.blacklist:
+        if user_bd is None:
             return 
-        print(123)
-        
+        elif await sync_to_async(user_bd.admin.blacklist) is False:
+            return
+        user_dev_data = await get_admin_data(await sync_to_async(user_bd.admin))
+        print(user_dev_data)
         extension_data = {
             'mint': mint,
             'user': user,
             'name': name,
             'symbol': symbol,
             'total_tokens': 0,
-            'ath': 0,
-            'migrations': 0,
-            'recent_tokens': 0,
+            'ath': user_dev_data['ath'],
+            'migrations': user_dev_data['migrations'],
+            'recent_tokens': user_dev_data['recent_tokens'],
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'user_whitelisted':user_bd.whitelist,
-            'user_blacklisted': user_bd.blacklist,
+            'user_whitelisted':user_bd.admin.whitelist,
+            'user_blacklisted': user_bd.admin.blacklist,
+            'admin': user_bd.admin.twitter
         }
-        print(extension_data)
+        
         await broadcast_to_extension(extension_data)
         
         
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 async def listen_to_websocket():
