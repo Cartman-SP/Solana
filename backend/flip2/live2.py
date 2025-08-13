@@ -210,8 +210,9 @@ async def process_token_data(data):
             return
         admin_whitelist = await sync_to_async(lambda: admin.whitelist, thread_sensitive=True)()
         admin_twitter = await sync_to_async(lambda: admin.twitter, thread_sensitive=True)()
+        print(123)
         user_dev_data = await get_admin_data(admin)
-        print(user_dev_data)
+        
         extension_data = {
             'mint': mint,
             'user': user,
