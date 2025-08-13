@@ -203,14 +203,15 @@ async def process_token_data(data):
         print("user_bd:", user_bd)
         if user_bd is None:
             return
-        # Доступ к связанному admin и его полям выполняем через sync_to_async
+        print(123)
         admin = await sync_to_async(lambda: user_bd.admin, thread_sensitive=True)()
         admin_blacklist = await sync_to_async(lambda: admin.blacklist, thread_sensitive=True)()
+        print(122)
         if admin_blacklist is False:
             return
+        print(111)
         admin_whitelist = await sync_to_async(lambda: admin.whitelist, thread_sensitive=True)()
         admin_twitter = await sync_to_async(lambda: admin.twitter, thread_sensitive=True)()
-        print(123)
         user_dev_data = await get_admin_data(admin)
         
         extension_data = {
