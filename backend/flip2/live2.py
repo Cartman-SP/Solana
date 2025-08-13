@@ -153,6 +153,11 @@ async def check_birzh(address, tags):
 
 async def check_admin(fund):
     data = None
+    try:
+        user = await sync_to_async(UserDev.objects.get, thread_sensitive=True)(adress=fund)
+    except:
+        return None
+
     while True:
         data = await get_funding_addresses(fund)
         fund = data.get('funded_by', {}).get('funded_by', '')
@@ -236,11 +241,13 @@ async def process_token_data(data):
         symbol = data.get('symbol', '')
         
         user_bd = await check_admin(user)
+        print("user_bd:",user_bd)
         if user_bd is None:
-            return
+            return 
         elif user_bd.admin.blacklist is False:
             return
         user_dev_data = await get_admin_data(user_bd.admin)
+        print("user_dev_data:",user_dev_data)
         if user_dev_data is None:
             return
         
