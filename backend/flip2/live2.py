@@ -109,48 +109,6 @@ async def get_funding_addresses(wallet_address):
         print(f"Error: {e}")
         return {}
 
-async def check_birzh(address, tags):
-    if "exchange_wallet" in tags:
-        return True
-    
-    base_url = "https://pro-api.solscan.io/v2.0/account/"
-    url = f"{base_url}transfer?address={address}&activity_type[]=ACTIVITY_SPL_TRANSFER&page=1&page_size=100&sort_by=block_time&sort_order=desc"    
-    headers = {"token": API_KEY}
-    
-    response = make_api_request(url, headers)
-    if response is None:
-        return False
-    
-    data = response.get('data', [])
-    if not data:
-        return False
-    
-    try:
-        ago = minutes_since(data[10]['time'])
-    except:
-        ago = minutes_since(data[-1]['time'])
-
-    if ago < 6 and len(data) == 100:
-        return True
-
-    url = f"{base_url}portfolio?address={address}&exclude_low_score_tokens=true"    
-    response = make_api_request(url, headers)
-    if response is None:
-        return False
-    
-    data = response.get('data', [])
-    try:
-        balance = data.get('native_balance', {}).get('balance', 0)
-    except:
-        balance = 0
-    
-    if balance > 300:
-        return True
-    return False
-
-
-
-
 async def check_admin(fund):
     data = None
     try:
@@ -167,8 +125,6 @@ async def check_admin(fund):
             tags = data.get('account_tags')
         except:
             pass
-        if await check_birzh(fund, tags):
-            return None
         try:
             user = await sync_to_async(UserDev.objects.get, thread_sensitive=True)(adress=fund)
             return user
