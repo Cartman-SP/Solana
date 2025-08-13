@@ -5,6 +5,7 @@ import os
 import sys
 import django
 from datetime import datetime
+import requests
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
