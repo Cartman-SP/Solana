@@ -50,6 +50,9 @@ def parse_create_instruction(program_data: str) -> dict:
         }
         return parsed_data
     except Exception as e:
+        with open("errors.txt", "a", encoding="utf-8") as f:
+            f.write(f"{str(e)}\n")
+            f.write('\n',program_data,'\n')
         print(e)
         return None
 
