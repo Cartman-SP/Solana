@@ -215,9 +215,8 @@ async def process_token_data(data):
             'recent_tokens': 0,
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'user_whitelisted':user_bd.admin.whitelist,
-            'user_blacklisted': user_bd.admin.blacklist,
-            'admin': user_bd.admin.twitter
+            'user_whitelisted':user_bd.whitelist,
+            'user_blacklisted': user_bd.blacklist,
         }
         print(extension_data)
         await broadcast_to_extension(extension_data)
