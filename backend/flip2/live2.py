@@ -110,7 +110,7 @@ async def get_funding_addresses(wallet_address):
     url = f"{base_url}?address={wallet_address}"
     
     try:
-        data = await make_api_request(session, url, headers)
+        data = await make_api_request(url, headers)
         data = data.get('data', [])
         return data
     except Exception as e:
