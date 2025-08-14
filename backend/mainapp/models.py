@@ -20,7 +20,7 @@ class UserDev(models.Model):
     uri = models.CharField(max_length=255, null=True, blank=True)
     processed = models.BooleanField(default=False)
     faunded = models.BooleanField(default=False)
-    faunded_by = models.ForeignKey(UserDev, on_delete=models.CASCADE, null=True, blank=True)
+    faunded_by = models.ForeignKey("UserDev", on_delete=models.CASCADE, null=True, blank=True)
     def __str__(self):
         return self.adress
 
