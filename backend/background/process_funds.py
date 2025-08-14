@@ -14,6 +14,7 @@ django.setup()
 
 from mainapp.models import UserDev, AdminDev
 from asgiref.sync import sync_to_async
+from django.db import IntegrityError
 
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTM1NzAxNzU2MjEsImVtYWlsIjoiZGFuaWlsLnNoaXJraW4wMDVAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzUzNTcwMTc1fQ.W2-ic8rt8wQZptdygjc6F3Z5N8CJv1UrCkfqzdwq2vw"
 
@@ -151,6 +152,17 @@ def get_funding_addresses(wallet_address):
     return data
 
 
+def create_admin_with_unique_twitter():
+    """Создает AdminDev с уникальным twitter, перегенерируя при коллизии."""
+    while True:
+        unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
+        if not AdminDev.objects.filter(twitter=unique_twitter).exists():
+            try:
+                return AdminDev.objects.create(twitter=unique_twitter)
+            except IntegrityError:
+                # Возможная гонка при параллельном создании
+                continue
+
 def process_fund(address):
     arr = []
     count = 0
@@ -168,8 +180,7 @@ def process_fund(address):
         except:
             pass    
         if check_birzh(fund, tags):
-            unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
-            admin = AdminDev.objects.create(twitter=unique_twitter)
+            admin = create_admin_with_unique_twitter()
             return arr, admin
         dev, created = UserDev.objects.get_or_create(
             adress=fund,
@@ -182,12 +193,10 @@ def process_fund(address):
             if dev.admin:
                 return arr, dev.admin
             else:
-                unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
-                admin = AdminDev.objects.create(twitter=unique_twitter)
+                admin = create_admin_with_unique_twitter()
                 arr.append(dev)
                 return arr, admin
-    unique_twitter = f"admin_{uuid.uuid4().hex[:8]}"
-    admin = AdminDev.objects.create(twitter=unique_twitter)
+    admin = create_admin_with_unique_twitter()
     return arr, admin
     
 def process_first(address):
