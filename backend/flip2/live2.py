@@ -172,11 +172,7 @@ async def get_admin_data(admin):
         migrations_pct = int((migrations_count / len(collected)) * 100)
 
         # Сумма total_tokens по всем девам админа
-        total_tokens_sum = await sync_to_async(
-            lambda: (UserDev.objects.filter(admin=admin)
-                     .aggregate(total=Sum('total_tokens'))['total'] or 0),
-            thread_sensitive=True,
-        )()
+        total_tokens_sum = admin.total_tokens
 
         return {
             'ath': avg_ath,
@@ -219,7 +215,7 @@ async def process_token_data(data):
             'user': user,
             'name': name,
             'symbol': symbol,
-            'total_tokens': 0,
+            'total_tokens': user_dev_data['total_tokens'],
             'ath': user_dev_data['ath'],
             'migrations': user_dev_data['migrations'],
             'recent_tokens': user_dev_data['recent_tokens'],
