@@ -15,7 +15,7 @@ def main() -> None:
     admin_twitter = "admin_b0c033f2"
 
     admin = AdminDev.objects.get(twitter=admin_twitter)
-    user_devs = UserDev.objects.filter(admin=admin, total_tokens__gte=1)
+    user_devs = UserDev.objects.filter(admin=admin)
 
     addresses = [user_dev.adress for user_dev in user_devs]
     content = "[" + ", ".join([f"'{addr}'" for addr in addresses]) + "]"
