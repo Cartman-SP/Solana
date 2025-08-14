@@ -124,11 +124,11 @@ def check_birzh(address, tags):
     
     data = response.get('data', [])
     try:
-        balance = data.get('native_balance', {}).get('balance', 0)
+        balance = data.get("total_value", {})
     except:
         balance = 0
     
-    if balance > 300:
+    if balance > 30000:
         return True
     return False
 
@@ -203,10 +203,14 @@ def process_first(address):
             admin.save()
         
         # Обновляем все UserDev в массиве
-        for i in arr:
-            i.admin = admin
-            i.faunded = True
-            i.save()
+        for i in range(len(arr)):
+            arr[i].admin = admin
+            arr[i].faunded = True
+            try:
+                arr[i].faunded_by = arr[i+1]
+            except:
+                pass
+            arr[i].save()
         
         # Обновляем total_devs у AdminDev
         admin.total_devs += len(arr)
