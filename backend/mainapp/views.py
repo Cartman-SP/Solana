@@ -537,3 +537,38 @@ def token_detail(request, address):
     }
     
     return render(request, 'mainapp/token_detail.html', context)
+
+
+from django.http import JsonResponse
+from .models import AdminDev, UserDev
+from django.views.decorators.http import require_GET
+
+@require_GET
+def admin_data(request):
+    twitter = request.GET.get('twitter')
+    if not twitter:
+        return JsonResponse({'error': 'Twitter handle is required'}, status=400)
+    
+    try:
+        admin = AdminDev.objects.get(twitter=twitter)
+    except AdminDev.DoesNotExist:
+        return JsonResponse({'error': 'Admin not found'}, status=404)
+    
+    # Get all UserDevs for this admin
+    user_devs = UserDev.objects.filter(admin=admin).select_related('faunded_by')
+    
+    # Prepare response data
+    data = []
+    for user_dev in user_devs:
+        data.append({
+            'adress': user_dev.adress,
+            'faunded_by': user_dev.faunded_by.adress if user_dev.faunded_by else None,
+            'total_tokens': user_dev.total_tokens,
+            'whitelist': user_dev.whitelist,
+            'blacklist': user_dev.blacklist,
+            'ath': user_dev.ath,
+            'processed': user_dev.processed,
+            'faunded': user_dev.faunded
+        })
+    
+    return JsonResponse(data, safe=False)

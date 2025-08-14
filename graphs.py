@@ -1,85 +1,192 @@
-import json
-import os
-from pyvis.network import Network
-import networkx as nx
+import sys
+import requests
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QGraphicsView, QGraphicsScene, 
+                             QGraphicsRectItem, QGraphicsTextItem, QGraphicsLineItem,
+                             QVBoxLayout, QWidget, QSlider, QLabel, QPushButton, 
+                             QLineEdit, QMessageBox)
+from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtGui import QFont, QBrush, QColor, QPen, QPainter
 
-def load_data(filename):
-    with open(filename, 'r') as f:
-        data = json.load(f)
-    return data['data']
-
-def build_graph(data):
-    G = nx.DiGraph()
+class WalletTreeVisualizer(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.zoom_level = 100
+        self.wallet_data = []
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('Wallet Connection Tree')
+        self.setGeometry(100, 100, 1200, 800)
+        
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+        
+        # Twitter input
+        self.twitter_input = QLineEdit()
+        self.twitter_input.setPlaceholderText("Enter admin Twitter handle")
+        layout.addWidget(self.twitter_input)
+        
+        # Load button
+        self.load_button = QPushButton("Load Data")
+        self.load_button.clicked.connect(self.load_admin_data)
+        layout.addWidget(self.load_button)
+        
+        # Zoom controls
+        zoom_layout = QVBoxLayout()
+        self.zoom_label = QLabel(f'Zoom: {self.zoom_level}%')
+        self.zoom_slider = QSlider(Qt.Horizontal)
+        self.zoom_slider.setRange(25, 400)
+        self.zoom_slider.setValue(100)
+        self.zoom_slider.valueChanged.connect(self.update_zoom)
+        
+        zoom_layout.addWidget(self.zoom_label)
+        zoom_layout.addWidget(self.zoom_slider)
+        
+        # Reset view button
+        self.reset_button = QPushButton('Reset View')
+        self.reset_button.clicked.connect(self.reset_view)
+        zoom_layout.addWidget(self.reset_button)
+        
+        layout.addLayout(zoom_layout)
+        
+        # Graphics view
+        self.view = QGraphicsView()
+        self.scene = QGraphicsScene()
+        self.view.setScene(self.scene)
+        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        
+        layout.addWidget(self.view)
     
-    for item in data:
-        main_wallet = item['main']
-        found_wallet = item['faund']
-        G.add_node(main_wallet, label=main_wallet, title=main_wallet, shape='box')
-        G.add_node(found_wallet, label=found_wallet, title=found_wallet, shape='box')
-        G.add_edge(main_wallet, found_wallet)
+    def load_admin_data(self):
+        twitter = self.twitter_input.text().strip()
+        if not twitter:
+            QMessageBox.warning(self, "Error", "Please enter Twitter handle")
+            return
+        
+        try:
+            response = requests.get(
+                "https://goodelivery.ru/api/admin_data",
+                params={"twitter": twitter}
+            )
+            response.raise_for_status()
+            self.wallet_data = response.json()
+            self.build_wallet_graph()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load data: {str(e)}")
     
-    return G
-
-def visualize_graph(G, output_file='wallet_tree.html'):
-    net = Network(
-        height='800px', 
-        width='100%', 
-        bgcolor='#222222', 
-        font_color='white',
-        directed=True,
-        notebook=True
-    )
+    def build_wallet_graph(self):
+        self.scene.clear()
+        
+        if not self.wallet_data:
+            return
+        
+        # Create mapping between wallets
+        wallet_map = {}
+        for item in self.wallet_data:
+            main = item['adress']
+            found = item.get('faunded_by')
+            if found:
+                if found not in wallet_map:
+                    wallet_map[found] = []
+                wallet_map[found].append(main)
+        
+        # Find root wallets (those that are not found in any 'faunded_by')
+        all_children = set()
+        for children in wallet_map.values():
+            all_children.update(children)
+        
+        root_wallets = [wallet for wallet in wallet_map if wallet not in all_children]
+        
+        # Layout parameters
+        level_height = 150
+        node_width = 180
+        node_height = 50
+        h_spacing = 50
+        
+        # Track positions and visited wallets
+        self.wallet_positions = {}
+        self.visited_wallets = set()
+        
+        # Start drawing from root wallets
+        start_x = 0
+        for i, root in enumerate(root_wallets):
+            self.draw_wallet_tree(root, start_x + i * (node_width + h_spacing), 50, 
+                                wallet_map, level_height, node_width, node_height, h_spacing)
     
-    # Указываем путь к шаблонам
-    try:
-        net.path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-    except:
-        pass
+    def draw_wallet_tree(self, wallet, x, y, wallet_map, level_height, node_width, node_height, h_spacing):
+        if wallet in self.visited_wallets:
+            return
+        
+        self.visited_wallets.add(wallet)
+        
+        # Draw wallet rectangle
+        rect = QGraphicsRectItem(QRectF(0, 0, node_width, node_height))
+        rect.setPos(x, y)
+        rect.setBrush(QBrush(QColor(173, 216, 230)))  # Light blue
+        rect.setPen(QPen(Qt.black, 1))
+        self.scene.addItem(rect)
+        
+        # Add wallet address text (shortened)
+        short_address = wallet[:8] + "..." + wallet[-8:]
+        text = QGraphicsTextItem(short_address)
+        text.setPos(x + 5, y + 5)
+        text.setToolTip(wallet)  # Show full address on hover
+        text.setFont(QFont('Arial', 8))
+        self.scene.addItem(text)
+        
+        # Store position for connection lines
+        self.wallet_positions[wallet] = QPointF(x + node_width/2, y + node_height)
+        
+        # Draw connections to found wallets
+        if wallet in wallet_map:
+            found_wallets = wallet_map[wallet]
+            num_found = len(found_wallets)
+            
+            # Calculate starting x position for children
+            total_width = num_found * node_width + (num_found - 1) * h_spacing
+            start_x = x - (total_width - node_width) / 2
+            
+            for i, found in enumerate(found_wallets):
+                child_x = start_x + i * (node_width + h_spacing)
+                child_y = y + level_height
+                
+                # Draw line before drawing child
+                if found in self.wallet_positions:
+                    existing_pos = self.wallet_positions[found]
+                    line = QGraphicsLineItem(
+                        x + node_width/2, y + node_height,
+                        existing_pos.x(), existing_pos.y() - node_height
+                    )
+                else:
+                    line = QGraphicsLineItem(
+                        x + node_width/2, y + node_height,
+                        child_x + node_width/2, child_y
+                    )
+                
+                line.setPen(QPen(Qt.darkGray, 1, Qt.DashLine))
+                self.scene.addItem(line)
+                
+                # Draw child wallet
+                if found not in self.visited_wallets:
+                    self.draw_wallet_tree(found, child_x, child_y, wallet_map, 
+                                        level_height, node_width, node_height, h_spacing)
     
-    net.barnes_hut(
-        gravity=-80000,
-        central_gravity=0.3,
-        spring_length=200,
-        spring_strength=0.001,
-        damping=0.09,
-        overlap=0.1
-    )
+    def update_zoom(self, value):
+        self.zoom_level = value
+        self.zoom_label.setText(f'Zoom: {self.zoom_level}%')
+        scale = self.zoom_level / 100.0
+        self.view.resetTransform()
+        self.view.scale(scale, scale)
     
-    net.from_nx(G)
-    
-    for node in net.nodes:
-        node['borderWidth'] = 1
-        node['borderWidthSelected'] = 2
-        node['color'] = {
-            'border': '#2B7CE9',
-            'background': '#97C2FC',
-            'highlight': {
-                'border': '#2B7CE9',
-                'background': '#D2E5FF'
-            },
-            'hover': {
-                'border': '#2B7CE9',
-                'background': '#D2E5FF'
-            }
-        }
-        node['font'] = {'size': 10}
-    
-    net.show_buttons(filter_=['physics', 'nodes', 'edges', 'layout'])
-    
-    # Альтернативное сохранение
-    try:
-        net.show(output_file)
-    except:
-        html = net.generate_html()
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(html)
-    
-    print(f"Граф сохранен в файл: {output_file}")
-
-def main():
-    data = load_data('faunds.json')
-    G = build_graph(data)
-    visualize_graph(G)
+    def reset_view(self):
+        self.zoom_slider.setValue(100)
+        self.view.centerOn(self.scene.itemsBoundingRect().center())
 
 if __name__ == '__main__':
-    main()
+    app = QApplication(sys.argv)
+    visualizer = WalletTreeVisualizer()
+    visualizer.show()
+    sys.exit(app.exec_())

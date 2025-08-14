@@ -16,10 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from mainapp.views import (
-    blacklist_user, whitelist_user, bonk_webhook, get_wallets,
-    search_page, search_results, admindev_detail, userdev_detail, token_detail
-)
+from mainapp.views import *
 
 urlpatterns = [
     path('', search_page, name='search_page'),
@@ -32,4 +29,5 @@ urlpatterns = [
     path('api/whitelist/', whitelist_user, name='whitelist_user'),
     path('api/bonk/', bonk_webhook, name='bonk_webhook'),
     path('api/get_wallets/', get_wallets, name='get_wallets'),
+    path('api/admin_data', admin_data, name='get_admin_devs'),
 ]
