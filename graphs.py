@@ -1,40 +1,65 @@
 import sys
 import requests
+from collections import defaultdict
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QGraphicsView, QGraphicsScene, 
-                             QGraphicsRectItem, QGraphicsTextItem, QGraphicsLineItem,
-                             QVBoxLayout, QWidget, QSlider, QLabel, QPushButton, 
-                             QLineEdit, QMessageBox)
-from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtGui import QFont, QBrush, QColor, QPen, QPainter
+                            QGraphicsRectItem, QGraphicsTextItem, QGraphicsLineItem,
+                            QVBoxLayout, QWidget, QSlider, QLabel, QPushButton, 
+                            QLineEdit, QMessageBox, QHBoxLayout, QGroupBox)
+from PyQt5.QtCore import Qt, QPointF, QRectF, QTimer
+from PyQt5.QtGui import QFont, QBrush, QColor, QPen, QPainter, QFontMetrics
 
 class WalletTreeVisualizer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.zoom_level = 100
         self.wallet_data = []
+        self.wallet_items = {}  # Для хранения графических элементов кошельков
+        self.root_wallets = []  # Корневые кошельки (которые никого не пополнили)
         self.initUI()
         
     def initUI(self):
         self.setWindowTitle('Wallet Connection Tree')
-        self.setGeometry(100, 100, 1200, 800)
+        self.setGeometry(100, 100, 1400, 900)
         
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
         
-        # Twitter input
+        # Панель управления
+        control_group = QGroupBox("Управление")
+        control_layout = QHBoxLayout()
+        
+        # Поиск по Twitter админа
         self.twitter_input = QLineEdit()
-        self.twitter_input.setPlaceholderText("Enter admin Twitter handle")
-        layout.addWidget(self.twitter_input)
+        self.twitter_input.setPlaceholderText("Twitter админа")
+        control_layout.addWidget(self.twitter_input)
         
-        # Load button
-        self.load_button = QPushButton("Load Data")
+        # Кнопка загрузки
+        self.load_button = QPushButton("Загрузить данные")
         self.load_button.clicked.connect(self.load_admin_data)
-        layout.addWidget(self.load_button)
+        control_layout.addWidget(self.load_button)
         
-        # Zoom controls
-        zoom_layout = QVBoxLayout()
-        self.zoom_label = QLabel(f'Zoom: {self.zoom_level}%')
+        # Поиск по адресу кошелька
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Поиск по адресу")
+        self.search_input.returnPressed.connect(self.search_wallet)
+        control_layout.addWidget(self.search_input)
+        
+        # Кнопка поиска
+        self.search_button = QPushButton("Найти")
+        self.search_button.clicked.connect(self.search_wallet)
+        control_layout.addWidget(self.search_button)
+        
+        control_group.setLayout(control_layout)
+        main_layout.addWidget(control_group)
+        
+        # Настройки отображения
+        settings_group = QGroupBox("Настройки отображения")
+        settings_layout = QVBoxLayout()
+        
+        # Управление зумом
+        zoom_layout = QHBoxLayout()
+        self.zoom_label = QLabel(f'Масштаб: {self.zoom_level}%')
         self.zoom_slider = QSlider(Qt.Horizontal)
         self.zoom_slider.setRange(25, 400)
         self.zoom_slider.setValue(100)
@@ -42,15 +67,23 @@ class WalletTreeVisualizer(QMainWindow):
         
         zoom_layout.addWidget(self.zoom_label)
         zoom_layout.addWidget(self.zoom_slider)
+        settings_layout.addLayout(zoom_layout)
         
-        # Reset view button
-        self.reset_button = QPushButton('Reset View')
+        # Кнопки управления
+        btn_layout = QHBoxLayout()
+        self.reset_button = QPushButton('Сбросить вид')
         self.reset_button.clicked.connect(self.reset_view)
-        zoom_layout.addWidget(self.reset_button)
+        btn_layout.addWidget(self.reset_button)
         
-        layout.addLayout(zoom_layout)
+        self.show_roots_button = QPushButton('Показать корни')
+        self.show_roots_button.clicked.connect(self.highlight_roots)
+        btn_layout.addWidget(self.show_roots_button)
         
-        # Graphics view
+        settings_layout.addLayout(btn_layout)
+        settings_group.setLayout(settings_layout)
+        main_layout.addWidget(settings_group)
+        
+        # Графическое отображение
         self.view = QGraphicsView()
         self.scene = QGraphicsScene()
         self.view.setScene(self.scene)
@@ -58,135 +91,228 @@ class WalletTreeVisualizer(QMainWindow):
         self.view.setDragMode(QGraphicsView.ScrollHandDrag)
         self.view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         
-        layout.addWidget(self.view)
+        main_layout.addWidget(self.view)
     
     def load_admin_data(self):
         twitter = self.twitter_input.text().strip()
         if not twitter:
-            QMessageBox.warning(self, "Error", "Please enter Twitter handle")
+            QMessageBox.warning(self, "Ошибка", "Введите Twitter админа")
             return
         
         try:
             response = requests.get(
                 "https://goodelivery.ru/api/admin_data",
-                params={"twitter": twitter}
+                params={"twitter": twitter},
+                timeout=10
             )
             response.raise_for_status()
             self.wallet_data = response.json()
             self.build_wallet_graph()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load data: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Ошибка загрузки данных: {str(e)}")
     
     def build_wallet_graph(self):
         self.scene.clear()
+        self.wallet_items = {}
+        self.root_wallets = []
         
         if not self.wallet_data:
             return
         
-        # Create mapping between wallets
-        wallet_map = {}
+        # Создаем связи между кошельками
+        wallet_children = defaultdict(list)
+        wallet_parents = defaultdict(list)
+        
         for item in self.wallet_data:
-            main = item['adress']
-            found = item.get('faunded_by')
-            if found:
-                if found not in wallet_map:
-                    wallet_map[found] = []
-                wallet_map[found].append(main)
+            address = item['adress']
+            funded_by = item.get('faunded_by')
+            
+            if funded_by:
+                wallet_children[funded_by].append(address)
+                wallet_parents[address].append(funded_by)
         
-        # Find root wallets (those that are not found in any 'faunded_by')
-        all_children = set()
-        for children in wallet_map.values():
-            all_children.update(children)
+        # Находим корневые кошельки (которые никого не пополнили)
+        all_children = set(wallet_parents.keys())
+        self.root_wallets = [wallet for wallet in wallet_children if wallet not in all_children]
         
-        root_wallets = [wallet for wallet in wallet_map if wallet not in all_children]
+        # Если нет явных корней, берем все кошельки без родителей
+        if not self.root_wallets:
+            self.root_wallets = [wallet for wallet in wallet_children if not wallet_parents.get(wallet)]
         
-        # Layout parameters
+        # Если все еще нет корней, берем первый кошелек
+        if not self.root_wallets and wallet_children:
+            self.root_wallets = [next(iter(wallet_children.keys()))]
+        
+        # Параметры отрисовки
         level_height = 150
-        node_width = 180
-        node_height = 50
-        h_spacing = 50
+        node_width = 200
+        node_height = 60
+        h_spacing = 30
         
-        # Track positions and visited wallets
-        self.wallet_positions = {}
-        self.visited_wallets = set()
-        
-        # Start drawing from root wallets
+        # Отрисовываем дерево
         start_x = 0
-        for i, root in enumerate(root_wallets):
-            self.draw_wallet_tree(root, start_x + i * (node_width + h_spacing), 50, 
-                                wallet_map, level_height, node_width, node_height, h_spacing)
+        for i, root in enumerate(self.root_wallets):
+            self.draw_wallet_tree(
+                root, start_x + i * (node_width + h_spacing), 50,
+                wallet_children, wallet_parents, level_height, 
+                node_width, node_height, h_spacing, is_root=True
+            )
+        
+        # Автоматически подстраиваем вид
+        QTimer.singleShot(100, self.zoom_to_fit)
     
-    def draw_wallet_tree(self, wallet, x, y, wallet_map, level_height, node_width, node_height, h_spacing):
-        if wallet in self.visited_wallets:
+    def draw_wallet_tree(self, wallet, x, y, wallet_children, wallet_parents, 
+                        level_height, node_width, node_height, h_spacing, is_root=False):
+        if wallet in self.wallet_items:
             return
         
-        self.visited_wallets.add(wallet)
-        
-        # Draw wallet rectangle
+        # Создаем прямоугольник кошелька
         rect = QGraphicsRectItem(QRectF(0, 0, node_width, node_height))
         rect.setPos(x, y)
-        rect.setBrush(QBrush(QColor(173, 216, 230)))  # Light blue
-        rect.setPen(QPen(Qt.black, 1))
+        
+        # Разные цвета для корневых, обычных и выделенных кошельков
+        if is_root:
+            rect.setBrush(QBrush(QColor(144, 238, 144)))  # Светло-зеленый для корней
+        else:
+            rect.setBrush(QBrush(QColor(173, 216, 230)))  # Светло-голубой для обычных
+        
+        rect.setPen(QPen(Qt.black, 2 if is_root else 1))
         self.scene.addItem(rect)
         
-        # Add wallet address text (shortened)
-        short_address = wallet[:8] + "..." + wallet[-8:]
+        # Добавляем текст с адресом
+        short_address = wallet[:6] + "..." + wallet[-4:]
         text = QGraphicsTextItem(short_address)
         text.setPos(x + 5, y + 5)
-        text.setToolTip(wallet)  # Show full address on hover
-        text.setFont(QFont('Arial', 8))
+        
+        # Полный адрес в подсказке и дополнительной информации
+        tooltip = f"Адрес: {wallet}\n"
+        if wallet in wallet_parents:
+            parents = ", ".join(f"{p[:6]}...{p[-4:]}" for p in wallet_parents[wallet])
+            tooltip += f"Пополнен: {parents}"
+        elif is_root:
+            tooltip += "Корневой кошелек (не был пополнен)"
+        
+        text.setToolTip(tooltip)
+        text.setFont(QFont('Arial', 10))
         self.scene.addItem(text)
         
-        # Store position for connection lines
-        self.wallet_positions[wallet] = QPointF(x + node_width/2, y + node_height)
+        # Сохраняем элемент для поиска
+        self.wallet_items[wallet] = {
+            'rect': rect,
+            'text': text,
+            'pos': QPointF(x + node_width/2, y + node_height/2)
+        }
         
-        # Draw connections to found wallets
-        if wallet in wallet_map:
-            found_wallets = wallet_map[wallet]
-            num_found = len(found_wallets)
+        # Отрисовываем связи
+        if wallet in wallet_children:
+            children = wallet_children[wallet]
+            num_children = len(children)
             
-            # Calculate starting x position for children
-            total_width = num_found * node_width + (num_found - 1) * h_spacing
+            # Вычисляем позиции для дочерних элементов
+            total_width = num_children * node_width + (num_children - 1) * h_spacing
             start_x = x - (total_width - node_width) / 2
             
-            for i, found in enumerate(found_wallets):
+            for i, child in enumerate(children):
                 child_x = start_x + i * (node_width + h_spacing)
                 child_y = y + level_height
                 
-                # Draw line before drawing child
-                if found in self.wallet_positions:
-                    existing_pos = self.wallet_positions[found]
-                    line = QGraphicsLineItem(
-                        x + node_width/2, y + node_height,
-                        existing_pos.x(), existing_pos.y() - node_height
-                    )
-                else:
-                    line = QGraphicsLineItem(
-                        x + node_width/2, y + node_height,
-                        child_x + node_width/2, child_y
-                    )
+                # Рисуем соединительную линию
+                line = QGraphicsLineItem(
+                    x + node_width/2, y + node_height,
+                    child_x + node_width/2, child_y
+                )
                 
-                line.setPen(QPen(Qt.darkGray, 1, Qt.DashLine))
+                line.setPen(QPen(Qt.darkGray, 1.5, Qt.SolidLine))
                 self.scene.addItem(line)
                 
-                # Draw child wallet
-                if found not in self.visited_wallets:
-                    self.draw_wallet_tree(found, child_x, child_y, wallet_map, 
-                                        level_height, node_width, node_height, h_spacing)
+                # Рекурсивно рисуем дочерний кошелек
+                self.draw_wallet_tree(
+                    child, child_x, child_y, 
+                    wallet_children, wallet_parents, level_height,
+                    node_width, node_height, h_spacing
+                )
+    
+    def search_wallet(self):
+        search_text = self.search_input.text().strip().lower()
+        if not search_text:
+            return
+        
+        found_wallets = [
+            addr for addr in self.wallet_items 
+            if search_text in addr.lower()
+        ]
+        
+        if not found_wallets:
+            QMessageBox.information(self, "Поиск", "Кошелек не найден")
+            return
+        
+        # Выделяем найденные кошельки
+        for wallet, item in self.wallet_items.items():
+            if wallet in found_wallets:
+                item['rect'].setBrush(QBrush(QColor(255, 215, 0)))  # Золотой для выделения
+                item['rect'].setPen(QPen(Qt.red, 2))
+            else:
+                if wallet in self.root_wallets:
+                    item['rect'].setBrush(QBrush(QColor(144, 238, 144)))
+                else:
+                    item['rect'].setBrush(QBrush(QColor(173, 216, 230)))
+                item['rect'].setPen(QPen(Qt.black, 1))
+        
+        # Центрируем на первом найденном кошельке
+        first_wallet = found_wallets[0]
+        self.center_on_wallet(first_wallet)
+    
+    def center_on_wallet(self, wallet):
+        if wallet not in self.wallet_items:
+            return
+        
+        pos = self.wallet_items[wallet]['pos']
+        self.view.centerOn(pos)
+        
+        # Анимация подлета
+        self.zoom_slider.setValue(150)
+        QTimer.singleShot(500, lambda: self.zoom_slider.setValue(100))
+    
+    def highlight_roots(self):
+        """Подсвечивает корневые кошельки"""
+        for wallet, item in self.wallet_items.items():
+            if wallet in self.root_wallets:
+                item['rect'].setBrush(QBrush(QColor(144, 238, 144)))
+                item['rect'].setPen(QPen(Qt.darkGreen, 2))
+            else:
+                item['rect'].setBrush(QBrush(QColor(173, 216, 230)))
+                item['rect'].setPen(QPen(Qt.black, 1))
+        
+        if self.root_wallets:
+            self.center_on_wallet(self.root_wallets[0])
+    
+    def zoom_to_fit(self):
+        """Автоматически подстраивает масштаб под все дерево"""
+        rect = self.scene.itemsBoundingRect()
+        self.view.fitInView(rect, Qt.KeepAspectRatio)
+        self.zoom_level = 100
+        self.zoom_label.setText(f'Масштаб: {self.zoom_level}%')
+        self.zoom_slider.setValue(100)
     
     def update_zoom(self, value):
         self.zoom_level = value
-        self.zoom_label.setText(f'Zoom: {self.zoom_level}%')
+        self.zoom_label.setText(f'Масштаб: {self.zoom_level}%')
         scale = self.zoom_level / 100.0
         self.view.resetTransform()
         self.view.scale(scale, scale)
     
     def reset_view(self):
         self.zoom_slider.setValue(100)
-        self.view.centerOn(self.scene.itemsBoundingRect().center())
+        self.zoom_to_fit()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')  # Современный стиль интерфейса
+    
+    # Увеличиваем лимит рекурсии
+    import sys
+    sys.setrecursionlimit(15000)
+    
     visualizer = WalletTreeVisualizer()
     visualizer.show()
     sys.exit(app.exec_())
