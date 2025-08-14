@@ -6,7 +6,7 @@ class AdminDev(models.Model):
     whitelist = models.BooleanField(default=False)
     ath = models.IntegerField(default=0)
     total_devs = models.IntegerField(default=0)
-
+    total_tokens = models.IntegerField(default=0)
     def __str__(self):
         return self.twitter
 

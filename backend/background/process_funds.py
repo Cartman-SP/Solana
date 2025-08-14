@@ -202,8 +202,9 @@ def process_first(address):
         if not admin.id:
             admin.save()
         
-        # Обновляем все UserDev в массиве
+        total_tokens = 0# Обновляем все UserDev в массиве
         for i in range(len(arr)):
+            total_tokens += arr[i].total_tokens
             arr[i].admin = admin
             arr[i].faunded = True
             try:
@@ -212,7 +213,7 @@ def process_first(address):
                 pass
             arr[i].save()
         
-        # Обновляем total_devs у AdminDev
+        admin.total_tokens += total_tokens# Обновляем total_devs у AdminDev
         admin.total_devs += len(arr)
         admin.save()
         
