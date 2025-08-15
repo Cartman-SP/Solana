@@ -1,47 +1,27 @@
+import json
 import sys
-import requests
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QGraphicsView, QGraphicsScene,
-                            QGraphicsRectItem, QGraphicsTextItem, QGraphicsLineItem,
-                            QVBoxLayout, QWidget, QSlider, QLabel, QPushButton,
-                            QLineEdit, QMessageBox, QHBoxLayout)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QGraphicsView, QGraphicsScene, 
+                             QGraphicsRectItem, QGraphicsTextItem, QGraphicsLineItem,
+                             QVBoxLayout, QWidget, QSlider, QLabel, QPushButton)
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QFont, QBrush, QColor, QPen, QPainter
 
 class WalletTreeVisualizer(QMainWindow):
-    def __init__(self):
+    def __init__(self, wallet_data):
         super().__init__()
+        self.wallet_data = wallet_data
         self.zoom_level = 100
-        self.wallet_data = []
         self.initUI()
+        self.build_wallet_graph()
         
     def initUI(self):
         self.setWindowTitle('Wallet Connection Tree')
         self.setGeometry(100, 100, 1200, 800)
         
+        # Central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
-        
-        # Input controls
-        control_layout = QHBoxLayout()
-        
-        self.twitter_input = QLineEdit()
-        self.twitter_input.setPlaceholderText("Enter admin Twitter")
-        control_layout.addWidget(self.twitter_input)
-        
-        self.load_button = QPushButton("Load Data")
-        self.load_button.clicked.connect(self.load_admin_data)
-        control_layout.addWidget(self.load_button)
-        
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search wallet")
-        control_layout.addWidget(self.search_input)
-        
-        self.search_button = QPushButton("Search")
-        self.search_button.clicked.connect(self.search_wallet)
-        control_layout.addWidget(self.search_button)
-        
-        layout.addLayout(control_layout)
         
         # Zoom controls
         zoom_layout = QVBoxLayout()
@@ -65,42 +45,14 @@ class WalletTreeVisualizer(QMainWindow):
         self.view = QGraphicsView()
         self.scene = QGraphicsScene()
         self.view.setScene(self.scene)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)  # Исправленная строка
         self.view.setDragMode(QGraphicsView.ScrollHandDrag)
         self.view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         
         layout.addWidget(self.view)
-    
-    def load_admin_data(self):
-        twitter = self.twitter_input.text().strip()
-        if not twitter:
-            QMessageBox.warning(self, "Error", "Please enter Twitter handle")
-            return
         
-        try:
-            response = requests.get(
-                "https://goodelivery.ru/api/admin_data",
-                params={"twitter": twitter},
-                timeout=10
-            )
-            response.raise_for_status()
-            
-            # Convert API response to the original format
-            api_data = response.json()
-            self.wallet_data = [{"main": item['faunded_by'], "faund": item['adress']} 
-                              for item in api_data if item.get('faunded_by')]
-            
-            self.build_wallet_graph()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load data: {str(e)}")
-    
     def build_wallet_graph(self):
-        self.scene.clear()
-        
-        if not self.wallet_data:
-            return
-        
-        # Create mapping between wallets (original algorithm)
+        # Create a mapping between wallets
         wallet_map = {}
         for item in self.wallet_data:
             main = item['main']
@@ -120,7 +72,7 @@ class WalletTreeVisualizer(QMainWindow):
         if not root_wallets and wallet_map:
             root_wallets = [next(iter(wallet_map.keys()))]
         
-        # Original layout parameters
+        # Layout parameters
         level_height = 150
         node_width = 180
         node_height = 50
@@ -129,9 +81,8 @@ class WalletTreeVisualizer(QMainWindow):
         # Track positions and visited wallets
         self.wallet_positions = {}
         self.visited_wallets = set()
-        self.wallet_items = {}  # For search functionality
         
-        # Start drawing from root wallets (original drawing method)
+        # Start drawing from root wallets
         start_x = 0
         for i, root in enumerate(root_wallets):
             self.draw_wallet_tree(root, start_x + i * (node_width + h_spacing), 50, 
@@ -143,14 +94,14 @@ class WalletTreeVisualizer(QMainWindow):
         
         self.visited_wallets.add(wallet)
         
-        # Original rectangle drawing
+        # Draw wallet rectangle
         rect = QGraphicsRectItem(QRectF(0, 0, node_width, node_height))
         rect.setPos(x, y)
-        rect.setBrush(QBrush(QColor(173, 216, 230)))  # Original light blue color
+        rect.setBrush(QBrush(QColor(173, 216, 230)))  # Light blue
         rect.setPen(QPen(Qt.black, 1))
         self.scene.addItem(rect)
         
-        # Original text display
+        # Add wallet address text (shortened)
         short_address = wallet[:8] + "..." + wallet[-8:]
         text = QGraphicsTextItem(short_address)
         text.setPos(x + 5, y + 5)
@@ -158,18 +109,15 @@ class WalletTreeVisualizer(QMainWindow):
         text.setFont(QFont('Arial', 8))
         self.scene.addItem(text)
         
-        # Store for search
-        self.wallet_items[wallet] = (rect, text)
-        
-        # Original position tracking
+        # Store position for connection lines
         self.wallet_positions[wallet] = QPointF(x + node_width/2, y + node_height)
         
-        # Original connection drawing
+        # Draw connections to found wallets
         if wallet in wallet_map:
             found_wallets = wallet_map[wallet]
             num_found = len(found_wallets)
             
-            # Original centering calculation
+            # Calculate starting x position for children to center them
             total_width = num_found * node_width + (num_found - 1) * h_spacing
             start_x = x - (total_width - node_width) / 2
             
@@ -177,8 +125,9 @@ class WalletTreeVisualizer(QMainWindow):
                 child_x = start_x + i * (node_width + h_spacing)
                 child_y = y + level_height
                 
-                # Original line drawing
+                # Draw line before drawing child
                 if found in self.wallet_positions:
+                    # If wallet already drawn, connect to existing position
                     existing_pos = self.wallet_positions[found]
                     line = QGraphicsLineItem(
                         x + node_width/2, y + node_height,
@@ -190,30 +139,13 @@ class WalletTreeVisualizer(QMainWindow):
                         child_x + node_width/2, child_y
                     )
                 
-                line.setPen(QPen(Qt.darkGray, 1, Qt.DashLine))  # Original dashed line
+                line.setPen(QPen(Qt.darkGray, 1, Qt.DashLine))
                 self.scene.addItem(line)
                 
-                # Original recursive drawing
+                # Draw child wallet
                 if found not in self.visited_wallets:
                     self.draw_wallet_tree(found, child_x, child_y, wallet_map, 
                                         level_height, node_width, node_height, h_spacing)
-    
-    def search_wallet(self):
-        search_text = self.search_input.text().strip()
-        if not search_text:
-            return
-        
-        found = False
-        for wallet, (rect, text) in self.wallet_items.items():
-            if search_text.lower() in wallet.lower():
-                rect.setBrush(QBrush(QColor(255, 215, 0)))  # Highlight color
-                self.view.centerOn(rect)
-                found = True
-            else:
-                rect.setBrush(QBrush(QColor(173, 216, 230)))  # Restore original color
-        
-        if not found:
-            QMessageBox.information(self, "Search", "Wallet not found")
     
     def update_zoom(self, value):
         self.zoom_level = value
@@ -226,13 +158,23 @@ class WalletTreeVisualizer(QMainWindow):
         self.zoom_slider.setValue(100)
         self.view.centerOn(self.scene.itemsBoundingRect().center())
 
+def load_wallet_data(filename):
+    with open(filename, 'r') as f:
+        data = json.load(f)
+    return data['data']
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     
-    # Increase recursion limit as in original
-    import sys
-    sys.setrecursionlimit(15000)
+    # Load wallet data
+    try:
+        wallet_data = load_wallet_data('faunds.json')
+    except Exception as e:
+        print(f"Error loading wallet data: {e}")
+        sys.exit(1)
     
-    visualizer = WalletTreeVisualizer()
+    # Create and show visualizer
+    visualizer = WalletTreeVisualizer(wallet_data)
     visualizer.show()
+    
     sys.exit(app.exec_())

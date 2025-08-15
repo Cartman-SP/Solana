@@ -192,6 +192,7 @@ def process_fund(address):
             count += 1
         else:
             if dev.admin:
+                arr.append(dev)
                 return arr, dev.admin
             else:
                 admin = create_admin_with_unique_twitter()
