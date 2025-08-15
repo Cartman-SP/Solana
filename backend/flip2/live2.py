@@ -146,6 +146,7 @@ async def get_admin_data(admin):
 
         collected = []
         for dev in devs:
+            print(collected, dev.adress)
             if len(collected) >= 3:
                 break
             remaining = 3 - len(collected)
