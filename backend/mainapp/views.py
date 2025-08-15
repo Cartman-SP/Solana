@@ -584,3 +584,4 @@ def pump_hook(request):
     except Exception as e:
         with open('pump_hook.txt', 'a') as f:
             f.write(e)
+        return JsonResponse({'success': True})
