@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/bonk/', bonk_webhook, name='bonk_webhook'),
     path('api/get_wallets/', get_wallets, name='get_wallets'),
     path('api/admin_data', admin_data, name='get_admin_devs'),
+    path('api/pump_hook/', pump_hook, name='pump_hook'),
 ]

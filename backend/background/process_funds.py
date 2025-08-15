@@ -7,7 +7,10 @@ import time
 import uuid
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 import random
+import threading
+from collections import deque
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -18,44 +21,54 @@ from django.db import IntegrityError
 
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTM1NzAxNzU2MjEsImVtYWlsIjoiZGFuaWlsLnNoaXJraW4wMDVAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzUzNTcwMTc1fQ.W2-ic8rt8wQZptdygjc6F3Z5N8CJv1UrCkfqzdwq2vw"
 
-# Глобальные переменные для отслеживания API запросов
-api_request_count = 0
-last_reset_time = time.time()
 MAX_REQUESTS_PER_MINUTE = 1000
 
-def check_api_limit():
-    """Проверяет лимит API запросов и ждет при необходимости"""
-    global api_request_count, last_reset_time
-    
-    current_time = time.time()
-    
-    # Сброс счетчика каждую минуту
-    if current_time - last_reset_time >= 60:
-        api_request_count = 0
-        last_reset_time = current_time
-    
-    # Если достигнут лимит, ждем до следующей минуты
-    if api_request_count >= MAX_REQUESTS_PER_MINUTE:
-        wait_time = 60 - (current_time - last_reset_time)
-        if wait_time > 0:
-            print(f"Достигнут лимит API ({MAX_REQUESTS_PER_MINUTE} запросов/мин). Ждем {wait_time:.2f} секунд...")
-            time.sleep(wait_time)
-            api_request_count = 0
-            last_reset_time = time.time()
+# Потокобезопасный лимитер (скользящее окно 60с)
+_rate_lock = threading.Lock()
+_request_times = deque()
+
+def acquire_rate_limit_slot():
+    """Блокирует до тех пор, пока не освободится слот в лимите RPS/RPM."""
+    while True:
+        now = time.time()
+        with _rate_lock:
+            # Очистка старых таймстампов
+            while _request_times and (now - _request_times[0]) >= 60:
+                _request_times.popleft()
+            if len(_request_times) < MAX_REQUESTS_PER_MINUTE:
+                _request_times.append(now)
+                return
+            # Время ожидания до освобождения старейшей записи
+            wait_time = max(0.0, 60 - (now - _request_times[0]))
+        # Спим небольшими порциями, чтобы быстрее реагировать
+        time.sleep(min(wait_time, 1.0))
+
+# Пул HTTP-соединений на потоках
+_thread_local = threading.local()
+
+def get_session() -> requests.Session:
+    if not hasattr(_thread_local, "session"):
+        session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=200, max_retries=0)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        session.headers.update({"User-Agent": "SolanaFlipper/1.0"})
+        _thread_local.session = session
+    return _thread_local.session
 
 def make_api_request(url, headers, max_retries=3):
     """Выполняет API запрос с обработкой ошибок и перезапусками"""
-    global api_request_count
-    
     for attempt in range(max_retries):
         try:
-            check_api_limit()
-            
-            response = requests.get(url, headers=headers, timeout=30)
-            api_request_count += 1
+            acquire_rate_limit_slot()
+            session = get_session()
+            response = session.get(url, headers=headers, timeout=(5, 30))
             
             if response.status_code == 200:
-                return response.json()
+                try:
+                    return response.json()
+                except Exception:
+                    return None
             elif response.status_code == 429:  # Rate limit exceeded
                 print(f"Rate limit exceeded. Попытка {attempt + 1}/{max_retries}")
                 if attempt < max_retries - 1:
@@ -94,8 +107,42 @@ def minutes_since(timestamp_str):
     return time_diff.total_seconds() / 60
 
 
+_cache_lock = threading.Lock()
+_funding_cache = {}
+_birzh_cache = {}
+CACHE_TTL_FUNDING = 600  # 10 минут
+CACHE_TTL_BIRZH = 1800   # 30 минут
+
+def _cache_get(cache_obj, key, ttl):
+    now = time.time()
+    with _cache_lock:
+        item = cache_obj.get(key)
+        if not item:
+            return None
+        ts, value = item
+        if (now - ts) <= ttl:
+            return value
+        # просрочено
+        cache_obj.pop(key, None)
+        return None
+
+def _cache_set(cache_obj, key, value, max_size=50000):
+    with _cache_lock:
+        cache_obj[key] = (time.time(), value)
+        if len(cache_obj) > max_size:
+            # Простая усечка: удалим ~1k первых ключей
+            for _ in range(1000):
+                try:
+                    cache_obj.pop(next(iter(cache_obj)))
+                except StopIteration:
+                    break
+
 def check_birzh(address, tags):
+    cached = _cache_get(_birzh_cache, address, CACHE_TTL_BIRZH)
+    if cached is not None:
+        return cached
     if "exchange_wallet" in tags or "deposit_address" in tags:
+        _cache_set(_birzh_cache, address, True)
         return True
     
     base_url = "https://pro-api.solscan.io/v2.0/account/"
@@ -104,10 +151,12 @@ def check_birzh(address, tags):
     
     response = make_api_request(url, headers)
     if response is None:
+        _cache_set(_birzh_cache, address, False)
         return False
     
     data = response.get('data', [])
     if not data:
+        _cache_set(_birzh_cache, address, False)
         return False
     
     try:
@@ -116,11 +165,13 @@ def check_birzh(address, tags):
         ago = minutes_since(data[-1]['time'])
 
     if ago < 6 and len(data) == 100:
+        _cache_set(_birzh_cache, address, True)
         return True
 
     url = f"{base_url}portfolio?address={address}&exclude_low_score_tokens=true"    
     response = make_api_request(url, headers)
     if response is None:
+        _cache_set(_birzh_cache, address, False)
         return False
     
     data = response.get('data', [])
@@ -130,10 +181,15 @@ def check_birzh(address, tags):
         balance = 0
     
     if balance > 30000:
+        _cache_set(_birzh_cache, address, True)
         return True
+    _cache_set(_birzh_cache, address, False)
     return False
 
 def get_funding_addresses(wallet_address):
+    cached = _cache_get(_funding_cache, wallet_address, CACHE_TTL_FUNDING)
+    if cached is not None:
+        return cached
     base_url = "https://pro-api.solscan.io/v2.0/account/metadata"
     
     headers = {
@@ -146,9 +202,11 @@ def get_funding_addresses(wallet_address):
     
     data = make_api_request(url, headers)
     if data is None:
+        _cache_set(_funding_cache, wallet_address, {})
         return {}
     
     data = data.get('data', {})
+    _cache_set(_funding_cache, wallet_address, data)
     return data
 
 
@@ -186,7 +244,12 @@ def process_fund(address):
             adress=fund,
         )
         dev.faunded = True
-        dev.save()
+        # Быстрый апдейт только нужного поля, чтобы уменьшить накладные расходы
+        try:
+            UserDev.objects.filter(pk=dev.pk).update(faunded=True)
+        except Exception:
+            # На всякий случай откат к обычному save
+            dev.save(update_fields=["faunded"])
         if created:
             arr.append(dev)
             count += 1
@@ -213,18 +276,28 @@ def process_first(address):
         if not admin.id:
             admin.save()
         
-        total_tokens = 0# Обновляем все UserDev в массиве
+        total_tokens = 0
+        # Подготовим массовое обновление
         for i in range(len(arr)):
-            total_tokens += arr[i].total_tokens
-            arr[i].admin = admin
-            arr[i].faunded = True
+            obj = arr[i]
+            total_tokens += obj.total_tokens
+            obj.admin = admin
+            obj.faunded = True
             try:
-                arr[i].faunded_by = arr[i+1]
-            except:
+                obj.faunded_by = arr[i+1]
+            except Exception:
                 pass
-            arr[i].save()
+        try:
+            UserDev.objects.bulk_update(arr, ["admin", "faunded", "faunded_by"])
+        except Exception:
+            # Fallback на поштучные сохранения, если bulk_update невозможен
+            for obj in arr:
+                try:
+                    obj.save(update_fields=["admin", "faunded", "faunded_by"])
+                except Exception:
+                    obj.save()
         
-        admin.total_tokens += total_tokens# Обновляем total_devs у AdminDev
+        admin.total_tokens += total_tokens
         admin.total_devs += len(arr)
         admin.save()
         
@@ -267,24 +340,19 @@ def main():
             addresses = [dev.adress for dev in unprocessed_devs]
             
             # Обрабатываем все адреса одновременно используя ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=100) as executor:
-                # Запускаем все задачи одновременно
-                future_to_address = {
-                    executor.submit(process_dev_async, addr): addr 
-                    for addr in addresses
-                }
-                
-                # Обрабатываем результаты по мере завершения
-                for future in future_to_address:
+            # Подбираем разумное число потоков, чтобы не упираться в RPM API
+            max_workers = max(8, min(32, len(addresses)))
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                future_to_address = {executor.submit(process_dev_async, addr): addr for addr in addresses}
+                for future in as_completed(future_to_address.keys()):
+                    address = future_to_address[future]
                     try:
                         result = future.result(timeout=300)  # 5 минут таймаут на один адрес
-                        address = future_to_address[future]
                         if result:
                             print(f"Адрес {address} успешно обработан")
                         else:
                             print(f"Адрес {address} не удалось обработать")
                     except Exception as e:
-                        address = future_to_address[future]
                         print(f"Ошибка при обработке адреса {address}: {e}")
             
             time.sleep(10)
