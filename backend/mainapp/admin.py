@@ -18,6 +18,23 @@ class HasAdminFilter(admin.SimpleListFilter):
             return queryset.filter(admin__isnull=True)
         return queryset
 
+class TotalTokensFilter(admin.SimpleListFilter):
+    title = 'Количество токенов'
+    parameter_name = 'total_tokens'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('gt0', 'Больше 0'),
+            ('eq0', 'Равно 0'),
+        )
+    
+    def queryset(self, request, queryset):
+        if self.value() == 'gt0':
+            return queryset.filter(total_tokens__gt=0)
+        elif self.value() == 'eq0':
+            return queryset.filter(total_tokens=0)
+        return queryset
+
 @admin.register(AdminDev)
 class AdminDevAdmin(admin.ModelAdmin):
     list_display = ('twitter', 'blacklist', 'whitelist', 'ath',"total_devs","total_tokens")
@@ -28,7 +45,7 @@ class AdminDevAdmin(admin.ModelAdmin):
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
     list_display = ('id','adress', 'admin' , 'whitelist', 'blacklist', 'ath', 'processed','total_tokens','faunded_by',"faunded")
-    list_filter = ('whitelist', 'blacklist', 'processed', HasAdminFilter)
+    list_filter = ('whitelist', 'blacklist', 'processed', HasAdminFilter, TotalTokensFilter)
     search_fields = ('adress', 'uri', 'admin__twitter')
     ordering = ('-total_tokens', 'adress')
     list_per_page = 50
