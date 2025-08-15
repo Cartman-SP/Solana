@@ -181,7 +181,8 @@ async def get_admin_data(admin):
             'migrations': migrations_pct,
             'recent_tokens': [{'name': item['name'], 'ath': item['ath']} for item in collected],
         }
-    except Exception:
+    except Exception as e:
+        print(e)
         return None
 
 
