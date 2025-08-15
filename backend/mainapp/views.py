@@ -576,7 +576,11 @@ def admin_data(request):
 
 @csrf_exempt
 def pump_hook(request):
-    data = json.loads(request.body)
-    with open('pump_hook.txt', 'a') as f:
-        f.write(json.dumps(data, indent=2))
-    return JsonResponse({'success': True})
+    try:
+        data = json.loads(request.body)
+        with open('pump_hook.txt', 'a') as f:
+            f.write(json.dumps(data, indent=2))
+        return JsonResponse({'success': True})
+    except Exception as e:
+        with open('pump_hook.txt', 'a') as f:
+            f.write(e)
