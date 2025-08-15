@@ -184,8 +184,9 @@ def process_fund(address):
             return arr, admin
         dev, created = UserDev.objects.get_or_create(
             adress=fund,
-            faunded=True,
         )
+        dev.faunded = True
+        dev.save()
         if created:
             arr.append(dev)
             count += 1
