@@ -12,7 +12,7 @@ django.setup()
 from mainapp.models import AdminDev, UserDev
 
 def main() -> None:
-    admin_twitter = "admin_b0c033f2"
+    admin_twitter = "admin_7c8f2f43"
 
     admin = AdminDev.objects.get(twitter=admin_twitter)
     user_devs = UserDev.objects.filter(admin=admin)
