@@ -41,7 +41,7 @@ class ProcessManager:
         
         # Запускаем получателей
         self.start_process("live.py", "Live получатель")
-        #self.start_process("create.py", "Create получатель")
+        self.start_process("create.py", "Create получатель")
         
         print("\n📊 Все программы запущены!")
         print("💡 Для остановки нажмите Ctrl+C")
