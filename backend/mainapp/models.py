@@ -23,6 +23,9 @@ class Twitter(models.Model):
     whitelist = models.BooleanField(default=False)
     total_tokens = models.IntegerField(default=0)
 
+    def __str__(self):
+        return self.name
+
 class Token(models.Model):
     address = models.CharField(max_length=255)
     dev = models.ForeignKey(UserDev, on_delete=models.CASCADE)

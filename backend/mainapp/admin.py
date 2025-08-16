@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AdminDev, UserDev, Token
+from .models import AdminDev, UserDev, Token, Twitter
 
 class TotalTokensFilter(admin.SimpleListFilter):
     title = 'Количество токенов'
@@ -18,12 +18,13 @@ class TotalTokensFilter(admin.SimpleListFilter):
             return queryset.filter(total_tokens=0)
         return queryset
 
-@admin.register(AdminDev)
-class AdminDevAdmin(admin.ModelAdmin):
-    list_display = ('twitter', 'blacklist', 'whitelist', 'ath', 'total_devs', 'total_tokens')
+@admin.register(Twitter)
+class TwitterAdmin(admin.ModelAdmin):
+    list_display = ('name', 'followers', 'blacklist', 'whitelist', 'total_tokens')
     list_filter = ('blacklist', 'whitelist')
-    search_fields = ('twitter',)
-    ordering = ('twitter', 'total_devs')
+    search_fields = ('name',)
+    ordering = ('name',)
+    list_per_page = 50
 
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
