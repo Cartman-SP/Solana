@@ -20,7 +20,7 @@ class TotalTokensFilter(admin.SimpleListFilter):
 
 @admin.register(Twitter)
 class TwitterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'followers', 'blacklist', 'whitelist', 'total_tokens')
+    list_display = ('name', 'blacklist', 'whitelist', 'total_tokens')
     list_filter = ('blacklist', 'whitelist')
     search_fields = ('name',)
     ordering = ('name',)
