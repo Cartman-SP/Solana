@@ -27,11 +27,16 @@ async def create_user_and_token(data):
         twitter_followers = data.get('twitter_followers','')
         print(symbol)
         token_created = False
+        
+        # Инициализируем twitter как None по умолчанию
+        twitter = None
+        
         if(twitter_name):
             twitter, created = await sync_to_async(Twitter.objects.get_or_create)(
                 name=twitter_name,
                 followers = twitter_followers,
             )
+        
         user_dev, created = await sync_to_async(UserDev.objects.get_or_create)(
             adress=user,
             defaults={
@@ -39,7 +44,8 @@ async def create_user_and_token(data):
             }
         )
         
-        if twitter.blacklist == False:
+        # Проверяем, что twitter существует и не в черном списке
+        if twitter and twitter.blacklist == False:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                 address=mint,
                 defaults={
@@ -51,8 +57,9 @@ async def create_user_and_token(data):
         
         if token_created:
             user_dev.total_tokens += 1
-            twitter.total_tokens +=1
-            await sync_to_async(twitter.save)()
+            if twitter:  # Добавляем проверку
+                twitter.total_tokens +=1
+                await sync_to_async(twitter.save)()
             await sync_to_async(user_dev.save)()
     except Exception as e:
         print(e)

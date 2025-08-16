@@ -167,12 +167,11 @@ async def get_twitter_data(twitter):
             migration_percentage = 0
         
         # Получаем последние 3 токена разработчика (исключая текущий)
+        # Убираем exclude, так как user_address не определен в этой функции
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 twitter=user_dev,
                 processed = True
-            ).exclude(
-                address=user_address  # Исключаем текущий токен
             ).order_by('-created_at')[:3]
         )
         
@@ -220,6 +219,17 @@ async def process_token_data(data):
         twitter_data = await get_twitter_data(twitter)
         if user_dev_data is None:
             return
+        
+        # Проверяем twitter_data и устанавливаем значения по умолчанию
+        if twitter_data is None:
+            twitter_data = {
+                'total_tokens': 0,
+                'ath': 0,
+                'migrations': 0,
+                'recent_tokens': [],
+                'whitelist': False,
+                'blacklist': False
+            }
         
         extension_data = {
             'mint': mint,

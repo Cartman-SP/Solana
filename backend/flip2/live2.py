@@ -209,7 +209,12 @@ async def process_token_data(data):
             return
         print(111)
         admin_whitelist = await sync_to_async(lambda: admin.whitelist, thread_sensitive=True)()
-        admin_twitter = await sync_to_async(lambda: admin.twitter, thread_sensitive=True)()
+        
+        # Проверяем, что admin существует перед обращением к его полям
+        admin_twitter = ""
+        if admin:
+            admin_twitter = await sync_to_async(lambda: admin.twitter, thread_sensitive=True)()
+        
         print(100)
         user_dev_data = await get_admin_data(admin)
         print(110)
