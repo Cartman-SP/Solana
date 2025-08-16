@@ -26,13 +26,12 @@ async def create_user_and_token(data):
         twitter_name = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
         print(symbol)
-        
-        # Инициализируем переменную
         token_created = False
-        twitter, created = await sync_to_async(Twitter.objects.get_or_create)(
-            name=twitter_name,
-            followers = twitter_followers,
-        )
+        if(twitter_name):
+            twitter, created = await sync_to_async(Twitter.objects.get_or_create)(
+                name=twitter_name,
+                followers = twitter_followers,
+            )
         user_dev, created = await sync_to_async(UserDev.objects.get_or_create)(
             adress=user,
             defaults={

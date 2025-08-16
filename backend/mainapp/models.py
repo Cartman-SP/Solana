@@ -26,7 +26,7 @@ class Twitter(models.Model):
 class Token(models.Model):
     address = models.CharField(max_length=255)
     dev = models.ForeignKey(UserDev, on_delete=models.CASCADE)
-    twitter = models.ForeignKey(Twitter, on_delete=models.CASCADE)
+    twitter = models.ForeignKey(Twitter, on_delete=models.CASCADE,null=True, blank=True)
     ath = models.IntegerField(default=0)
     migrated = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
