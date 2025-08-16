@@ -138,6 +138,10 @@ async def check_admin(fund):
 
 async def get_admin_data(admin):
     try:
+        # Проверяем, что admin существует
+        if admin is None:
+            return None
+            
         # Получаем подходящих девов (последние по id) с total_tokens > 1
         devs = await sync_to_async(
             lambda: list(UserDev.objects.filter(admin=admin, total_tokens__gt=1).order_by('-id')),
@@ -203,6 +207,11 @@ async def process_token_data(data):
             return
         print(123)
         admin = await sync_to_async(lambda: user_bd.admin, thread_sensitive=True)()
+        
+        # Проверяем, что admin существует
+        if admin is None:
+            return
+            
         admin_blacklist = await sync_to_async(lambda: admin.blacklist, thread_sensitive=True)()
         print(122)
         if admin_blacklist is True:
@@ -218,6 +227,11 @@ async def process_token_data(data):
         print(100)
         user_dev_data = await get_admin_data(admin)
         print(110)
+        
+        # Проверяем, что user_dev_data существует
+        if user_dev_data is None:
+            return
+            
         extension_data = {
             'mint': mint,
             'user': user,
