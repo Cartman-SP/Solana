@@ -25,7 +25,7 @@ migration_cache: Dict[str, bool] = {}
 ath_cache: Dict[str, int] = {}
 
 # Контроль лимитов API
-API_RATE_LIMIT = 500  # запросов в минуту
+API_RATE_LIMIT = 1000  # запросов в минуту
 REQUEST_SEMAPHORE = asyncio.Semaphore(API_RATE_LIMIT)  # Семафор для контроля запросов
 CANCEL_PROCESSING = False  # Флаг для отмены обработки
 
@@ -301,10 +301,10 @@ async def main_processing_loop():
             if processed_count == 0:
                 if CANCEL_PROCESSING:
                     print("Обработка отменена из-за ошибок API. Ожидание 5 минут...")
-                    await asyncio.sleep(30)  # 5 минут при ошибках
+                    await asyncio.sleep(15)  # 5 минут при ошибках
                 else:
                     print("Нет токенов для обработки. Ожидание 5 минут...")
-                    await asyncio.sleep(300)  # 5 минут
+                    await asyncio.sleep(15)  # 5 минут
             else:
                 print(f"Обработано {processed_count} токенов. Ожидание 1 минуту...")
                 
