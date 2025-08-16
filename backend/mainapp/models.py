@@ -21,7 +21,6 @@ class UserDev(models.Model):
 
 class Twitter(models.Model):
     name = models.CharField(max_length=255)
-    followers = models.IntegerField(default=0)
     blacklist = models.BooleanField(default=False)
     whitelist = models.BooleanField(default=False)
     total_tokens = models.IntegerField(default=0)

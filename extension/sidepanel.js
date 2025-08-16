@@ -486,6 +486,21 @@ class TokenMonitor {
         tokenElement.querySelector('.open-birdeye').addEventListener('click', () => {
             window.open(`https://birdeye.so/token/${token.mint}`, '_blank');
         });
+        
+        // Кнопка Open
+        tokenElement.querySelector('.open').addEventListener('click', () => {
+            window.open(`https://birdeye.so/token/${token.mint}`, '_blank');
+        });
+        
+        // Кнопка Blacklist
+        tokenElement.querySelector('.blacklist').addEventListener('click', () => {
+            this.blacklistUser(token.mint, tokenElement.querySelector('.blacklist'));
+        });
+        
+        // Кнопка Whitelist
+        tokenElement.querySelector('.whitelist').addEventListener('click', () => {
+            this.whitelistUser(token.mint, tokenElement.querySelector('.whitelist'));
+        });
     }
     
     formatNumber(value) {
@@ -670,6 +685,108 @@ class TokenMonitor {
             this.ws.close();
         }
         this.connectWebSocket();
+    }
+    
+    blacklistUser(tokenAddress, button) {
+        const originalText = button.textContent;
+        
+        // Отключаем кнопку и показываем загрузку
+        button.disabled = true;
+        button.textContent = 'Loading...';
+        
+        fetch('https://goodelivery.ru/api/blacklist/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            mode: 'cors',
+            credentials: 'omit',
+            body: JSON.stringify({
+                token_address: tokenAddress
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.textContent = 'Blacklisted!';
+                button.style.background = 'linear-gradient(90deg, #28a745 0%, #20c997 100%)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.background = '';
+                }, 2000);
+            } else {
+                button.textContent = 'Error!';
+                button.style.background = 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.background = '';
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.textContent = 'Error!';
+            button.style.background = 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+                button.style.background = '';
+            }, 2000);
+        });
+    }
+    
+    whitelistUser(tokenAddress, button) {
+        const originalText = button.textContent;
+        
+        // Отключаем кнопку и показываем загрузку
+        button.disabled = true;
+        button.textContent = 'Loading...';
+        
+        fetch('https://goodelivery.ru/api/whitelist/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            mode: 'cors',
+            credentials: 'omit',
+            body: JSON.stringify({
+                token_address: tokenAddress
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.textContent = 'Whitelisted!';
+                button.style.background = 'linear-gradient(90deg, #28a745 0%, #20c997 100%)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.background = '';
+                }, 2000);
+            } else {
+                button.textContent = 'Error!';
+                button.style.background = 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.background = '';
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.textContent = 'Error!';
+            button.style.background = 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+                button.style.background = '';
+            }, 2000);
+        });
     }
 }
 

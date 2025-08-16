@@ -223,9 +223,9 @@ body {
 .token-card {
     background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
     border: 1px solid #444;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 8px;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -277,16 +277,16 @@ body {
 }
 
 .token-symbol {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #ff6b35;
 }
 
 .token-name {
-    font-size: 13px;
+    font-size: 14px;
     color: #ccc;
     font-weight: 500;
-    max-width: 150px;
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -295,20 +295,20 @@ body {
 .token-source {
     background: rgba(255, 107, 53, 0.2);
     color: #ff6b35;
-    padding: 3px 6px;
+    padding: 4px 8px;
     border-radius: 6px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .token-time {
-    font-size: 10px;
+    font-size: 11px;
     color: #888;
     font-weight: 500;
     background: rgba(255, 255, 255, 0.05);
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 4px;
 }
 
@@ -363,32 +363,32 @@ body {
 .token-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .stat-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-    padding: 8px;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .stat-header {
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
+    gap: 5px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-icon {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .stat-title {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     color: #ff6b35;
     text-transform: uppercase;
@@ -403,8 +403,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
-    font-size: 10px;
+    margin-bottom: 3px;
+    font-size: 11px;
 }
 
 .stat-label {
@@ -446,27 +446,27 @@ body {
 }
 
 .token-addresses {
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
 }
 
 .address-section {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
 }
 
 .address-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3px;
-    font-size: 10px;
+    margin-bottom: 4px;
+    font-size: 11px;
 }
 
 .address-label {
@@ -479,16 +479,23 @@ body {
 }
 
 .address-value {
-    font-size: 10px;
+    font-size: 11px;
     color: #ccc;
     font-family: 'Courier New', monospace;
     font-weight: 600;
-    max-width: 70px;
+    max-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
     transition: color 0.3s ease;
+}
+
+/* Twitter значения должны отображаться целиком */
+.twitter-address-section .address-value {
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .address-value:hover {
@@ -498,11 +505,21 @@ body {
 
 .token-actions {
     display: flex;
-    gap: 6px;
-    justify-content: flex-end;
-    margin-top: 8px;
-    padding-top: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-buttons-left {
+    display: flex;
+    gap: 6px;
+}
+
+.action-buttons-right {
+    display: flex;
+    gap: 6px;
 }
 
 .action-btn {
@@ -539,6 +556,43 @@ body {
 .action-btn.open-birdeye:hover {
     background: rgba(76, 175, 80, 0.2);
     border-color: #4CAF50;
+}
+
+/* Стили для новых кнопок */
+.action-btn.open {
+    background: linear-gradient(90deg, #ff6b35 0%, #f7931e 100%);
+    color: white;
+    border: none;
+    min-width: 50px;
+}
+
+.action-btn.open:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.action-btn.blacklist {
+    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    min-width: 70px;
+}
+
+.action-btn.blacklist:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.action-btn.whitelist {
+    background: linear-gradient(90deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    min-width: 70px;
+}
+
+.action-btn.whitelist:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
 }
     cursor: pointer;
     transition: all 0.3s ease;
