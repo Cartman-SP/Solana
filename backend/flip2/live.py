@@ -225,8 +225,8 @@ async def process_token_data(data):
             'mint': mint,
             'user': user,
             'user_name': name,
-            'twitter_name':twitter
-            'followers': twitter_followers
+            'twitter_name': twitter,
+            'followers': twitter_followers,
             'symbol': symbol,
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
@@ -248,7 +248,7 @@ async def process_token_data(data):
         
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
-        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['name']} ({extension_data['symbol']}) | Avg ATH: {extension_data['ath']} | Total Tokens: {extension_data['total_tokens']} | Migrations: {extension_data['migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
+        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
         
     except:
         pass

@@ -232,70 +232,85 @@ body {
 }
 
 .token-card.new-token {
-    animation: slideIn 0.5s ease-out;
+    animation: newTokenGlow 0.5s ease-in-out;
+}
+
+@keyframes newTokenGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0);
+    }
 }
 
 .token-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     border-color: #ff6b35;
-}
-
-.token-card.whitelist {
-    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-    border-color: #ff6b35;
-    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-}
-
-.token-card.whitelist .token-name {
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.token-card.whitelist .token-symbol {
-    background: #ffffff;
-    color: #ff6b35;
-}
-
-.token-card.whitelist .info-value {
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.token-card.whitelist .address-value {
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.token-card.whitelist:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
-    border-color: #ffffff;
 }
 
 .token-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.token-symbol {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ff6b35;
+}
+
+.token-source {
+    background: rgba(255, 107, 53, 0.2);
+    color: #ff6b35;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.token-time {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.token-info {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .token-name {
     font-size: 16px;
-    font-weight: 600;
-    color: #ff6b35;
-    flex: 1;
+    color: #ccc;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
-.token-symbol {
-    background: #ff6b35;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-right: 8px;
+.token-mint {
+    font-size: 12px;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
 }
 
 .remove-token-btn {
@@ -320,35 +335,102 @@ body {
     transform: scale(1.1);
 }
 
-.token-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 8px;
+/* Секции пользователя и Twitter */
+.user-section,
+.twitter-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.info-item {
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ff6b35;
+    margin-bottom: 12px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
-.info-label {
-    font-size: 11px;
+.user-stats,
+.twitter-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
     color: #888;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
 }
 
-.info-value {
+.stat-value {
+    display: block;
     font-size: 13px;
-    font-weight: 500;
-    color: #ffffff;
+    font-weight: 600;
+    color: #ff6b35;
 }
 
-.info-value.highlight {
-    color: #ff6b35;
-    font-weight: 600;
+.user-info,
+.twitter-info {
+    margin-bottom: 12px;
+}
+
+.user-name,
+.twitter-name {
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.twitter-followers {
+    font-size: 12px;
+    color: #888;
+}
+
+.user-lists,
+.twitter-lists {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.list-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.list-badge.whitelist {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.list-badge.blacklist {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .token-addresses {
@@ -392,19 +474,47 @@ body {
 .token-actions {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #444;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.action-button {
-    flex: 1;
-    padding: 6px 12px;
-    border: none;
+.action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
     border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.action-btn.copy-mint:hover {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #FFC107;
+}
+
+.action-btn.open-solscan:hover {
+    background: rgba(33, 150, 243, 0.2);
+    border-color: #2196F3;
+}
+
+.action-btn.open-birdeye:hover {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4CAF50;
+}
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
@@ -496,6 +606,32 @@ body {
 
 .token-card.fade-out {
     animation: fadeOut 0.5s ease-in forwards;
+}
+
+/* Toast уведомления */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* Скроллбар */
