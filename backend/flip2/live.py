@@ -60,10 +60,7 @@ async def get_user_dev_data(user_address):
     """Получает данные UserDev из базы данных"""
     try:
         user_dev = await sync_to_async(UserDev.objects.get)(adress=user_address)
-        
-        if user_dev.blacklist:
-            return None
-        
+                
         # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
         recent_tokens = await sync_to_async(list)(
             Token.objects.filter(
