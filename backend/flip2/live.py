@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from mainapp.models import UserDev, Token
+from mainapp.models import UserDev, Token, Twitter
 from asgiref.sync import sync_to_async
 
 # Хранилище подключенных клиентов расширения
