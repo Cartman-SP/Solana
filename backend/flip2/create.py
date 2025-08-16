@@ -49,6 +49,7 @@ async def create_user_and_token(data):
                     address=mint,
                     defaults={
                         'dev': user_dev,
+                        'twitter': twitter
                         'ath': 0,
                         'migrated': False
                     }
