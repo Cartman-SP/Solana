@@ -509,7 +509,7 @@ uri: {uri or ''}"""
                                 if isinstance(followers, int):
                                     line += f"  |  подписчиков: {followers:,}"
                                 print(Fore.MAGENTA + Style.BRIGHT + line + Style.RESET_ALL)
-                                websocket_data["twitter_name"]= f"@{username}",
+                                websocket_data["twitter_name"] = f"@{username}"
                                 websocket_data["twitter_followers"] = followers
 
 

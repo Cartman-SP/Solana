@@ -51,9 +51,8 @@ async def create_user_and_token(data):
         
         if token_created:
             user_dev.total_tokens += 1
-            if user_dev.admin:
-                user_dev.admin.total_tokens += 1
-                user_dev.admin.save()
+            twitter.total_tokens +=1
+            await sync_to_async(twitter.save)()
             await sync_to_async(user_dev.save)()
             print("dev saved:", symbol)
     except Exception as e:
