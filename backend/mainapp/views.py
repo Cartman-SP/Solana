@@ -50,7 +50,7 @@ def blacklist_user(request):
         # Находим токен и получаем связанного UserDev
         try:
             token = Token.objects.get(address=token_address)
-            user_dev = token.dev
+            user_dev = token.twitter
             
             if user_dev:
                 user_dev.blacklist = True
@@ -125,7 +125,7 @@ def whitelist_user(request):
         # Находим токен и получаем связанного UserDev
         try:
             token = Token.objects.get(address=token_address)
-            user_dev = token.dev
+            user_dev = token.twitter
             
             if user_dev:
                 user_dev.whitelist = True
