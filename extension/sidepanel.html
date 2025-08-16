@@ -34,6 +34,76 @@
                 <p>Ожидание новых токенов...</p>
             </div>
         </div>
+        
+        <!-- Шаблон токена -->
+        <template id="token-template">
+            <div class="token-card">
+                <div class="token-header">
+                    <div class="token-symbol"></div>
+                    <div class="token-source"></div>
+                    <div class="token-time"></div>
+                </div>
+                
+                <div class="token-info">
+                    <div class="token-name"></div>
+                    <div class="token-mint"></div>
+                </div>
+                
+                <div class="user-section">
+                    <div class="section-title">👤 Пользователь</div>
+                    <div class="user-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">ATH:</span>
+                            <span class="stat-value user-ath"></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Токены:</span>
+                            <span class="stat-value user-tokens"></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Миграции:</span>
+                            <span class="stat-value user-migrations"></span>
+                        </div>
+                    </div>
+                    <div class="user-lists">
+                        <span class="list-badge whitelist" style="display: none;">✅ Белый список</span>
+                        <span class="list-badge blacklist" style="display: none;">❌ Черный список</span>
+                    </div>
+                </div>
+                
+                <div class="twitter-section">
+                    <div class="section-title">🐦 Twitter</div>
+                    <div class="twitter-info">
+                        <div class="twitter-name"></div>
+                        <div class="twitter-followers"></div>
+                    </div>
+                    <div class="twitter-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">ATH:</span>
+                            <span class="stat-value twitter-ath"></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Токены:</span>
+                            <span class="stat-value twitter-tokens"></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Миграции:</span>
+                            <span class="stat-value twitter-migrations"></span>
+                        </div>
+                    </div>
+                    <div class="twitter-lists">
+                        <span class="list-badge whitelist" style="display: none;">✅ Белый список</span>
+                        <span class="list-badge blacklist" style="display: none;">❌ Черный список</span>
+                    </div>
+                </div>
+                
+                <div class="token-actions">
+                    <button class="action-btn copy-mint" title="Копировать mint адрес">📋</button>
+                    <button class="action-btn open-solscan" title="Открыть в Solscan">🔍</button>
+                    <button class="action-btn open-birdeye" title="Открыть в Birdeye">📊</button>
+                </div>
+            </div>
+        </template>
     </div>
     
     <script src="sidepanel.js"></script>

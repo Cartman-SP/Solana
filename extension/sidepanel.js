@@ -187,43 +187,129 @@ class TokenMonitor {
     applyFilters(tokens) {
         return new Promise((resolve) => {
             chrome.storage.sync.get({
-                minAth: '',
-                maxAth: '',
-                minTokens: '',
-                maxTokens: '',
-                minMigrations: '',
-                maxMigrations: ''
+                // Фильтры пользователя
+                minUserAth: '',
+                maxUserAth: '',
+                minUserTokens: '',
+                maxUserTokens: '',
+                minUserMigrations: '',
+                maxUserMigrations: '',
+                userWhitelisted: false,
+                userBlacklisted: false,
+                minFollowers: '',
+                
+                // Фильтры Twitter
+                minTwitterAth: '',
+                maxTwitterAth: '',
+                minTwitterTokens: '',
+                maxTwitterTokens: '',
+                minTwitterMigrations: '',
+                maxTwitterMigrations: '',
+                twitterWhitelisted: false,
+                twitterBlacklisted: false,
+                
+                // Дополнительные настройки
+                sourceFilter: '',
+                showOnlyNew: false
             }, (settings) => {
                 let filteredTokens = tokens.filter(token => {
-                    // Фильтр по ATH (диапазон)
-                    if (settings.minAth !== '' || settings.maxAth !== '') {
-                        const athValue = token.ath === 'N/A' ? 0 : parseFloat(token.ath) || 0;
-                        const minAth = settings.minAth !== '' ? parseFloat(settings.minAth) : 0;
-                        const maxAth = settings.maxAth !== '' ? parseFloat(settings.maxAth) : Infinity;
-                        
-                        if (athValue < minAth || athValue > maxAth) {
+                    // Фильтр по источнику
+                    if (settings.sourceFilter && token.source !== settings.sourceFilter) {
+                        return false;
+                    }
+                    
+                    // Фильтр по времени (только новые токены)
+                    if (settings.showOnlyNew) {
+                        const tokenTime = new Date(`2000-01-01 ${token.timestamp}`);
+                        const currentTime = new Date();
+                        const timeDiff = (currentTime - tokenTime) / (1000 * 60 * 60); // разница в часах
+                        if (timeDiff > 1) {
                             return false;
                         }
                     }
                     
-                    // Фильтр по количеству токенов (диапазон)
-                    if (settings.minTokens !== '' || settings.maxTokens !== '') {
-                        const tokensValue = token.total_tokens === 'N/A' ? 0 : parseInt(token.total_tokens) || 0;
-                        const minTokens = settings.minTokens !== '' ? parseInt(settings.minTokens) : 0;
-                        const maxTokens = settings.maxTokens !== '' ? parseInt(settings.maxTokens) : Infinity;
-                        
-                        if (tokensValue < minTokens || tokensValue > maxTokens) {
+                    // Фильтр по количеству подписчиков
+                    if (settings.minFollowers && token.followers) {
+                        const followers = parseInt(token.followers) || 0;
+                        if (followers < parseInt(settings.minFollowers)) {
                             return false;
                         }
                     }
                     
-                    // Фильтр по проценту миграций (диапазон)
-                    if (settings.minMigrations !== '' || settings.maxMigrations !== '') {
-                        const migrationsValue = token.migrations === 'N/A' ? 0 : parseFloat(token.migrations) || 0;
-                        const minMigrations = settings.minMigrations !== '' ? parseFloat(settings.minMigrations) : 0;
-                        const maxMigrations = settings.maxMigrations !== '' ? parseFloat(settings.maxMigrations) : 100;
+                    // Фильтры пользователя
+                    if (settings.userWhitelisted && !token.user_whitelisted) {
+                        return false;
+                    }
+                    
+                    if (settings.userBlacklisted && token.user_blacklisted) {
+                        return false;
+                    }
+                    
+                    if (settings.minUserAth !== '' || settings.maxUserAth !== '') {
+                        const userAth = parseFloat(token.user_ath) || 0;
+                        const minUserAth = settings.minUserAth !== '' ? parseFloat(settings.minUserAth) : 0;
+                        const maxUserAth = settings.maxUserAth !== '' ? parseFloat(settings.maxUserAth) : Infinity;
                         
-                        if (migrationsValue < minMigrations || migrationsValue > maxMigrations) {
+                        if (userAth < minUserAth || userAth > maxUserAth) {
+                            return false;
+                        }
+                    }
+                    
+                    if (settings.minUserTokens !== '' || settings.maxUserTokens !== '') {
+                        const userTokens = parseInt(token.user_total_tokens) || 0;
+                        const minUserTokens = settings.minUserTokens !== '' ? parseInt(settings.minUserTokens) : 0;
+                        const maxUserTokens = settings.maxUserTokens !== '' ? parseInt(settings.maxUserTokens) : Infinity;
+                        
+                        if (userTokens < minUserTokens || userTokens > maxUserTokens) {
+                            return false;
+                        }
+                    }
+                    
+                    if (settings.minUserMigrations !== '' || settings.maxUserMigrations !== '') {
+                        const userMigrations = parseFloat(token.user_migrations) || 0;
+                        const minUserMigrations = settings.minUserMigrations !== '' ? parseFloat(settings.minUserMigrations) : 0;
+                        const maxUserMigrations = settings.maxUserMigrations !== '' ? parseFloat(settings.maxUserMigrations) : 100;
+                        
+                        if (userMigrations < minUserMigrations || userMigrations > maxUserMigrations) {
+                            return false;
+                        }
+                    }
+                    
+                    // Фильтры Twitter
+                    if (settings.twitterWhitelisted && !token.twitter_whitelisted) {
+                        return false;
+                    }
+                    
+                    if (settings.twitterBlacklisted && token.twitter_blacklisted) {
+                        return false;
+                    }
+                    
+                    if (settings.minTwitterAth !== '' || settings.maxTwitterAth !== '') {
+                        const twitterAth = parseFloat(token.twitter_ath) || 0;
+                        const minTwitterAth = settings.minTwitterAth !== '' ? parseFloat(settings.minTwitterAth) : 0;
+                        const maxTwitterAth = settings.maxTwitterAth !== '' ? parseFloat(settings.maxTwitterAth) : Infinity;
+                        
+                        if (twitterAth < minTwitterAth || twitterAth > maxTwitterAth) {
+                            return false;
+                        }
+                    }
+                    
+                    if (settings.minTwitterTokens !== '' || settings.maxTwitterTokens !== '') {
+                        const twitterTokens = parseInt(token.twitter_total_tokens) || 0;
+                        const minTwitterTokens = settings.minTwitterTokens !== '' ? parseInt(settings.minTwitterTokens) : 0;
+                        const maxTwitterTokens = settings.maxTwitterTokens !== '' ? parseInt(settings.maxTwitterTokens) : Infinity;
+                        
+                        if (twitterTokens < minTwitterTokens || twitterTokens > maxTwitterTokens) {
+                            return false;
+                        }
+                    }
+                    
+                    if (settings.minTwitterMigrations !== '' || settings.maxTwitterMigrations !== '') {
+                        const twitterMigrations = parseFloat(token.twitter_migrations) || 0;
+                        const minTwitterMigrations = settings.minTwitterMigrations !== '' ? parseFloat(settings.minTwitterMigrations) : 0;
+                        const maxTwitterMigrations = settings.maxTwitterMigrations !== '' ? parseFloat(settings.maxTwitterMigrations) : 100;
+                        
+                        if (twitterMigrations < minTwitterMigrations || twitterMigrations > maxTwitterMigrations) {
                             return false;
                         }
                     }
@@ -311,6 +397,122 @@ class TokenMonitor {
         }
         
         noData.style.display = 'none';
+        
+        // Очищаем контейнер
+        container.innerHTML = '';
+        
+        // Сортируем токены по направлению потока
+        const sortedTokens = [...filteredTokens];
+        if (this.flowDirection === 'top') {
+            sortedTokens.reverse(); // Новые сверху
+        }
+        
+        // Рендерим каждый токен
+        sortedTokens.forEach(token => {
+            const tokenElement = this.createTokenElement(token);
+            container.appendChild(tokenElement);
+        });
+    }
+    
+    createTokenElement(token) {
+        const template = document.getElementById('token-template');
+        const tokenElement = template.content.cloneNode(true);
+        
+        // Заполняем основную информацию
+        tokenElement.querySelector('.token-symbol').textContent = token.symbol || 'N/A';
+        tokenElement.querySelector('.token-source').textContent = token.source || 'Unknown';
+        tokenElement.querySelector('.token-time').textContent = token.timestamp || 'N/A';
+        tokenElement.querySelector('.token-name').textContent = token.user_name || 'N/A';
+        tokenElement.querySelector('.token-mint').textContent = token.mint ? `${token.mint.slice(0, 8)}...` : 'N/A';
+        
+        // Заполняем данные пользователя
+        tokenElement.querySelector('.user-ath').textContent = this.formatNumber(token.user_ath);
+        tokenElement.querySelector('.user-tokens').textContent = this.formatNumber(token.user_total_tokens);
+        tokenElement.querySelector('.user-migrations').textContent = `${this.formatNumber(token.user_migrations)}%`;
+        
+        // Показываем/скрываем бейджи списков пользователя
+        if (token.user_whitelisted) {
+            tokenElement.querySelector('.user-lists .whitelist').style.display = 'inline-block';
+        }
+        if (token.user_blacklisted) {
+            tokenElement.querySelector('.user-lists .blacklist').style.display = 'inline-block';
+        }
+        
+        // Заполняем данные Twitter
+        tokenElement.querySelector('.twitter-name').textContent = token.twitter_name || 'N/A';
+        tokenElement.querySelector('.twitter-followers').textContent = `${this.formatNumber(token.followers)} подписчиков`;
+        tokenElement.querySelector('.twitter-ath').textContent = this.formatNumber(token.twitter_ath);
+        tokenElement.querySelector('.twitter-tokens').textContent = this.formatNumber(token.twitter_total_tokens);
+        tokenElement.querySelector('.twitter-migrations').textContent = `${this.formatNumber(token.twitter_migrations)}%`;
+        
+        // Показываем/скрываем бейджи списков Twitter
+        if (token.twitter_whitelisted) {
+            tokenElement.querySelector('.twitter-lists .whitelist').style.display = 'inline-block';
+        }
+        if (token.twitter_blacklisted) {
+            tokenElement.querySelector('.twitter-lists .blacklist').style.display = 'inline-block';
+        }
+        
+        // Настраиваем кнопки действий
+        this.setupTokenActions(tokenElement, token);
+        
+        // Добавляем анимацию для новых токенов
+        if (token.isNew) {
+            tokenElement.querySelector('.token-card').classList.add('new-token');
+        }
+        
+        return tokenElement;
+    }
+    
+    setupTokenActions(tokenElement, token) {
+        // Копирование mint адреса
+        tokenElement.querySelector('.copy-mint').addEventListener('click', () => {
+            navigator.clipboard.writeText(token.mint).then(() => {
+                this.showToast('Mint адрес скопирован!');
+            });
+        });
+        
+        // Открытие в Solscan
+        tokenElement.querySelector('.open-solscan').addEventListener('click', () => {
+            window.open(`https://solscan.io/token/${token.mint}`, '_blank');
+        });
+        
+        // Открытие в Birdeye
+        tokenElement.querySelector('.open-birdeye').addEventListener('click', () => {
+            window.open(`https://birdeye.so/token/${token.mint}`, '_blank');
+        });
+    }
+    
+    formatNumber(value) {
+        if (value === null || value === undefined || value === '') {
+            return 'N/A';
+        }
+        
+        const num = parseFloat(value);
+        if (isNaN(num)) {
+            return 'N/A';
+        }
+        
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        } else {
+            return num.toFixed(1);
+        }
+    }
+    
+    showToast(message) {
+        // Создаем временное уведомление
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
         
         // Отображаем токены в зависимости от направления потока
         let tokensToRender = filteredTokens;

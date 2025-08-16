@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .settings-container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -25,6 +25,9 @@
             font-weight: 600;
             color: #ff6b35;
             margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .filter-group {
@@ -72,6 +75,19 @@
             font-size: 14px;
         }
         
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .checkbox-label {
+            color: #ccc;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
         .save-btn {
             background: linear-gradient(90deg, #ff6b35 0%, #f7931e 100%);
             color: white;
@@ -106,54 +122,173 @@
             background: #dc3545;
             color: white;
         }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .filter-column {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>⚙️ Настройки</h1>
+            <h1>⚙️ Настройки фильтров</h1>
         </header>
         
         <div class="settings-container">
             <div class="settings-section">
-                <div class="settings-title">Фильтры токенов</div>
-                
-                <div class="filter-group">
-                    <label class="filter-label">ATH (от - до)</label>
-                    <div class="range-group">
-                        <input type="number" id="min-ath" class="filter-input range-input" placeholder="0">
-                        <span class="range-separator">-</span>
-                        <input type="number" id="max-ath" class="filter-input range-input" placeholder="∞">
-                    </div>
+                <div class="settings-title">
+                    <span>👤</span>
+                    Фильтры пользователя
                 </div>
                 
-                <div class="filter-group">
-                    <label class="filter-label">Количество токенов (от - до)</label>
-                    <div class="range-group">
-                        <input type="number" id="min-tokens" class="filter-input range-input" placeholder="0">
-                        <span class="range-separator">-</span>
-                        <input type="number" id="max-tokens" class="filter-input range-input" placeholder="∞">
+                <div class="filters-grid">
+                    <div class="filter-column">
+                        <div class="filter-group">
+                            <label class="filter-label">ATH пользователя (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-user-ath" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-user-ath" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Количество токенов пользователя (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-user-tokens" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-user-tokens" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Процент миграций пользователя (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-user-migrations" class="filter-input range-input" placeholder="0" step="0.1">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-user-migrations" class="filter-input range-input" placeholder="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-column">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="user-whitelisted" class="filter-checkbox">
+                            <label for="user-whitelisted" class="checkbox-label">Только в белом списке</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="user-blacklisted" class="filter-checkbox">
+                            <label for="user-blacklisted" class="checkbox-label">Исключить из черного списка</label>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Минимальное количество подписчиков</label>
+                            <input type="number" id="min-followers" class="filter-input" placeholder="0">
+                        </div>
                     </div>
                 </div>
-                
-                <div class="filter-group">
-                    <label class="filter-label">Процент миграций (от - до)</label>
-                    <div class="range-group">
-                        <input type="number" id="min-migrations" class="filter-input range-input" placeholder="0" step="0.1">
-                        <span class="range-separator">-</span>
-                        <input type="number" id="max-migrations" class="filter-input range-input" placeholder="100" step="0.1">
-                    </div>
-                </div>
-                
-                <button id="save-settings" class="save-btn">Сохранить настройки</button>
-                <div id="status-message" class="status-message"></div>
             </div>
             
             <div class="settings-section">
-                <div class="settings-title">Информация</div>
+                <div class="settings-title">
+                    <span>🐦</span>
+                    Фильтры Twitter аккаунта
+                </div>
+                
+                <div class="filters-grid">
+                    <div class="filter-column">
+                        <div class="filter-group">
+                            <label class="filter-label">ATH Twitter (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-twitter-ath" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-twitter-ath" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Количество токенов Twitter (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-twitter-tokens" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-twitter-tokens" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Процент миграций Twitter (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-twitter-migrations" class="filter-input range-input" placeholder="0" step="0.1">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-twitter-migrations" class="filter-input range-input" placeholder="100" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-column">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="twitter-whitelisted" class="filter-checkbox">
+                            <label for="twitter-whitelisted" class="checkbox-label">Только в белом списке</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="twitter-blacklisted" class="filter-checkbox">
+                            <label for="twitter-blacklisted" class="checkbox-label">Исключить из черного списка</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>🔧</span>
+                    Дополнительные настройки
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Источник токена</label>
+                    <select id="source-filter" class="filter-input">
+                        <option value="">Все источники</option>
+                        <option value="pump">Pump</option>
+                        <option value="flip">Flip</option>
+                        <option value="other">Другие</option>
+                    </select>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-only-new" class="filter-checkbox">
+                    <label for="show-only-new" class="checkbox-label">Показывать только новые токены (за последний час)</label>
+                </div>
+            </div>
+            
+            <button id="save-settings" class="save-btn">Сохранить настройки</button>
+            <div id="status-message" class="status-message"></div>
+            
+            <div class="settings-section">
+                <div class="settings-title">ℹ️ Информация</div>
                 <p style="color: #ccc; line-height: 1.6;">
-                    Настройки фильтров применяются к отображаемым токенам в sidebar панели. 
+                    Настройки фильтров применяются к отображаемым токенам в боковой панели. 
                     Токены, не соответствующие критериям, будут скрыты. Оставьте поле пустым для отключения фильтра.
+                    <br><br>
+                    <strong>Новые данные включают:</strong>
+                    <br>• Статистику пользователя (ATH, токены, миграции)
+                    <br>• Статистику Twitter аккаунта
+                    <br>• Информацию о белых/черных списках
+                    <br>• Количество подписчиков
                 </p>
             </div>
         </div>

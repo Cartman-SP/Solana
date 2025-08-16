@@ -224,7 +224,9 @@ async def process_token_data(data):
         extension_data = {
             'mint': mint,
             'user': user,
-            'name': name,
+            'user_name': name,
+            'twitter_name':twitter
+            'followers': twitter_followers
             'symbol': symbol,
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
@@ -240,7 +242,6 @@ async def process_token_data(data):
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],
             'twitter_blacklisted': twitter_data['blacklist'],
-
         }
         
         await broadcast_to_extension(extension_data)

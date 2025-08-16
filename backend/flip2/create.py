@@ -39,7 +39,7 @@ async def create_user_and_token(data):
             }
         )
         
-        if user_dev.blacklist == False and twitter.blacklist == False:
+        if twitter.blacklist == False:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                 address=mint,
                 defaults={
@@ -54,7 +54,6 @@ async def create_user_and_token(data):
             twitter.total_tokens +=1
             await sync_to_async(twitter.save)()
             await sync_to_async(user_dev.save)()
-            print("dev saved:", symbol)
     except Exception as e:
         print(e)
         pass
