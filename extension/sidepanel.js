@@ -458,6 +458,10 @@ class TokenMonitor {
         tokenElement.querySelector('.twitter-name').textContent = token.twitter_name || 'N/A';
         tokenElement.querySelector('.twitter-followers').textContent = token.followers ? `${this.formatNumber(token.followers)}` : 'N/A';
         
+        // Заполняем Recent Tokens
+        this.populateRecentTokens(tokenElement, '.user-recent-tokens', token.user_recent_tokens);
+        this.populateRecentTokens(tokenElement, '.twitter-recent-tokens', token.twitter_recent_tokens);
+        
         // Настраиваем кнопки действий
         this.setupTokenActions(tokenElement, token);
         
@@ -467,6 +471,30 @@ class TokenMonitor {
         }
         
         return tokenElement;
+    }
+    
+    populateRecentTokens(tokenElement, selector, recentTokens) {
+        const container = tokenElement.querySelector(selector);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (recentTokens && recentTokens.length > 0) {
+            recentTokens.forEach(token => {
+                const tokenItem = document.createElement('div');
+                tokenItem.className = 'recent-token-item';
+                tokenItem.innerHTML = `
+                    <span class="recent-token-name">${token.name}</span>
+                    <span class="recent-token-ath">ATH: ${this.formatNumber(token.ath)}</span>
+                `;
+                container.appendChild(tokenItem);
+            });
+        } else {
+            const noTokens = document.createElement('div');
+            noTokens.className = 'recent-token-item';
+            noTokens.innerHTML = '<span class="recent-token-name">Нет токенов</span>';
+            container.appendChild(noTokens);
+        }
     }
     
     setupTokenActions(tokenElement, token) {
@@ -482,14 +510,14 @@ class TokenMonitor {
             window.open(`https://solscan.io/token/${token.mint}`, '_blank');
         });
         
-        // Открытие в Birdeye
+        // Открытие в Padre
         tokenElement.querySelector('.open-birdeye').addEventListener('click', () => {
-            window.open(`https://birdeye.so/token/${token.mint}`, '_blank');
+            window.open(`https://trade.padre.gg/trade/solana/${token.mint}`, '_blank');
         });
         
         // Кнопка Open
         tokenElement.querySelector('.open').addEventListener('click', () => {
-            window.open(`https://birdeye.so/token/${token.mint}`, '_blank');
+            window.open(`https://trade.padre.gg/trade/solana/${token.mint}`, '_blank');
         });
         
         // Кнопка Blacklist
