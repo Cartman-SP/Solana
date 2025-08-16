@@ -43,15 +43,26 @@ async def create_user_and_token(data):
         )
         
         # Проверяем, что twitter существует и не в черном списке
-        if twitter and twitter.blacklist == False:
+        if twitter:
+            if twitter.blacklist == False:
+                token, token_created = await sync_to_async(Token.objects.get_or_create)(
+                    address=mint,
+                    defaults={
+                        'dev': user_dev,
+                        'ath': 0,
+                        'migrated': False
+                    }
+                )
+        else:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
-                address=mint,
-                defaults={
-                    'dev': user_dev,
-                    'ath': 0,
-                    'migrated': False
-                }
-            )
+                    address=mint,
+                    defaults={
+                        'dev': user_dev,
+                        'ath': 0,
+                        'migrated': False
+                    }
+                )
+
         
         if token_created:
             user_dev.total_tokens += 1
