@@ -423,7 +423,6 @@ class TokenMonitor {
         tokenElement.querySelector('.token-source').textContent = token.source || 'Unknown';
         tokenElement.querySelector('.token-time').textContent = token.timestamp || 'N/A';
         tokenElement.querySelector('.token-name').textContent = token.user_name || 'N/A';
-        tokenElement.querySelector('.token-mint').textContent = token.mint ? `${token.mint.slice(0, 8)}...` : 'N/A';
         
         // Заполняем данные пользователя
         tokenElement.querySelector('.user-ath').textContent = this.formatNumber(token.user_ath);
@@ -439,8 +438,6 @@ class TokenMonitor {
         }
         
         // Заполняем данные Twitter
-        tokenElement.querySelector('.twitter-name').textContent = token.twitter_name || 'N/A';
-        tokenElement.querySelector('.twitter-followers').textContent = `${this.formatNumber(token.followers)} подписчиков`;
         tokenElement.querySelector('.twitter-ath').textContent = this.formatNumber(token.twitter_ath);
         tokenElement.querySelector('.twitter-tokens').textContent = this.formatNumber(token.twitter_total_tokens);
         tokenElement.querySelector('.twitter-migrations').textContent = `${this.formatNumber(token.twitter_migrations)}%`;
@@ -452,6 +449,14 @@ class TokenMonitor {
         if (token.twitter_blacklisted) {
             tokenElement.querySelector('.twitter-lists .blacklist').style.display = 'inline-block';
         }
+        
+        // Заполняем адреса
+        tokenElement.querySelector('.token-mint').textContent = token.mint ? `${token.mint.slice(0, 8)}...` : 'N/A';
+        tokenElement.querySelector('.user-address').textContent = token.user ? `${token.user.slice(0, 8)}...` : 'N/A';
+        
+        // Заполняем Twitter информацию
+        tokenElement.querySelector('.twitter-name').textContent = token.twitter_name || 'N/A';
+        tokenElement.querySelector('.twitter-followers').textContent = token.followers ? `${this.formatNumber(token.followers)}` : 'N/A';
         
         // Настраиваем кнопки действий
         this.setupTokenActions(tokenElement, token);

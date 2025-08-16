@@ -13,6 +13,9 @@ class AdminDev(models.Model):
 class UserDev(models.Model):
     adress = models.CharField(max_length=255)
     total_tokens = models.IntegerField(default=0)
+    blacklist = models.BooleanField(default=False)
+    whitelist = models.BooleanField(default=False)
+
     def __str__(self):
         return self.adress
 
