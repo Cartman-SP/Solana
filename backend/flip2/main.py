@@ -40,7 +40,7 @@ class ProcessManager:
         self.start_process("pumpfun.py", "PumpFun монитор")
         
         # Запускаем получателей
-        self.start_process("live2.py", "Live получатель")
+        self.start_process("live.py", "Live получатель")
         self.start_process("create.py", "Create получатель")
         
         print("\n📊 Все программы запущены!")

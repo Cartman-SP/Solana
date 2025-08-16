@@ -131,6 +131,80 @@ async def get_user_dev_data(user_address):
             'recent_tokens': []
         }
 
+async def get_twitter_data(twitter):
+    """Получает данные UserDev из базы данных"""
+    try:
+        user_dev = await sync_to_async(Twitter.objects.get)(name=twitter)
+        
+        if user_dev.blacklist:
+            return None
+        
+        # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
+        recent_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                twitter=user_dev,
+                ath__gt=0,
+                processed = True
+            ).order_by('-created_at')[:3]
+        )
+        
+        # Рассчитываем средний ATH
+        if recent_tokens:
+            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
+        else:
+            avg_ath = 0
+        
+        # Получаем последние 100 токенов для расчета процента миграций
+        recent_100_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                twitter=user_dev,
+                processed = True
+            ).order_by('-created_at')[:100]
+        )
+        
+        # Рассчитываем процент мигрированных токенов
+        if recent_100_tokens:
+            migrated_count = sum(1 for token in recent_100_tokens if token.migrated)
+            migration_percentage = (migrated_count / len(recent_100_tokens)) * 100
+        else:
+            migration_percentage = 0
+        
+        # Получаем последние 3 токена разработчика (исключая текущий)
+        recent_dev_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                twitter=user_dev,
+                processed = True
+            ).exclude(
+                address=user_address  # Исключаем текущий токен
+            ).order_by('-created_at')[:3]
+        )
+        
+        # Формируем список последних токенов
+        recent_tokens_info = []
+        for token in recent_dev_tokens:
+            recent_tokens_info.append({
+                'name': token.address[:8] + '...',  # Сокращенное название
+                'ath': token.ath
+            })
+            
+        return {
+            'ath': int(avg_ath),  # Средний ATH последних 5 токенов
+            'total_tokens': user_dev.total_tokens,
+            'whitelist': user_dev.whitelist,
+            'blacklist': user_dev.blacklist,
+            'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
+            'recent_tokens': recent_tokens_info  # Последние 3 токена
+        }
+    except Exception as e:
+        print(e)
+        return{
+            'ath': 0,
+            'total_tokens': 1,
+            'whitelist': False,
+            'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': []
+        }
 
 
 async def process_token_data(data):
@@ -141,9 +215,12 @@ async def process_token_data(data):
         user = data.get('user', '')
         name = data.get('name', '')
         symbol = data.get('symbol', '')
-        print(symbol)
+        twitter = data.get('twitter_name','')
+        twitter_followers = data.get('twitter_followers','')
+        if twitter == '':
+            return
         user_dev_data = await get_user_dev_data(user)
-        
+        twitter_data = await get_twitter_data(twitter)
         if user_dev_data is None:
             return
         
@@ -152,14 +229,21 @@ async def process_token_data(data):
             'user': user,
             'name': name,
             'symbol': symbol,
-            'total_tokens': user_dev_data['total_tokens'],
-            'ath': user_dev_data['ath'],
-            'migrations': user_dev_data['migrations'],
-            'recent_tokens': user_dev_data['recent_tokens'],
             'source': source,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'user_total_tokens': user_dev_data['total_tokens'],
+            'user_ath': user_dev_data['ath'],
+            'user_migrations': user_dev_data['migrations'],
+            'user_recent_tokens': user_dev_data['recent_tokens'],
             'user_whitelisted': user_dev_data['whitelist'],
-            'user_blacklisted': user_dev_data['blacklist']
+            'user_blacklisted': user_dev_data['blacklist'],
+            'twitter_total_tokens': twitter_data['total_tokens'],
+            'twitter_ath': twitter_data['ath'],
+            'twitter_migrations': twitter_data['migrations'],
+            'twitter_recent_tokens': twitter_data['recent_tokens'],
+            'twitter_whitelisted': twitter_data['whitelist'],
+            'twitter_blacklisted': twitter_data['blacklist'],
+
         }
         
         await broadcast_to_extension(extension_data)
