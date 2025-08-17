@@ -3,6 +3,7 @@
 let walletsData = [];
 let selectedWallets = new Set();
 let isBlockReplaced = false; // Флаг для предотвращения дублирования
+let isTrenchesReordered = false; // Флаг для страницы trenches
 
 function createLoadingSpinner() {
     const spinner = document.createElement('div');
@@ -992,21 +993,65 @@ function addStyles() {
     document.head.appendChild(style);
 }
 
+// Функция для сброса флагов при смене страницы
+function resetFlags() {
+    isBlockReplaced = false;
+    isTrenchesReordered = false;
+}
+
 // Основная функция инициализации
 function initializeExtension() {
+    // Сбрасываем флаги при инициализации
+    resetFlags();
+    
     // Проверяем, что мы на правильной странице
-    if (!window.location.href.includes('trade.padre.gg/trade/solana/')) {
+    if (window.location.href.includes('trade.padre.gg/trade/solana/')) {
+        // Добавляем стили
+        addStyles();
+        
+        // Заменяем целевой блок
+        replaceTargetBlock();
+        
+        // Добавляем кнопки blacklist и whitelist
+        addBlacklistButton();
+    } else if (window.location.href.includes('trade.padre.gg/trenches')) {
+        // Для страницы trenches меняем порядок элементов
+        reorderTrenchesElements();
+    }
+}
+
+// Функция для изменения порядка элементов на странице trenches
+function reorderTrenchesElements() {
+    // Проверяем, что перестановка еще не была выполнена
+    if (isTrenchesReordered) {
         return;
     }
     
-    // Добавляем стили
-    addStyles();
+    // Ищем элементы MuiStack-root с классом css-1v21yzc
+    const targetElements = document.querySelectorAll('div.MuiStack-root.css-1v21yzc');
     
-    // Заменяем целевой блок
-    replaceTargetBlock();
+    if (targetElements.length < 2) {
+        // Если элементы не найдены, пробуем еще раз через 1 секунду
+        setTimeout(reorderTrenchesElements, 1000);
+        return;
+    }
     
-    // Добавляем кнопки blacklist и whitelist
-    addBlacklistButton();
+    console.log(targetElements);
+    ///const firstElement = targetElements[0];
+    ///const secondElement = targetElements[1];
+    
+    if (firstElement && secondElement) {
+        // Сохраняем родительский элемент
+        const parent = firstElement.parentNode;
+        
+        // Меняем местами элементы
+        parent.insertBefore(secondElement, firstElement);
+        
+        // Устанавливаем флаг, что элементы переставлены
+        isTrenchesReordered = true;
+        
+        console.log('Trenches elements reordered successfully');
+    }
 }
 
 // Запускаем расширение при загрузке страницы
@@ -1016,9 +1061,22 @@ if (document.readyState === 'loading') {
     initializeExtension();
 }
 
+// Слушаем изменения URL для SPA
+let currentUrl = window.location.href;
+new MutationObserver(() => {
+    const url = window.location.href;
+    if (url !== currentUrl) {
+        currentUrl = url;
+        resetFlags();
+        initializeExtension();
+    }
+}).observe(document, {subtree: true, childList: true});
+
 // Также запускаем при изменениях в DOM (для SPA)
 const observer = new MutationObserver(() => {
-    if (!isBlockReplaced) {
+    if (window.location.href.includes('trade.padre.gg/trade/solana/') && !isBlockReplaced) {
+        initializeExtension();
+    } else if (window.location.href.includes('trade.padre.gg/trenches') && !isTrenchesReordered) {
         initializeExtension();
     }
 });

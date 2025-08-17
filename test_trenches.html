@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Trenches Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .mui-stack {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .mui-stack.css-1v21yzc {
+            background: #f3e5f5;
+            border-color: #9c27b0;
+        }
+        .test-button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Test Trenches Functionality</h1>
+        <p>This page simulates the trenches page structure to test the extension functionality.</p>
+        
+        <div class="status info">
+            <strong>Instructions:</strong> 
+            <ol>
+                <li>Load this page in Chrome with the extension installed</li>
+                <li>Click "Test Reorder" to manually trigger the reorder function</li>
+                <li>Check the console for logs</li>
+            </ol>
+        </div>
+        
+        <button class="test-button" onclick="testReorder()">Test Reorder</button>
+        <button class="test-button" onclick="resetOrder()">Reset Order</button>
+        
+        <div class="status info">
+            <strong>Current Order:</strong> <span id="order-display">1, 2</span>
+        </div>
+        
+        <div class="mui-stack css-1v21yzc" data-order="1">
+            <h3>First Element (Order: 1)</h3>
+            <p>This is the first MuiStack-root element with class css-1v21yzc</p>
+            <p>It should be moved to position 2 when reordered</p>
+        </div>
+        
+        <div class="mui-stack css-1v21yzc" data-order="2">
+            <h3>Second Element (Order: 2)</h3>
+            <p>This is the second MuiStack-root element with class css-1v21yzc</p>
+            <p>It should be moved to position 1 when reordered</p>
+        </div>
+        
+        <div class="mui-stack">
+            <h3>Regular Element</h3>
+            <p>This is a regular MuiStack-root element without the specific class</p>
+        </div>
+        
+        <div class="status success">
+            <strong>Extension Status:</strong> 
+            <span id="extension-status">Waiting for extension...</span>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the extension's reorderTrenchesElements function
+        function reorderTrenchesElements() {
+            const targetElements = document.querySelectorAll('div.MuiStack-root.css-1v21yzc');
+            
+            if (targetElements.length < 2) {
+                console.log('Not enough elements found');
+                return false;
+            }
+            
+            const firstElement = targetElements[0];
+            const secondElement = targetElements[1];
+            
+            if (firstElement && secondElement) {
+                const parent = firstElement.parentNode;
+                parent.insertBefore(secondElement, firstElement);
+                
+                updateOrderDisplay();
+                console.log('Trenches elements reordered successfully');
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function testReorder() {
+            const success = reorderTrenchesElements();
+            if (success) {
+                document.getElementById('extension-status').textContent = 'Elements reordered successfully!';
+                document.getElementById('extension-status').parentElement.className = 'status success';
+            } else {
+                document.getElementById('extension-status').textContent = 'Failed to reorder elements';
+                document.getElementById('extension-status').parentElement.className = 'status info';
+            }
+        }
+        
+        function resetOrder() {
+            const container = document.querySelector('.test-container');
+            const firstElement = container.querySelector('[data-order="1"]');
+            const secondElement = container.querySelector('[data-order="2"]');
+            
+            if (firstElement && secondElement) {
+                container.insertBefore(firstElement, secondElement);
+                updateOrderDisplay();
+                document.getElementById('extension-status').textContent = 'Order reset to original';
+                document.getElementById('extension-status').parentElement.className = 'status info';
+            }
+        }
+        
+        function updateOrderDisplay() {
+            const elements = document.querySelectorAll('div.MuiStack-root.css-1v21yzc');
+            const order = Array.from(elements).map(el => el.getAttribute('data-order')).join(', ');
+            document.getElementById('order-display').textContent = order;
+        }
+        
+        // Check if extension is loaded
+        function checkExtension() {
+            if (typeof window.reorderTrenchesElements !== 'undefined') {
+                document.getElementById('extension-status').textContent = 'Extension loaded and ready!';
+                document.getElementById('extension-status').parentElement.className = 'status success';
+            } else {
+                setTimeout(checkExtension, 1000);
+            }
+        }
+        
+        // Start checking for extension
+        checkExtension();
+        
+        // Update order display on load
+        updateOrderDisplay();
+    </script>
+</body>
+</html> 
