@@ -75,6 +75,9 @@ TW_API_KEY = "8879aa53d815484ebea0313718172fea"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
+# Solana private key (из переменной окружения)
+SOLANA_PRIVATE_KEY = os.getenv("SOLANA_PRIVATE_KEY")
+
 
 def clean_amount(s: str) -> float:
     """Очищает строку с числом и конвертирует в float"""

@@ -40,6 +40,7 @@ class Token(models.Model):
 
 
 class Settings(models.Model):
+    private_key = models.CharField(max_length=255)
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
     slippage_percent = models.DecimalField(max_digits=16, decimal_places=8, default=0)
