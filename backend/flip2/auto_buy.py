@@ -519,10 +519,9 @@ async def check_twitter_whitelist(twitter_name: str) -> bool:
             name=twitter_name,
             ath__gt=filter_ath
         ).first())()
-        
+    
         result = twitter_obj is not None
-        # Кэшируем результат
-        WHITELIST_CACHE[twitter_name] = result
+        
         return result
         
     except Exception as e:
