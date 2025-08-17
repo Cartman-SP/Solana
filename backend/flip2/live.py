@@ -181,11 +181,7 @@ async def get_twitter_data(twitter):
                 'name': token.address[:8] + '...',  # Сокращенное название
                 'ath': token.ath
             })
-        
-        print(avg_ath)
-        user_dev.ath = int(avg_ath)
-        await sync_to_async(user_dev.save)()
-        
+                
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_tokens': user_dev.total_tokens,
@@ -249,7 +245,9 @@ async def process_token_data(data):
         }
         
         await broadcast_to_extension(extension_data)
-        
+        twitter_acc = await sync_to_async(Twitter.objects.get)(name=twitter)
+        twitter_acc.ath = twitter_data['ath']
+        await sync_to_async(twitter_acc.save)()
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
         print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
