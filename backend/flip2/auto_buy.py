@@ -662,6 +662,7 @@ async def main():
                                 
                                 # Проверяем whitelist в базе данных
                                 is_whitelisted = await check_twitter_whitelist(twitter_name)
+                                print(is_whitelisted)
                                 if is_whitelisted:
                                     # Вызываем функцию buy для whitelist Twitter
                                     await buy(mint)  # price=0 для примера, можно изменить
