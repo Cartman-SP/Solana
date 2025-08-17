@@ -170,9 +170,14 @@ async def buy(mint):
         )
         
         # Отправляем транзакцию
-        sig = send_vt_via_helius(tx_bytes, None, HELIUS_HTTP)
-        print(f"✅ Transaction sent successfully: {sig}")
-        print(f"   View: https://solscan.io/tx/{sig}")
+        # Создаем Keypair из приватного ключа (нужно добавить в настройки)
+        if hasattr(settings_obj, 'private_key') and settings_obj.private_key:
+            kp = keypair_from_base58(settings_obj.private_key)
+            sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
+            print(f"✅ Transaction sent successfully: {sig}")
+            print(f"   View: https://solscan.io/tx/{sig}")
+        else:
+            print(f"❌ Cannot buy {mint}: private key not found in settings")
         
     except Exception as e:
         print(f"❌ Error buying {mint}: {str(e)}")
