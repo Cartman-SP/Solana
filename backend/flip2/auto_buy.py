@@ -106,6 +106,10 @@ def build_buy_tx(mint: str,
         "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
         "pool": pool
     }
+    
+    # Отладочная информация
+    print(f"🔍 Sending to PumpPortal: {jdumps(payload)}")
+    
     r = requests.post(PUMPPORTAL_TRADE_LOCAL,
                       headers={"Content-Type": "application/json"},
                       data=json.dumps(payload),
@@ -173,14 +177,15 @@ async def buy(mint):
         )
         
         # Отправляем транзакцию
-        # Создаем Keypair из приватного ключа (нужно добавить в настройки)
-        if hasattr(settings_obj, 'private_key') and settings_obj.private_key:
-            kp = keypair_from_base58(settings_obj.private_key)
+        # Создаем Keypair из приватного ключа (buyer_pubkey содержит приватный ключ)
+        try:
+            kp = keypair_from_base58(buyer_pubkey)
             sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
             print(f"✅ Transaction sent successfully: {sig}")
             print(f"   View: https://solscan.io/tx/{sig}")
-        else:
-            print(f"❌ Cannot buy {mint}: private key not found in settings")
+        except Exception as e:
+            print(f"❌ Error creating keypair from buyer_pubkey: {str(e)}")
+            print(f"   Make sure buyer_pubkey contains a valid base58 private key")
         
     except Exception as e:
         print(f"❌ Error buying {mint}: {str(e)}")
