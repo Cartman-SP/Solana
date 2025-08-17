@@ -602,6 +602,7 @@ async def main():
     session = None
     
     while True:
+
         try:
             if session is None:
                 session = aiohttp.ClientSession(connector=tcp, headers=headers)
@@ -618,15 +619,16 @@ async def main():
                 
                 await ws.send(LOGS_SUB_JSON)
                 await ws.recv()
+                settings_obj = await sync_to_async(Settings.objects.first)()
+                if not(settings_obj.start):
+                    time.sleep(30)
+                    continue
 
                 async for raw in ws:
                     try:
                         # Быстрый парсинг JSON
                         msg = jloads(raw)
                         if msg.get("method") != "logsNotification":
-                            continue
-                        settings_obj = await sync_to_async(Settings.objects.first)()
-                        if not(settings_obj.start):
                             continue
                         logs, sig, _slot = unpack_logs_notification(msg)
                         if not sig or sig in SEEN_SIGS:
