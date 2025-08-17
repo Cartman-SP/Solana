@@ -245,7 +245,8 @@ async def process_token_data(data):
         }
         
         await broadcast_to_extension(extension_data)
-        print(twitter_data['ath'])
+        with open('extension_data.json', 'w') as f:
+            json.dump(extension_data, f)
         twitter_acc = await sync_to_async(Twitter.objects.get)(name=twitter)
         twitter_acc.ath = twitter_data['ath']
         await sync_to_async(twitter_acc.save)()
@@ -253,7 +254,9 @@ async def process_token_data(data):
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
         print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
         
-    except:
+    except Exception as e:
+        with open('extension_data.json', 'w') as f:
+            json.dump(extension_data, f)
         pass
 
 async def listen_to_websocket():
