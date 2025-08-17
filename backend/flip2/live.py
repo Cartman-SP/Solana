@@ -51,12 +51,7 @@ async def broadcast_to_extension(data):
     for client in extension_clients:
         try:
             await client.send(json.dumps(data))
-        except Exception as e:
-            error_msg = f"Ошибка при отправке данных клиенту: {e}"
-            print(error_msg)
-            # Записываем ошибку в файл
-            with open('errors.log', 'a', encoding='utf-8') as f:
-                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
+        except:
             disconnected_clients.add(client)
     
     extension_clients.difference_update(disconnected_clients)
@@ -123,12 +118,15 @@ async def get_user_dev_data(user_address):
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except Exception as e:
-        error_msg = f"Ошибка в get_user_dev_data для {user_address}: {e}"
-        print(error_msg)
-        # Записываем ошибку в файл
-        with open('errors.log', 'a', encoding='utf-8') as f:
-            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
-        return None
+        print(e)
+        return{
+            'ath': 0,
+            'total_tokens': 1,
+            'whitelist': False,
+            'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': []
+        }
 
 async def get_twitter_data(twitter):
     """Получает данные UserDev из базы данных"""
@@ -183,6 +181,15 @@ async def get_twitter_data(twitter):
                 'name': token.address[:8] + '...',  # Сокращенное название
                 'ath': token.ath
             })
+        
+        # Сохраняем средний ATH в Twitter модель
+        print(f"DEBUG: Сохраняем ath={int(avg_ath)} для Twitter {twitter}")
+        user_dev.ath = int(avg_ath)
+        try:
+            await sync_to_async(user_dev.save)()
+            print(f"DEBUG: ATH успешно сохранен для Twitter {twitter}, {user_dev.ath}")
+        except Exception as e:
+            print(f"DEBUG: Ошибка при сохранении ATH: {e}")
                 
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
@@ -193,12 +200,15 @@ async def get_twitter_data(twitter):
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except Exception as e:
-        error_msg = f"Ошибка в get_twitter_data для {twitter}: {e}"
-        print(error_msg)
-        # Записываем ошибку в файл
-        with open('errors.log', 'a', encoding='utf-8') as f:
-            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
-        return None
+        print(e)
+        return{
+            'ath': 0,
+            'total_tokens': 1,
+            'whitelist': False,
+            'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': []
+        }
 
 
 async def process_token_data(data):
@@ -215,6 +225,7 @@ async def process_token_data(data):
             return
         user_dev_data = await get_user_dev_data(user)
         twitter_data = await get_twitter_data(twitter)
+        print(f"DEBUG: Получены данные Twitter: {twitter_data}")
         if user_dev_data is None:
             return
         # Проверяем twitter_data и устанавливаем значения по умолчанию
@@ -244,32 +255,16 @@ async def process_token_data(data):
         }
         
         await broadcast_to_extension(extension_data)
-        
-        # Сохраняем данные в файл для отладки
         with open('extension_data.json', 'w') as f:
             json.dump(extension_data, f)
-        
-        # Обновляем ATH в Twitter модели
-        try:
-            twitter_acc = await sync_to_async(Twitter.objects.get)(name=twitter)
-            twitter_acc.ath = twitter_data['ath']
-            await sync_to_async(twitter_acc.save)()
-        except Exception as e:
-            print(f"Ошибка при сохранении ATH для Twitter {twitter}: {e}")
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
         print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
         
     except Exception as e:
-        print(f"Ошибка в process_token_data: {e}")
-        # Сохраняем данные об ошибке для отладки
-        error_data = {
-            'error': str(e),
-            'data': data if 'data' in locals() else {},
-            'timestamp': datetime.now().strftime('%H:%M:%S')
-        }
-        with open('error_data.json', 'w') as f:
-            json.dump(error_data, f)
+        with open('extension_data.json', 'w') as f:
+            json.dump(extension_data, f)
+        pass
 
 async def listen_to_websocket():
     """Слушает основной веб-сокет и обрабатывает данные"""
@@ -280,18 +275,9 @@ async def listen_to_websocket():
                     try:
                         data = json.loads(message)
                         await process_token_data(data)
-                    except Exception as e:
-                        error_msg = f"Ошибка при обработке сообщения websocket: {e}"
-                        print(error_msg)
-                        # Записываем ошибку в файл
-                        with open('errors.log', 'a', encoding='utf-8') as f:
-                            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
-        except Exception as e:
-            error_msg = f"Ошибка в listen_to_websocket: {e}"
-            print(error_msg)
-            # Записываем ошибку в файл
-            with open('errors.log', 'a', encoding='utf-8') as f:
-                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
+                    except:
+                        pass
+        except:
             await asyncio.sleep(1)
 
 async def start_extension_server():
