@@ -58,7 +58,6 @@ def blacklist_user(request):
                 
                 response = JsonResponse({
                     'success': True,
-                    'message': f'User {user_dev.adress} added to blacklist via token {token_address}'
                 })
                 response["Access-Control-Allow-Origin"] = "*"
                 return response
@@ -133,7 +132,6 @@ def whitelist_user(request):
                 
                 response = JsonResponse({
                     'success': True,
-                    'message': f'User {user_dev.adress} added to whitelist via token {token_address}'
                 })
                 response["Access-Control-Allow-Origin"] = "*"
                 return response
