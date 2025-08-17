@@ -184,18 +184,10 @@ async def get_twitter_data(twitter):
         
         # Сохраняем средний ATH в Twitter модель
         user_dev.ath = int(avg_ath)
-        print(f"DEBUG: Попытка сохранить ATH {avg_ath} для Twitter {twitter}")
-        
         try:
             await sync_to_async(user_dev.save)()
-            print(f"DEBUG: ATH успешно сохранен для Twitter {twitter}: {avg_ath}")
-            
         except Exception as e:
-            # Логируем ошибку в файл logs_live.txt с добавлением
-            with open('logs_live.txt', 'a') as f:
-                f.write(f"{datetime.now()}: Ошибка при сохранении ATH для {twitter}: {e}\n")
-            print(f"DEBUG: Ошибка при сохранении ATH для {twitter}: {e}")
-            # Продолжаем выполнение, не прерывая процесс
+            print(f"DEBUG: Ошибка при сохранении ATH: {e}")
                 
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
