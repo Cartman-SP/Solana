@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from mainapp.models import UserDev, Token, Twitter
+from mainapp.models import UserDev, Token, Twitter, Settings
 from asgiref.sync import sync_to_async
 
 try:
@@ -22,7 +22,20 @@ import re
 import base64
 import websockets
 import aiohttp
+import requests
 from typing import Optional, Tuple, List, Dict, Any
+
+# Импорт solders для работы с Solana
+try:
+    from solders.keypair import Keypair
+    from solders.transaction import VersionedTransaction
+    from solders.rpc.requests import SendVersionedTransaction
+    from solders.rpc.config import RpcSendTransactionConfig
+    from solders.commitment_config import CommitmentLevel
+    SOLDERS_AVAILABLE = True
+except ImportError:
+    SOLDERS_AVAILABLE = False
+    print("Warning: solders not available, buy function will not work")
 
 # Быстрый JSON парсер
 try:
@@ -52,6 +65,10 @@ except ImportError:
 HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
 WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
 PUMP_FUN = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+HELIUS_HTTP = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
+
+# PumpPortal API
+PUMPPORTAL_TRADE_LOCAL = "https://pumpportal.fun/api/trade-local"
 
 # X/Twitter API
 TW_API_KEY = "8879aa53d815484ebea0313718172fea"
@@ -59,12 +76,106 @@ TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
 
+def clean_amount(s: str) -> float:
+    """Очищает строку с числом и конвертирует в float"""
+    s = s.strip().replace(",", ".")
+    s = s.strip("()[]")
+    return float(s)
 
-def buy(mint: str, price: int):
-    """Функция для покупки токена"""
-    print(f"🚀 BUYING: {mint} | Price: {price}")
-    # Здесь будет логика покупки
-    pass
+def keypair_from_base58(secret_b58: str) -> Keypair:
+    """Создает Keypair из base58 строки"""
+    return Keypair.from_base58_string(secret_b58.strip())
+
+def build_buy_tx(mint: str,
+                 buyer_pubkey: str,
+                 sol_amount: float,
+                 slippage_percent: float = 10.0,
+                 priority_fee_sol: float = 0.00005,
+                 pool: str = "pump") -> bytes:
+    """Строит транзакцию покупки через PumpPortal API"""
+    payload = {
+        "publicKey": buyer_pubkey,
+        "action": "buy",
+        "mint": mint,
+        "amount": sol_amount,          # тратим X SOL
+        "denominatedInSol": "true",    # сумма в SOL
+        "slippage": slippage_percent,  # % слиппеджа
+        "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
+        "pool": pool
+    }
+    r = requests.post(PUMPPORTAL_TRADE_LOCAL,
+                      headers={"Content-Type": "application/json"},
+                      data=json.dumps(payload),
+                      timeout=10)
+    if r.status_code != 200:
+        raise RuntimeError(f"PumpPortal error {r.status_code}: {r.text}")
+    return r.content  # сериализованный VersionedTransaction (bytes)
+
+def send_vt_via_helius(vt_bytes: bytes, kp: Keypair, helius_http: str) -> str:
+    """Отправляет подписанную транзакцию через Helius RPC"""
+    vt = VersionedTransaction.from_bytes(vt_bytes)
+    signed_tx = VersionedTransaction(vt.message, [kp])
+    cfg = RpcSendTransactionConfig(preflight_commitment=CommitmentLevel.Confirmed)
+    body = SendVersionedTransaction(signed_tx, cfg).to_json()
+    r = requests.post(helius_http,
+                      headers={"Content-Type": "application/json"},
+                      data=body,
+                      timeout=10)
+    data = r.json()
+    if "error" in data:
+        raise RuntimeError(f"Helius send error: {data['error']}")
+    sig = data.get("result")
+    if not sig:
+        raise RuntimeError(f"Unexpected Helius response: {data}")
+    return sig
+
+async def buy(mint):
+    """Функция автоматической покупки токена"""
+    if not SOLDERS_AVAILABLE:
+        print(f"❌ Cannot buy {mint}: solders library not available")
+        return
+    
+    try:
+        # Получаем настройки из базы данных
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        if not settings_obj:
+            print(f"❌ Cannot buy {mint}: no settings found")
+            return
+            
+        buyer_pubkey = settings_obj.buyer_pubkey
+        sol_amount = float(settings_obj.sol_amount)
+        slippage_percent = float(settings_obj.slippage_percent)
+        priority_fee_sol = float(settings_obj.priority_fee_sol)
+        filter_ath = settings_obj.filter_ath
+        
+        # Проверяем, что у нас есть все необходимые параметры
+        if not buyer_pubkey or sol_amount <= 0:
+            print(f"❌ Cannot buy {mint}: invalid buyer_pubkey or sol_amount")
+            return
+            
+        print(f"🚀 BUYING: {mint}")
+        print(f"   Buyer: {buyer_pubkey}")
+        print(f"   Amount: {sol_amount} SOL")
+        print(f"   Slippage: {slippage_percent}%")
+        print(f"   Priority Fee: {priority_fee_sol} SOL")
+        
+        # Строим транзакцию покупки
+        tx_bytes = build_buy_tx(
+            mint=mint,
+            buyer_pubkey=buyer_pubkey,
+            sol_amount=sol_amount,
+            slippage_percent=slippage_percent,
+            priority_fee_sol=priority_fee_sol,
+            pool="pump"  # используем pump pool по умолчанию
+        )
+        
+        # Отправляем транзакцию
+        sig = send_vt_via_helius(tx_bytes, None, HELIUS_HTTP)
+        print(f"✅ Transaction sent successfully: {sig}")
+        print(f"   View: https://solscan.io/tx/{sig}")
+        
+    except Exception as e:
+        print(f"❌ Error buying {mint}: {str(e)}")
 
 # state - используем более быстрые структуры данных
 SEEN_SIGS: set = set()
@@ -402,10 +513,15 @@ async def check_twitter_whitelist(twitter_name: str) -> bool:
         return WHITELIST_CACHE[twitter_name]
     
     try:
-        # Ищем Twitter с whitelist=True и указанным именем
+        # Получаем настройки для фильтрации
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        filter_ath = settings_obj.filter_ath if settings_obj else 0
+        
+        # Ищем Twitter с whitelist=True, указанным именем и ath больше filter_ath
         twitter_obj = await sync_to_async(Twitter.objects.filter)(
             whitelist=True, 
-            name=twitter_name
+            name=twitter_name,
+            ath__gt=filter_ath
         ).first()
         
         result = twitter_obj is not None
@@ -550,7 +666,7 @@ async def main():
                                 is_whitelisted = await check_twitter_whitelist(twitter_name)
                                 if is_whitelisted:
                                     # Вызываем функцию buy для whitelist Twitter
-                                    buy(mint, 0)  # price=0 для примера, можно изменить
+                                    buy(mint)  # price=0 для примера, можно изменить
 
                     except Exception:
                         continue
