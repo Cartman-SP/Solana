@@ -41,7 +41,7 @@ class Token(models.Model):
 
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
-    slippage_percent = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    sol_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     slippage_percent = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     priority_fee_sol = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     filter_ath = models.IntegerField(default=0)
