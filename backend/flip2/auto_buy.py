@@ -16,7 +16,7 @@ try:
     uvloop.install()
 except ImportError:
     pass
-
+import time
 import asyncio
 import re
 import base64
@@ -610,7 +610,10 @@ async def main():
                         msg = jloads(raw)
                         if msg.get("method") != "logsNotification":
                             continue
-
+                        settings_obj = await sync_to_async(Settings.objects.first)()
+                        if (settings.obj.statr is None):
+                            time.sleep(60)
+                            continue
                         logs, sig, _slot = unpack_logs_notification(msg)
                         if not sig or sig in SEEN_SIGS:
                             continue
