@@ -183,11 +183,9 @@ async def get_twitter_data(twitter):
             })
         
         # Сохраняем средний ATH в Twitter модель
-        print(f"DEBUG: Сохраняем ath={int(avg_ath)} для Twitter {twitter}")
         user_dev.ath = int(avg_ath)
         try:
             await sync_to_async(user_dev.save)()
-            print(f"DEBUG: ATH успешно сохранен для Twitter {twitter}, {user_dev.ath}")
         except Exception as e:
             print(f"DEBUG: Ошибка при сохранении ATH: {e}")
                 
