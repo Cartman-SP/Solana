@@ -516,7 +516,7 @@ async def check_twitter_whitelist(twitter_name: str) -> bool:
         # Ищем Twitter с whitelist=True, указанным именем и ath больше filter_ath
         twitter_obj = await sync_to_async(lambda: Twitter.objects.filter(
             whitelist=True, 
-            name=twitter_name,
+            name=f"@{twitter_name}",
             ath__gt=filter_ath
         ).first())()
     
@@ -526,8 +526,6 @@ async def check_twitter_whitelist(twitter_name: str) -> bool:
         
     except Exception as e:
         print(f"Error checking whitelist: {e}")
-        # Кэшируем ошибку как False
-        WHITELIST_CACHE[twitter_name] = False
         return False
 
 async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
