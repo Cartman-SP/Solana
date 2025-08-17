@@ -507,10 +507,6 @@ async def _get_first_member_via_members(session: aiohttp.ClientSession, communit
     return None, None, None
 
 async def check_twitter_whitelist(twitter_name: str) -> bool:
-    """Проверяет, есть ли Twitter в whitelist базе данных"""
-    # Проверяем кэш сначала
-    if twitter_name in WHITELIST_CACHE:
-        return WHITELIST_CACHE[twitter_name]
     
     try:
         # Получаем настройки для фильтрации
