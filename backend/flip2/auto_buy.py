@@ -78,6 +78,11 @@ TW_HEADERS = {"X-API-Key": TW_API_KEY}
 # Solana private key (из переменной окружения)
 SOLANA_PRIVATE_KEY = os.getenv("SOLANA_PRIVATE_KEY")
 
+# Default values (как в pump_buy.py)
+DEFAULT_SLIPPAGE = 10.0
+DEFAULT_PRIORITY_FEE = 0.00005
+DEFAULT_POOL = "pump"   # варианты: pump | pump-amm | raydium | auto
+
 
 def clean_amount(s: str) -> float:
     """Очищает строку с числом и конвертирует в float"""
@@ -92,9 +97,9 @@ def keypair_from_base58(secret_b58: str) -> Keypair:
 def build_buy_tx(mint: str,
                  buyer_pubkey: str,
                  sol_amount: float,
-                 slippage_percent: float = 10.0,
-                 priority_fee_sol: float = 0.00005,
-                 pool: str = "pump") -> bytes:
+                 slippage_percent: float = DEFAULT_SLIPPAGE,
+                 priority_fee_sol: float = DEFAULT_PRIORITY_FEE,
+                 pool: str = DEFAULT_POOL) -> bytes:
     """Строит транзакцию покупки через PumpPortal API"""
     payload = {
         "publicKey": buyer_pubkey,
@@ -137,7 +142,7 @@ def send_vt_via_helius(vt_bytes: bytes, kp: Keypair, helius_http: str) -> str:
     return sig
 
 async def buy(mint):
-    """Функция автоматической покупки токена"""
+    """Функция автоматической покупки токена (адаптированная из pump_buy.py)"""
     if not SOLDERS_AVAILABLE:
         print(f"❌ Cannot buy {mint}: solders library not available")
         return
@@ -149,11 +154,12 @@ async def buy(mint):
             print(f"❌ Cannot buy {mint}: no settings found")
             return
             
-        buyer_pubkey = settings_obj.buyer_pubkey
+        # Получаем настройки из Settings (как в pump_buy.py)
+        buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
         sol_amount = float(settings_obj.sol_amount)
         slippage_percent = float(settings_obj.slippage_percent)
         priority_fee_sol = float(settings_obj.priority_fee_sol)
-        filter_ath = settings_obj.filter_ath
+        pool = "pump"  # используем pump pool по умолчанию
         
         # Проверяем, что у нас есть все необходимые параметры
         if not buyer_pubkey or sol_amount <= 0:
@@ -161,31 +167,34 @@ async def buy(mint):
             return
             
         print(f"🚀 BUYING: {mint}")
-        print(f"   Buyer: {buyer_pubkey}")
         print(f"   Amount: {sol_amount} SOL")
         print(f"   Slippage: {slippage_percent}%")
         print(f"   Priority Fee: {priority_fee_sol} SOL")
+        print(f"   Pool: {pool}")
         
-        # Строим транзакцию покупки
-        tx_bytes = build_buy_tx(
-            mint=mint,
-            buyer_pubkey=buyer_pubkey,
-            sol_amount=sol_amount,
-            slippage_percent=slippage_percent,
-            priority_fee_sol=priority_fee_sol,
-            pool="pump"  # используем pump pool по умолчанию
-        )
-        
-        # Отправляем транзакцию
-        # Создаем Keypair из приватного ключа (buyer_pubkey содержит приватный ключ)
+        # Создаем Keypair из приватного ключа (как в pump_buy.py)
         try:
             kp = keypair_from_base58(buyer_pubkey)
-            sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
-            print(f"✅ Transaction sent successfully: {sig}")
-            print(f"   View: https://solscan.io/tx/{sig}")
+            print(f"   Buyer: {str(kp.pubkey())}")
         except Exception as e:
             print(f"❌ Error creating keypair from buyer_pubkey: {str(e)}")
             print(f"   Make sure buyer_pubkey contains a valid base58 private key")
+            return
+        
+        # Строим транзакцию покупки (точно как в pump_buy.py)
+        tx_bytes = build_buy_tx(
+            mint=mint,
+            buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
+            sol_amount=sol_amount,
+            slippage_percent=slippage_percent,
+            priority_fee_sol=priority_fee_sol,
+            pool=pool
+        )
+        
+        # Отправляем транзакцию (точно как в pump_buy.py)
+        sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
+        print(f"✅ Transaction sent successfully: {sig}")
+        print(f"   View: https://solscan.io/tx/{sig}")
         
     except Exception as e:
         print(f"❌ Error buying {mint}: {str(e)}")
