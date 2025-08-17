@@ -627,7 +627,6 @@ async def main():
                             continue
                         settings_obj = await sync_to_async(Settings.objects.first)()
                         if not(settings_obj.start):
-                            time.sleep(60)
                             continue
                         logs, sig, _slot = unpack_logs_notification(msg)
                         if not sig or sig in SEEN_SIGS:

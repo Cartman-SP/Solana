@@ -1016,7 +1016,12 @@ function initializeExtension() {
         addBlacklistButton();
     } else if (window.location.href.includes('trade.padre.gg/trenches')) {
         // Для страницы trenches меняем порядок элементов
-        reorderTrenchesElements();
+        console.log('Trenches page detected, calling reorderTrenchesElements...');
+        if (typeof reorderTrenchesElements === 'function') {
+            reorderTrenchesElements();
+        } else {
+            console.error('reorderTrenchesElements function is not defined!');
+        }
     }
 }
 
@@ -1024,33 +1029,59 @@ function initializeExtension() {
 function reorderTrenchesElements() {
     // Проверяем, что перестановка еще не была выполнена
     if (isTrenchesReordered) {
+        console.log('Trenches already reordered, skipping...');
         return;
     }
     
-    // Ищем элементы MuiStack-root с классом css-1v21yzc
-    const targetElements = document.querySelectorAll('div.MuiStack-root.css-1v21yzc');
+    console.log('Starting reorderTrenchesElements function...');
     
-    if (targetElements.length < 2) {
-        // Если элементы не найдены, пробуем еще раз через 1 секунду
+    try {
+        // Ищем родительский контейнер с классом css-12wpaax
+        const parentContainer = document.querySelector('div.MuiStack-root.css-12wpaax');
+        console.log('Parent container found:', !!parentContainer);
+        
+        if (!parentContainer) {
+            // Если родительский контейнер не найден, пробуем еще раз через 1 секунду
+            console.log('Parent container not found, retrying in 1 second...');
+            setTimeout(reorderTrenchesElements, 1000);
+            return;
+        }
+        
+        // Ищем элементы MuiStack-root с классами css-1v21yzc и css-1shjrlc внутри родительского контейнера
+        const targetElements = parentContainer.querySelectorAll('div.MuiStack-root.css-1v21yzc, div.MuiStack-root.css-1shjrlc');
+        console.log('Target elements found:', targetElements.length);
+        
+        if (targetElements.length < 3) {
+            // Если элементов меньше 3, пробуем еще раз через 1 секунду
+            console.log('Not enough target elements, retrying in 1 second...');
+            setTimeout(reorderTrenchesElements, 1000);
+            return;
+        }
+        
+        // Меняем местами второй и третий элементы (индексы 1 и 2)
+        const secondElement = targetElements[1];
+        const thirdElement = targetElements[2];
+        
+        console.log('Second element:', !!secondElement, 'Third element:', !!thirdElement);
+        
+        if (secondElement && thirdElement) {
+            // Сохраняем родительский элемент
+            const parent = secondElement.parentNode;
+            
+            // Меняем местами элементы
+            parent.insertBefore(thirdElement, secondElement);
+            
+            // Устанавливаем флаг, что элементы переставлены
+            isTrenchesReordered = true;
+            
+            console.log('Trenches elements reordered successfully: 2nd and 3rd elements swapped');
+        } else {
+            console.log('Second or third element not found:', { secondElement: !!secondElement, thirdElement: !!thirdElement });
+        }
+    } catch (error) {
+        console.error('Error in reorderTrenchesElements:', error);
+        // Пробуем еще раз через 1 секунду при ошибке
         setTimeout(reorderTrenchesElements, 1000);
-        return;
-    }
-    
-    console.log(targetElements);
-    ///const firstElement = targetElements[0];
-    ///const secondElement = targetElements[1];
-    
-    if (firstElement && secondElement) {
-        // Сохраняем родительский элемент
-        const parent = firstElement.parentNode;
-        
-        // Меняем местами элементы
-        parent.insertBefore(secondElement, firstElement);
-        
-        // Устанавливаем флаг, что элементы переставлены
-        isTrenchesReordered = true;
-        
-        console.log('Trenches elements reordered successfully');
     }
 }
 
@@ -1087,4 +1118,5 @@ observer.observe(document.body, {
 });
 
 // Делаем функции глобально доступными для обработчиков событий
-window.retryLoadWallets = retryLoadWallets; 
+window.retryLoadWallets = retryLoadWallets;
+window.reorderTrenchesElements = reorderTrenchesElements; 
