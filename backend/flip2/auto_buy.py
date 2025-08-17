@@ -611,7 +611,7 @@ async def main():
                         if msg.get("method") != "logsNotification":
                             continue
                         settings_obj = await sync_to_async(Settings.objects.first)()
-                        if (settings.obj.statr is None):
+                        if (settings_obj.start is None):
                             time.sleep(60)
                             continue
                         logs, sig, _slot = unpack_logs_notification(msg)
