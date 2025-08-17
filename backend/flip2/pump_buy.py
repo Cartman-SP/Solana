@@ -11,7 +11,7 @@ from solders.commitment_config import CommitmentLevel
 PUMPPORTAL_TRADE_LOCAL = "https://pumpportal.fun/api/trade-local"
 
 HELIUS_HTTP: Optional[str] = os.getenv("HELIUS") or None     # можно заранее экспортнуть переменную окружения HELIUS
-DEFAULT_SLIPPAGE = 10.0df 
+DEFAULT_SLIPPAGE = 10.0
 DEFAULT_PRIORITY_FEE = 0.00005
 DEFAULT_POOL = "pump"   # варианты: pump | pump-amm | raydium | auto
 

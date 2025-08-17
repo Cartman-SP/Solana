@@ -24,6 +24,7 @@ class Twitter(models.Model):
     blacklist = models.BooleanField(default=False)
     whitelist = models.BooleanField(default=False)
     total_tokens = models.IntegerField(default=0)
+    ath = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name

@@ -182,7 +182,8 @@ async def get_twitter_data(twitter):
                 'name': token.address[:8] + '...',  # Сокращенное название
                 'ath': token.ath
             })
-            
+        user_dev.ath = int(avg_ath)
+        user_dev.save()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_tokens': user_dev.total_tokens,
