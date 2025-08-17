@@ -166,8 +166,7 @@ async def get_twitter_data(twitter):
         else:
             migration_percentage = 0
         
-        # Получаем последние 3 токена разработчика (исключая текущий)
-        # Убираем exclude, так как user_address не определен в этой функции
+        # Получаем последние 3 токена разработчика
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 twitter=user_dev,
@@ -182,8 +181,11 @@ async def get_twitter_data(twitter):
                 'name': token.address[:8] + '...',  # Сокращенное название
                 'ath': token.ath
             })
+        
+        # Сохраняем средний ATH в Twitter модель
         user_dev.ath = int(avg_ath)
         user_dev.save()
+        
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_tokens': user_dev.total_tokens,
@@ -223,15 +225,7 @@ async def process_token_data(data):
         print(twitter_data)
         # Проверяем twitter_data и устанавливаем значения по умолчанию
         if twitter_data is None:
-            twitter_data = {
-                'total_tokens': 0,
-                'ath': 0,
-                'migrations': 0,
-                'recent_tokens': [],
-                'whitelist': False,
-                'blacklist': False
-            }
-        
+            return
         extension_data = {
             'mint': mint,
             'user': user,

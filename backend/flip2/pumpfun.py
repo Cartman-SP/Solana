@@ -249,7 +249,6 @@ async def send_to_websocket_server(websocket_data: dict):
     try:
         async with websockets.connect(WEBSOCKET_SERVER_URL, timeout=2.0) as ws:
             await ws.send(jdumps(websocket_data))
-            print(Fore.BLUE + "[WS] Данные отправлены в веб-сокет сервер" + Style.RESET_ALL)
     except Exception as e:
         print(Fore.RED + f"[WS] Ошибка отправки в веб-сокет: {e}" + Style.RESET_ALL)
 
@@ -397,7 +396,6 @@ async def main():
 
                 await ws.send(jdumps(build_logs_sub()))
                 ack = await ws.recv()
-                print(Fore.GREEN + "[subscribed]" + Style.RESET_ALL, COMMITMENT, MODE)
 
                 async for raw in ws:
                     msg = jloads(raw)
@@ -412,9 +410,6 @@ async def main():
                     global _debug_left
                     if DEBUG_SUB and _debug_left > 0:
                         _debug_left -= 1
-                        print(Fore.YELLOW + "DEBUG LOGS START" + Style.RESET_ALL)
-                        for l in logs: print(str(l))
-                        print(Fore.YELLOW + "DEBUG LOGS END" + Style.RESET_ALL)
 
                     # ---- фильтры ----
                     if MODE == "strict":
@@ -450,14 +445,6 @@ async def main():
                     SEEN_MINTS.add(mint)
 
                     stage = "LAUNCHED" if looks_like_complete(logs) else "CREATED"
-                    print(
-f"""{Fore.CYAN}{Style.BRIGHT}{stage}{Style.RESET_ALL}
-symbol: {parsed['symbol']}
-name: {parsed['name']}
-кто создал токен: {parsed['creator']}
-адрес токена: {mint}
-uri: {uri or ''}"""
-                    )
 
                     # Быстрый вывод готов, ниже — «мягкие» HTTP (не RPC) для доп. инфы
                     links = {}
@@ -484,13 +471,6 @@ uri: {uri or ''}"""
                                             community_src = "link"
                                             break
 
-                    if links.get("external_url"): print(f"external_url: {links['external_url']}")
-                    if links.get("website"):      print(f"website: {links['website']}")
-                    if links.get("x") or links.get("twitter"):
-                        print(f"x/twitter: {links.get('x') or links.get('twitter')}")
-                    if links.get("telegram"):     print(f"telegram: {links['telegram']}")
-                    if links.get("discord"):      print(f"discord: {links['discord']}")
-                    if img:                        print(f"image: {img}")
                     websocket_data = {
                         "source": "pumpfun",
                         "mint": mint,
@@ -508,7 +488,6 @@ uri: {uri or ''}"""
                                 line += f"  |  {label}: @{username}"
                                 if isinstance(followers, int):
                                     line += f"  |  подписчиков: {followers:,}"
-                                print(Fore.MAGENTA + Style.BRIGHT + line + Style.RESET_ALL)
                                 websocket_data["twitter_name"] = f"@{username}"
                                 websocket_data["twitter_followers"] = followers
 
@@ -517,7 +496,6 @@ uri: {uri or ''}"""
                         except Exception:
                             pass
                     await send_to_websocket_server(websocket_data)
-                    print("---")
 
         except Exception as e:
             print("WS reconnect after error:", e)
