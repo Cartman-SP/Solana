@@ -175,6 +175,9 @@ async def get_twitter_data(twitter):
         } for token in recent_dev_tokens]
         
         # Обновляем и сохраняем данные Twitter
+        old_ath = user_dev.ath
+        settings_obj =  await sync_to_async(Settings.objects.first)()
+        autobuy = old_ath > settings_obj.ath and user_dev.whitelist and settings_obj.start
         user_dev.ath = int(avg_ath)
         user_dev.total_tokens = await sync_to_async(Token.objects.filter(twitter=user_dev, processed=True).count)()
         try:
@@ -189,7 +192,8 @@ async def get_twitter_data(twitter):
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
             'migrations': round(migration_percentage, 1),
-            'recent_tokens': recent_tokens_info
+            'recent_tokens': recent_tokens_info,
+            'autobuy': autobuy
         }
     except Twitter.DoesNotExist:
         print(f"DEBUG: Twitter аккаунт {twitter} не найден в базе данных")
@@ -205,6 +209,7 @@ async def get_twitter_data(twitter):
                 'blacklist': False,
                 'migrations': 0,
                 'recent_tokens': []
+                'autobuy': False
             }
         except Exception as e:
             print(f"ERROR: Не удалось создать Twitter аккаунт {twitter}: {str(e)}")
@@ -223,6 +228,8 @@ async def process_token_data(data):
         symbol = data.get('symbol', '')
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
+        twitter_user = await sync_to_async(Twitter.objects.get)(name=twitter)
+
         if twitter == '':
             return
         user_dev_data = await get_user_dev_data(user)
@@ -254,6 +261,7 @@ async def process_token_data(data):
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],
             'twitter_blacklisted': twitter_data['blacklist'],
+            'autobuy': twitter_data['autobuy']
         }
         
         await broadcast_to_extension(extension_data)

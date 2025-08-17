@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Autobuy Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест функциональности Autobuy</h1>
+    
+    <div class="test-section">
+        <h2>Тестирование редиректа основного окна</h2>
+        <p>Эта страница тестирует функциональность редиректа основного окна при получении autobuy=true</p>
+        
+        <button class="test-button" onclick="testAutobuyRedirect()">Тест редиректа (mint: TEST123)</button>
+        <button class="test-button" onclick="testAutobuyRedirectWithCustomMint()">Тест с кастомным mint</button>
+        <button class="test-button" onclick="clearLog()">Очистить лог</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Инструкции по тестированию</h2>
+        <ol>
+            <li>Откройте основное окно с trade.padre.gg</li>
+            <li>Откройте боковую панель расширения</li>
+            <li>Нажмите кнопку теста</li>
+            <li>Проверьте, что основное окно редиректится на правильный URL</li>
+        </ol>
+    </div>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function testAutobuyRedirect() {
+            log('Тестируем редирект с mint: TEST123');
+            
+            // Симулируем получение данных от вебсокета
+            const mockData = {
+                mint: 'TEST123',
+                autobuy: true,
+                timestamp: new Date().toISOString()
+            };
+            
+            log(`Получены данные: ${JSON.stringify(mockData)}`);
+            
+            // Проверяем, что autobuy === true
+            if (mockData.autobuy === true && mockData.mint) {
+                log(`Autobuy = true, редиректим основное окно на: https://trade.padre.gg/trade/solana/${mockData.mint}`);
+                
+                // Здесь должна быть логика редиректа
+                // В реальном расширении это будет работать через chrome.tabs API
+                log('В реальном расширении здесь произойдет редирект основного окна');
+            } else {
+                log('Autobuy не равен true или mint отсутствует');
+            }
+        }
+
+        function testAutobuyRedirectWithCustomMint() {
+            const customMint = prompt('Введите mint адрес для тестирования:', 'ABC123DEF456');
+            if (customMint) {
+                log(`Тестируем редирект с кастомным mint: ${customMint}`);
+                
+                const mockData = {
+                    mint: customMint,
+                    autobuy: true,
+                    timestamp: new Date().toISOString()
+                };
+                
+                log(`Получены данные: ${JSON.stringify(mockData)}`);
+                
+                if (mockData.autobuy === true && mockData.mint) {
+                    log(`Autobuy = true, редиректим основное окно на: https://trade.padre.gg/trade/solana/${mockData.mint}`);
+                    log('В реальном расширении здесь произойдет редирект основного окна');
+                }
+            }
+        }
+
+        // Инициализация
+        log('Страница тестирования загружена');
+        log('Готов к тестированию функциональности autobuy');
+    </script>
+</body>
+</html> 

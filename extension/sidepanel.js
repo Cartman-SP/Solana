@@ -162,6 +162,12 @@ class TokenMonitor {
             return; // Токен уже существует, не добавляем повторно
         }
         
+        // Проверяем поле autobuy и редиректим основное окно если нужно
+        if (data.autobuy === true && data.mint) {
+            console.log(`Получен autobuy=true для токена ${data.mint}, редиректим основное окно`);
+            this.redirectMainWindow(data.mint);
+        }
+        
         // Токены всегда добавляются в конец
         const tokenWithData = {
             ...data,
@@ -814,6 +820,45 @@ class TokenMonitor {
                 button.disabled = false;
                 button.style.background = '';
             }, 2000);
+        });
+    }
+    
+    redirectMainWindow(mint) {
+        console.log(`Попытка редиректа основного окна для токена: ${mint}`);
+        
+        // Получаем все вкладки и находим основное окно (не боковую панель)
+        chrome.tabs.query({}, (tabs) => {
+            console.log(`Найдено вкладок: ${tabs.length}`);
+            
+            // Ищем вкладку с основным окном (не боковой панелью)
+            const mainTab = tabs.find(tab => 
+                tab.url && 
+                tab.url.includes('trade.padre.gg') && 
+                !tab.url.includes('chrome-extension://')
+            );
+            
+            if (mainTab) {
+                console.log(`Найдена основная вкладка: ${mainTab.url}`);
+                // Редиректим основное окно на страницу торговли
+                const tradeUrl = `https://trade.padre.gg/trade/solana/${mint}`;
+                chrome.tabs.update(mainTab.id, { url: tradeUrl }, (updatedTab) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Ошибка при обновлении вкладки:', chrome.runtime.lastError);
+                    } else {
+                        console.log(`Редирект основного окна на: ${tradeUrl}`);
+                    }
+                });
+            } else {
+                console.log('Основная вкладка не найдена, открываем новую');
+                // Если основное окно не найдено, открываем новую вкладку
+                chrome.tabs.create({ url: `https://trade.padre.gg/trade/solana/${mint}` }, (newTab) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Ошибка при создании новой вкладки:', chrome.runtime.lastError);
+                    } else {
+                        console.log(`Открыта новая вкладка с: https://trade.padre.gg/trade/solana/${mint}`);
+                    }
+                });
+            }
         });
     }
 }

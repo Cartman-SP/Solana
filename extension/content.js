@@ -1058,25 +1058,24 @@ function reorderTrenchesElements() {
             return;
         }
         
-        // Меняем местами второй и третий элементы (индексы 1 и 2)
-        const secondElement = targetElements[1];
-        const thirdElement = targetElements[2];
+        // Перемещаем первый элемент (New) в конец родительского блока
+        const firstElement = targetElements[0];
         
-        console.log('Second element:', !!secondElement, 'Third element:', !!thirdElement);
+        console.log('First element (New):', !!firstElement);
         
-        if (secondElement && thirdElement) {
+        if (firstElement) {
             // Сохраняем родительский элемент
-            const parent = secondElement.parentNode;
+            const parent = firstElement.parentNode;
             
-            // Меняем местами элементы
-            parent.insertBefore(thirdElement, secondElement);
+            // Перемещаем первый элемент в конец
+            parent.appendChild(firstElement);
             
             // Устанавливаем флаг, что элементы переставлены
             isTrenchesReordered = true;
             
-            console.log('Trenches elements reordered successfully: 2nd and 3rd elements swapped');
+            console.log('Trenches elements reordered successfully: New moved to the end');
         } else {
-            console.log('Second or third element not found:', { secondElement: !!secondElement, thirdElement: !!thirdElement });
+            console.log('First element not found');
         }
     } catch (error) {
         console.error('Error in reorderTrenchesElements:', error);

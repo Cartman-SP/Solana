@@ -6,11 +6,13 @@
   "permissions": [
     "sidePanel",
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "https://goodelivery.ru/*",
     "https://solscan.io/*",
+    "https://trade.padre.gg/*",
     "wss://goodelivery.ru/*",
     "ws://goodelivery.ru/*"
   ],
