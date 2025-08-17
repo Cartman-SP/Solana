@@ -245,6 +245,7 @@ async def process_token_data(data):
         }
         
         await broadcast_to_extension(extension_data)
+        print(twitter_data['ath'])
         twitter_acc = await sync_to_async(Twitter.objects.get)(name=twitter)
         twitter_acc.ath = twitter_data['ath']
         await sync_to_async(twitter_acc.save)()
