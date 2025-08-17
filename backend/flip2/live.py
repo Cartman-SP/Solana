@@ -183,6 +183,8 @@ async def get_twitter_data(twitter):
             })
         
         # Сохраняем средний ATH в Twitter модель
+        user_dev.ath = int(avg_ath)
+        user_dev.save()
         
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
@@ -220,7 +222,6 @@ async def process_token_data(data):
         twitter_data = await get_twitter_data(twitter)
         if user_dev_data is None:
             return
-        print(twitter_data)
         # Проверяем twitter_data и устанавливаем значения по умолчанию
         if twitter_data is None:
             return
