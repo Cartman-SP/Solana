@@ -518,11 +518,11 @@ async def check_twitter_whitelist(twitter_name: str) -> bool:
         filter_ath = settings_obj.filter_ath if settings_obj else 0
         
         # Ищем Twitter с whitelist=True, указанным именем и ath больше filter_ath
-        twitter_obj = await sync_to_async(Twitter.objects.filter)(
+        twitter_obj = await sync_to_async(lambda: Twitter.objects.filter(
             whitelist=True, 
             name=twitter_name,
             ath__gt=filter_ath
-        ).first()
+        ).first())
         
         result = twitter_obj is not None
         # Кэшируем результат
@@ -669,7 +669,7 @@ async def main():
                                 is_whitelisted = await check_twitter_whitelist(twitter_name)
                                 if is_whitelisted:
                                     # Вызываем функцию buy для whitelist Twitter
-                                    buy(mint)  # price=0 для примера, можно изменить
+                                    await buy(mint)  # price=0 для примера, можно изменить
 
                     except Exception:
                         continue
