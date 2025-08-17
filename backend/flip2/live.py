@@ -184,7 +184,7 @@ async def get_twitter_data(twitter):
         
         # Сохраняем средний ATH в Twitter модель
         user_dev.ath = int(avg_ath)
-        user_dev.save()
+        await sync_to_async(user_dev.save)()
         
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
