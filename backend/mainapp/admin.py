@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AdminDev, UserDev, Token, Twitter
+from .models import AdminDev, UserDev, Token, Twitter, Settings
 
 class TotalTokensFilter(admin.SimpleListFilter):
     title = 'Количество токенов'
@@ -42,5 +42,22 @@ class TokenAdmin(admin.ModelAdmin):
     ordering = ('-created_at', 'address')
     list_per_page = 50
     date_hierarchy = 'created_at'
+
+@admin.register(Settings)
+class SettingsAdmin(admin.ModelAdmin):
+    list_display = ('buyer_pubkey', 'sol_amount', 'slippage_percent', 'priority_fee_sol', 'filter_ath', 'start')
+    list_filter = ('start', 'filter_ath')
+    search_fields = ('buyer_pubkey',)
+    ordering = ('-sol_amount',)
+    list_per_page = 50
+    
+    fieldsets = (
+        ('Основные настройки', {
+            'fields': ('buyer_pubkey', 'sol_amount', 'start')
+        }),
+        ('Параметры торговли', {
+            'fields': ('slippage_percent', 'priority_fee_sol', 'filter_ath')
+        }),
+    )
 
 
