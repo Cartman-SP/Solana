@@ -131,6 +131,7 @@ async def get_user_dev_data(user_address):
 async def get_twitter_data(twitter):
     """Получает данные UserDev из базы данных"""
     try:
+        # Проверяем, существует ли Twitter аккаунт
         user_dev = await sync_to_async(Twitter.objects.get)(name=twitter)
         
         if user_dev.blacklist:
@@ -141,73 +142,76 @@ async def get_twitter_data(twitter):
             Token.objects.filter(
                 twitter=user_dev,
                 ath__gt=0,
-                processed = True
+                processed=True
             ).order_by('-created_at')[:3]
         )
         
         # Рассчитываем средний ATH
-        if recent_tokens:
-            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
-        else:
-            avg_ath = 0
+        avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens) if recent_tokens else 0
         
         # Получаем последние 100 токенов для расчета процента миграций
         recent_100_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 twitter=user_dev,
-                processed = True
+                processed=True
             ).order_by('-created_at')[:100]
         )
         
         # Рассчитываем процент мигрированных токенов
-        if recent_100_tokens:
-            migrated_count = sum(1 for token in recent_100_tokens if token.migrated)
-            migration_percentage = (migrated_count / len(recent_100_tokens)) * 100
-        else:
-            migration_percentage = 0
+        migration_percentage = (sum(1 for token in recent_100_tokens if token.migrated) / len(recent_100_tokens) * 100) if recent_100_tokens else 0
         
         # Получаем последние 3 токена разработчика
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 twitter=user_dev,
-                processed = True
+                processed=True
             ).order_by('-created_at')[:3]
         )
         
         # Формируем список последних токенов
-        recent_tokens_info = []
-        for token in recent_dev_tokens:
-            recent_tokens_info.append({
-                'name': token.address[:8] + '...',  # Сокращенное название
-                'ath': token.ath
-            })
+        recent_tokens_info = [{
+            'name': token.address[:8] + '...',
+            'ath': token.ath
+        } for token in recent_dev_tokens]
         
-        # Сохраняем средний ATH в Twitter модель
+        # Обновляем и сохраняем данные Twitter
         user_dev.ath = int(avg_ath)
+        user_dev.total_tokens = await sync_to_async(Token.objects.filter(twitter=user_dev, processed=True).count)()
         try:
             await sync_to_async(user_dev.save)()
+            print(f"DEBUG: Успешно сохранен Twitter {twitter} с ATH {user_dev.ath}")
         except Exception as e:
-            print(f"DEBUG: Ошибка при сохранении ATH: {e}")
+            print(f"ERROR: Не удалось сохранить Twitter {twitter}: {str(e)}")
                 
         return {
-            'ath': int(avg_ath),  # Средний ATH последних 5 токенов
+            'ath': int(avg_ath),
             'total_tokens': user_dev.total_tokens,
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
-            'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
-            'recent_tokens': recent_tokens_info  # Последние 3 токена
+            'migrations': round(migration_percentage, 1),
+            'recent_tokens': recent_tokens_info
         }
+    except Twitter.DoesNotExist:
+        print(f"DEBUG: Twitter аккаунт {twitter} не найден в базе данных")
+        # Создаем новый Twitter аккаунт, если он не существует
+        try:
+            user_dev = Twitter(name=twitter)
+            await sync_to_async(user_dev.save)()
+            print(f"DEBUG: Создан новый Twitter аккаунт {twitter}")
+            return {
+                'ath': 0,
+                'total_tokens': 0,
+                'whitelist': False,
+                'blacklist': False,
+                'migrations': 0,
+                'recent_tokens': []
+            }
+        except Exception as e:
+            print(f"ERROR: Не удалось создать Twitter аккаунт {twitter}: {str(e)}")
+            return None
     except Exception as e:
-        print(e)
-        return{
-            'ath': 0,
-            'total_tokens': 1,
-            'whitelist': False,
-            'blacklist': False,
-            'migrations': 0,
-            'recent_tokens': []
-        }
-
+        print(f"ERROR: Ошибка при обработке Twitter {twitter}: {str(e)}")
+        return None
 
 async def process_token_data(data):
     """Обрабатывает данные токена и отправляет в расширение"""
