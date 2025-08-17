@@ -15,7 +15,7 @@ from django.utils import timezone
 
 def delete_old_tokens():
     """Удаляет токены старше 2-х дней"""
-    # Вычисляем дату 2 дня назад
+    # Вычисляем дату 2 дня назад - используем UTC время
     two_days_ago = timezone.now() - timedelta(days=2)
     
     # Находим токены старше 2-х дней

@@ -206,9 +206,9 @@ async def process_token_complete(token_address: str, session: aiohttp.ClientSess
 
 async def get_tokens_for_processing():
     """Получает токены для обработки согласно критериям"""
-    # Время 60 минут назад
+    # Время 60 минут назад - используем UTC время
     sixty_minutes_ago = timezone.now() - timedelta(minutes=10)
-    
+    print(sixty_minutes_ago)
     # Получаем токены с ATH = 0, созданные больше 60 минут назад
     # и у которых UserDev не в черном списке и имеет не больше 300 токенов
     tokens = await sync_to_async(list)(

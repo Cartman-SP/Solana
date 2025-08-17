@@ -15,8 +15,8 @@ from django.utils import timezone
 
 def delete_unprocessed_old_tokens():
     """Удаляет необработанные токены (processed=False) старше 40 минут"""
-    # Вычисляем дату 40 минут назад
-    forty_minutes_ago = timezone.now() - timedelta(minutes=40)
+    # Вычисляем дату 40 минут назад - используем локальное время
+    forty_minutes_ago = timezone.localtime(timezone.now()) - timedelta(minutes=40)
     
     # Находим необработанные токены старше 40 минут
     old_unprocessed_tokens = Token.objects.filter(
