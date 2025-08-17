@@ -187,6 +187,8 @@ async def get_twitter_data(twitter):
         try:
             await sync_to_async(user_dev.save)()
         except Exception as e:
+            with open('extension_data.txt', 'w') as f:
+                f.write(str(e))
             print(f"DEBUG: Ошибка при сохранении ATH: {e}")
                 
         return {
@@ -260,8 +262,6 @@ async def process_token_data(data):
         print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
         
     except Exception as e:
-        with open('extension_data.json', 'w') as f:
-            json.dump(extension_data, f)
         pass
 
 async def listen_to_websocket():
