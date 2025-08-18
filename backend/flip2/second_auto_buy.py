@@ -179,9 +179,11 @@ async def main_loop():
                         msg = json.loads(raw)
                         if msg.get("method") == "logsNotification":
                             await process_message(msg, session)
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         continue
-        except Exception:
+        except Exception as e:
+            print(e)
             await asyncio.sleep(0.1)
         finally:
             await session.close()
