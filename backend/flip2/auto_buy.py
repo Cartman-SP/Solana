@@ -16,7 +16,15 @@ from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
 from decimal import Decimal
-from solders.transaction import VersionedTx
+import base64
+from decimal import Decimal
+import requests
+from solders.keypair import Keypair
+from solders.transaction import VersionedTransaction
+from solders.message import Message
+from solana.rpc.api import Client
+from solana.rpc.commitment import CommitmentLevel
+from solana.rpc.types import RpcSendTransactionConfig
 
 import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -118,39 +126,78 @@ async def buy_via_jupiter(mint: str):
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
-
-        quote = requests.get(
+        amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
+        slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
+        
+        # 3. Получаем квоту
+        quote_params = {
+            "inputMint": "So11111111111111111111111111111111111111112",
+            "outputMint": mint,
+            "amount": amount_lamports,
+            "slippageBps": slippage_bps
+        }
+        
+        quote_response = requests.get(
             f"{JUPITER_API}/quote",
-            params={
-                "inputMint": "So11111111111111111111111111111111111111112",
-                "outputMint": mint,
-                "amount": str(int(settings_obj.sol_amount * Decimal(1e9))),
-                "slippageBps": str(int(settings_obj.slippage_percent * 100))
-            }
-        ).json()
+            params=quote_params,
+            headers={"Accept": "application/json"},
+            timeout=15
+        )
+        quote_response.raise_for_status()
+        quote = quote_response.json()
 
-        # 2. Получаем транзакцию
-        swap_data = requests.post(
+        if "error" in quote:
+            raise RuntimeError(f"Jupiter quote error: {quote['error']}")
+
+        # 4. Получаем транзакцию для подписи
+        swap_payload = {
+            "quoteResponse": quote,
+            "userPublicKey": str(kp.pubkey()),
+            "wrapAndUnwrapSol": True,
+            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))
+        }
+        
+        swap_response = requests.post(
             f"{JUPITER_API}/swap",
-            json={
-                "quoteResponse": quote,
-                "userPublicKey": str(kp.pubkey()),
-                "wrapAndUnwrapSol": True
-            }
-        ).json()
+            json=swap_payload,
+            headers={"Content-Type": "application/json"},
+            timeout=15
+        )
+        swap_response.raise_for_status()
+        swap_data = swap_response.json()
 
-        # 3. Декодируем и подписываем (исправленная часть)
-        raw_tx = base64.b64decode(swap_data["swapTransaction"])
-        tx = VersionedTx.from_bytes(raw_tx)
-        signed_tx = tx.sign([kp])  # Новый метод подписи
+        if "swapTransaction" not in swap_data:
+            raise RuntimeError("No transaction data in Jupiter response")
 
-        # 4. Отправляем
+        # 5. Декодируем и подписываем транзакцию
+        try:
+            raw_tx = base64.b64decode(swap_data["swapTransaction"])
+            tx = VersionedTransaction.from_bytes(raw_tx)
+            
+            # Создаем подписанную транзакцию
+            signed_tx = VersionedTransaction(
+                message=tx.message,
+                signatures=[kp.sign(tx.message.serialize())]
+            )
+        except Exception as e:
+            raise RuntimeError(f"Transaction signing failed: {str(e)}")
+
+        # 6. Отправляем транзакцию
         rpc_client = Client(HELIUS_HTTP)
-        tx_hash = await rpc_client.send_raw_transaction(bytes(signed_tx))
+        tx_hash = await rpc_client.send_raw_transaction(
+            bytes(signed_tx),
+            opts=RpcSendTransactionConfig(
+                skip_preflight=False,
+                preflight_commitment=CommitmentLevel.Confirmed,
+            )
+        )
+        
         return str(tx_hash.value)
 
+    except requests.RequestException as e:
+        raise RuntimeError(f"HTTP request failed: {str(e)}")
     except Exception as e:
-        raise RuntimeError(f"Swap failed: {str(e)}")
+        raise RuntimeError(f"Swap execution failed: {str(e)}")
 
 
 
