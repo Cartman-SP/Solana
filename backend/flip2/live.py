@@ -253,7 +253,7 @@ async def process_token_data(data):
         if twitter == '':
             return
 
-        autobuy = check_twitter_whitelist(twitter,user)
+        autobuy = await check_twitter_whitelist(twitter,user)
         user_dev_data = await get_user_dev_data(user)
         twitter_data = await get_twitter_data(twitter)
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
