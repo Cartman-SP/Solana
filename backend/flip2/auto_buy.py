@@ -127,7 +127,7 @@ async def buy_via_jupiter(mint: str):
         amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
         slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
         time.sleep(1)
-        # Получаем квоту
+        # 1. Получаем квоту от Jupiter
         quote_params = {
             "inputMint": "So11111111111111111111111111111111111111112",
             "outputMint": mint,
@@ -147,7 +147,7 @@ async def buy_via_jupiter(mint: str):
         if "error" in quote:
             raise RuntimeError(f"Jupiter quote error: {quote['error']}")
 
-        # Получаем транзакцию для подписи
+        # 2. Получаем транзакцию для подписи
         swap_payload = {
             "quoteResponse": quote,
             "userPublicKey": str(kp.pubkey()),
@@ -167,17 +167,21 @@ async def buy_via_jupiter(mint: str):
         if "swapTransaction" not in swap_data:
             raise RuntimeError("No transaction data in Jupiter response")
 
-        # Декодируем и подписываем транзакцию
+        # 3. Декодируем и подписываем транзакцию (правильный способ для solders 0.29)
         try:
             raw_tx = base64.b64decode(swap_data["swapTransaction"])
             tx = VersionedTransaction.from_bytes(raw_tx)
             
-            # Подписываем транзакцию (исправленный метод для solders 0.29)
-            signed_tx = tx.sign([kp])
+            # Создаем подписанную транзакцию
+            signatures = [kp.sign(tx.message.serialize())]
+            signed_tx = VersionedTransaction(
+                message=tx.message,
+                signatures=signatures
+            )
         except Exception as e:
             raise RuntimeError(f"Transaction signing failed: {str(e)}")
 
-        # Отправляем транзакцию
+        # 4. Отправляем транзакцию
         rpc_client = Client(HELIUS_HTTP)
         tx_hash = await rpc_client.send_raw_transaction(
             bytes(signed_tx),
@@ -193,7 +197,6 @@ async def buy_via_jupiter(mint: str):
         raise RuntimeError(f"HTTP request failed: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Swap execution failed: {str(e)}")
-
 
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
