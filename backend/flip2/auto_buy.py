@@ -90,18 +90,28 @@ async def check_twitter_whitelist(twitter_name,creator):
                 return False
         if(settings_obj.whitelist_enabled):
             try:
-                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",whitelist=True,ath__gt=settings_obj.ath_from)
+                await sync_to_async(Twitter.objects.get)(
+                    name=f"@{twitter_name}",
+                    whitelist=True,
+                    ath__gt=settings_obj.ath_from,
+                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                )
             except:
                 return False
         else:
             try:
-                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",ath__gt=settings_obj.ath_from)
+                await sync_to_async(Twitter.objects.get)(
+                    name=f"@{twitter_name}",
+                    ath__gt=settings_obj.ath_from,
+                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                )
             except:
                 return False
         return True
-    except:
-        return False
-        
+    except Exception as e:
+        print(e)
+        return False     
+           
 async def get_creator_username(session, community_id):
     """Получение username создателя сообщества"""
     if community_id in COMMUNITY_CACHE:
