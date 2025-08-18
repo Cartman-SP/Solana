@@ -623,22 +623,19 @@ async def main():
                 if not(settings_obj.start):
                     time.sleep(30)
                     continue
-
-                async for raw in ws:
+                async for raw,num in enumerate(ws):
                     try:
-                        # Быстрый парсинг JSON
                         msg = jloads(raw)
                         if msg.get("method") != "logsNotification":
                             continue
                         logs, sig, _slot = unpack_logs_notification(msg)
                         if not sig or sig in SEEN_SIGS:
                             continue
-
                         # ---- фильтры ----
                         # минимально строгие условия: есть Create, нет явной ошибки
                         if not (looks_like_create(logs) and not has_error(logs)):
                             continue
-
+                        print(num)
                         # Парсим данные из блока Create
                         data = collect_progdata_bytes_after_create(logs)
                         parsed = parse_pump_create(data or b"")
@@ -647,12 +644,6 @@ async def main():
 
                         uri  = (parsed["uri"] or "").strip()
                         mint = (parsed["mint"] or "").strip()
-                        sym  = (parsed["symbol"] or "").strip()
-
-                        if not mint or mint in SEEN_MINTS:
-                            continue
-                        if not sym:
-                            continue
 
                         # помечаем после всех фильтров
                         SEEN_SIGS.add(sig)

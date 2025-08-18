@@ -476,6 +476,11 @@ class TokenMonitor {
             tokenElement.querySelector('.token-card').classList.add('new-token');
         }
         
+        // Добавляем стили для токенов с autobuy
+        if (token.autobuy === true) {
+            tokenElement.querySelector('.token-card').classList.add('autobuy-token');
+        }
+        
         return tokenElement;
     }
     

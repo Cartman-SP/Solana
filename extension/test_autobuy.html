@@ -38,6 +38,174 @@
             max-height: 200px;
             overflow-y: auto;
         }
+        
+        /* Стили для превью autobuy токена */
+        .token-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+            border: 1px solid #444;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .token-card.autobuy-token {
+            background: linear-gradient(135deg, #ff4500 0%, #ff6347 100%);
+            border: 2px solid #ff8c00;
+            box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+            position: relative;
+            animation: autobuyPulse 2s ease-in-out infinite;
+        }
+        
+        .token-card.autobuy-token::before {
+            content: "🚀 AUTOBUY";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff8c00;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+        
+        .token-card.autobuy-token .token-symbol {
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .token-card.autobuy-token .token-name {
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            font-size: 16px;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .token-card.autobuy-token .token-source {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .token-card.autobuy-token .token-time {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 13px;
+            color: white;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .token-card.autobuy-token .token-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .token-card.autobuy-token .token-stats-grid {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .token-card.autobuy-token .token-actions {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .token-card.autobuy-token .action-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .token-card.autobuy-token .action-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .token-card.autobuy-token .token-mint,
+        .token-card.autobuy-token .user-address {
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+        }
+        
+        @keyframes autobuyPulse {
+            0% {
+                box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 4px 30px rgba(255, 69, 0, 0.8), 0 0 40px rgba(255, 69, 0, 0.3);
+            }
+            100% {
+                box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+            }
+        }
+        
+        .token-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .token-main-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .token-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +217,7 @@
         
         <button class="test-button" onclick="testAutobuyRedirect()">Тест редиректа (mint: TEST123)</button>
         <button class="test-button" onclick="testAutobuyRedirectWithCustomMint()">Тест с кастомным mint</button>
+        <button class="test-button" onclick="showAutobuyPreview()">Показать превью autobuy токена</button>
         <button class="test-button" onclick="clearLog()">Очистить лог</button>
         
         <div class="log" id="log"></div>
@@ -120,6 +289,49 @@
             }
         }
 
+        function showAutobuyPreview() {
+            log('Показываем превью autobuy токена');
+            
+            // Создаем превью токена с autobuy стилями
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'test-section';
+            previewContainer.innerHTML = `
+                <h3>Превью токена с autobuy=true</h3>
+                <div class="token-card autobuy-token" style="max-width: 600px;">
+                    <div class="token-header">
+                        <div class="token-main-info">
+                            <div class="token-symbol">TEST</div>
+                            <div class="token-name">Test Token Name</div>
+                        </div>
+                        <div class="token-meta">
+                            <div class="token-source">PUMP</div>
+                            <div class="token-time">12:00:00</div>
+                        </div>
+                    </div>
+                    <div class="token-info">
+                        <div class="token-mint">ABC123...DEF456</div>
+                        <div class="user-address">USER123...ABC456</div>
+                    </div>
+                    <div class="token-stats-grid">
+                        <div>User ATH: $1,234</div>
+                        <div>User Tokens: 50</div>
+                        <div>User Migrations: 15%</div>
+                    </div>
+                    <div class="token-actions">
+                        <button class="action-button">Copy Mint</button>
+                        <button class="action-button">Open Solscan</button>
+                        <button class="action-button">Open Padre</button>
+                    </div>
+                </div>
+                <p><strong>Этот токен имеет autobuy=true и будет автоматически редиректить основное окно!</strong></p>
+            `;
+            
+            // Добавляем превью на страницу
+            document.body.appendChild(previewContainer);
+            
+            log('Превью autobuy токена добавлено на страницу');
+        }
+        
         // Инициализация
         log('Страница тестирования загружена');
         log('Готов к тестированию функциональности autobuy');

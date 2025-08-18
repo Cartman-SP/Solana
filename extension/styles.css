@@ -236,6 +236,109 @@ body {
     animation: newTokenGlow 0.5s ease-in-out;
 }
 
+.token-card.autobuy-token {
+    background: linear-gradient(135deg, #ff4500 0%, #ff6347 100%);
+    border: 2px solid #ff8c00;
+    box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+    position: relative;
+    animation: autobuyPulse 2s ease-in-out infinite;
+}
+
+.token-card.autobuy-token::before {
+    content: "🚀 AUTOBUY";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff8c00;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.token-card.autobuy-token .token-symbol {
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.token-card.autobuy-token .token-name {
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.token-card.autobuy-token .token-source {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.token-card.autobuy-token .token-time {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.token-card.autobuy-token .token-info {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.token-card.autobuy-token .token-stats-grid {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.token-card.autobuy-token .token-addresses {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.token-card.autobuy-token .token-actions {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.token-card.autobuy-token .user-ath,
+.token-card.autobuy-token .user-tokens,
+.token-card.autobuy-token .user-migrations,
+.token-card.autobuy-token .twitter-ath,
+.token-card.autobuy-token .twitter-tokens,
+.token-card.autobuy-token .twitter-migrations,
+.token-card.autobuy-token .token-mint,
+.token-card.autobuy-token .user-address,
+.token-card.autobuy-token .twitter-name,
+.token-card.autobuy-token .twitter-followers {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.token-card.autobuy-token .recent-token-item {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.token-card.autobuy-token .recent-token-name,
+.token-card.autobuy-token .recent-token-ath {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.token-card.autobuy-token .action-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.token-card.autobuy-token .action-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
 @keyframes newTokenGlow {
     0% {
         box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
@@ -248,10 +351,32 @@ body {
     }
 }
 
+@keyframes autobuyPulse {
+    0% {
+        box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 30px rgba(255, 69, 0, 0.8), 0 0 40px rgba(255, 69, 0, 0.3);
+    }
+    100% {
+        box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
+    }
+}
+
+.token-card.autobuy-token {
+    animation: autobuyPulse 2s ease-in-out infinite;
+}
+
 .token-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     border-color: #ff6b35;
+}
+
+.token-card.autobuy-token:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(255, 69, 0, 0.6), 0 0 50px rgba(255, 69, 0, 0.2);
+    border-color: #ffd700;
 }
 
 .token-header {
