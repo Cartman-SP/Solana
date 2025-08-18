@@ -34,9 +34,9 @@ URI_META_CACHE = {}
 
 # Регулярные выражения
 COMMUNITY_ID_RE = re.compile(r"/communities/(\d+)", re.IGNORECASE)
-INSTRUCTION_CREATE_RE = re.compile(r"instruction.*create", re.IGNORECASE)
 FAILED_ERROR_RE = re.compile(r"(failed:|custom program error)", re.IGNORECASE)
 PROGDATA_RE = re.compile(r"Program data:\s*([A-Za-z0-9+/=]+)")
+INSTRUCTION_MINT_RE = re.compile(r"Program log: Instruction: (InitializeMint2|InitializeMint)", re.IGNORECASE)
 
 # WebSocket подписка
 LOGS_SUB_JSON = json.dumps({
@@ -224,7 +224,7 @@ async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
-        if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
+        if not any(INSTRUCTION_MINT_RE.search(log) for log in logs):
             return
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
