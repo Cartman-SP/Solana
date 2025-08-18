@@ -78,7 +78,7 @@ async def buy(mint):
             "denominatedInSol": "true",
             "slippage": float(settings_obj.slippage_percent),
             "priorityFee": float(settings_obj.priority_fee_sol),
-            "pool": "pump"
+            "pool": "auto"
         }
         
         tx_response = requests.post(
