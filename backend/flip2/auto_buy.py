@@ -120,14 +120,26 @@ async def buy(mint):
 JUPITER_API = "https://quote-api.jup.ag/v6"
 
 
+from solders.transaction import Transaction as LegacyTransaction  # Для solders 0.26.0
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
+from solders.signature import Signature
+from solana.rpc.async_api import AsyncClient
+from solana.rpc.commitment import Confirmed
+from solana.rpc.types import RpcSendTransactionConfig
+import base64
+import requests
+from decimal import Decimal
+
 async def buy_via_jupiter(mint: str):
     try:
+        # 1. Получение настроек и подготовка данных
         settings_obj = await sync_to_async(Settings.objects.first)()
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
         amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
         slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
-        time.sleep(1)
-        # 1. Получаем квоту от Jupiter
+
+        # 2. Получение квоты от Jupiter
         quote_params = {
             "inputMint": "So11111111111111111111111111111111111111112",
             "outputMint": mint,
@@ -147,7 +159,7 @@ async def buy_via_jupiter(mint: str):
         if "error" in quote:
             raise RuntimeError(f"Jupiter quote error: {quote['error']}")
 
-        # 2. Получаем транзакцию для подписи
+        # 3. Получение транзакции для подписи
         swap_payload = {
             "quoteResponse": quote,
             "userPublicKey": str(kp.pubkey()),
@@ -167,14 +179,14 @@ async def buy_via_jupiter(mint: str):
         if "swapTransaction" not in swap_data:
             raise RuntimeError("No transaction data in Jupiter response")
 
-        # 3. Декодируем и подписываем транзакцию
+        # 4. Декодирование и подпись транзакции
         try:
             raw_tx = base64.b64decode(swap_data["swapTransaction"])
             
-            # Для solders 0.26.0 используем Transaction вместо VersionedTransaction
-            tx = Transaction.deserialize(raw_tx)
+            # Для solders 0.26.0 используем LegacyTransaction
+            tx = LegacyTransaction.deserialize(raw_tx)
             
-            # Подписываем транзакцию
+            # Подписываем транзакцию (старый метод для solders 0.26.0)
             tx.sign([kp])
             
             # Сериализуем подписанную транзакцию
@@ -183,23 +195,24 @@ async def buy_via_jupiter(mint: str):
         except Exception as e:
             raise RuntimeError(f"Transaction signing failed: {str(e)}")
 
-        # 4. Отправляем транзакцию
+        # 5. Отправка транзакции
         rpc_client = AsyncClient(HELIUS_HTTP)
-        tx_hash = await rpc_client.send_raw_transaction(
-            signed_tx_bytes,
-            opts=RpcSendTransactionConfig(
-                skip_preflight=False,
-                preflight_commitment=Confirmed,
+        try:
+            tx_hash = await rpc_client.send_raw_transaction(
+                signed_tx_bytes,
+                opts=RpcSendTransactionConfig(
+                    skip_preflight=False,
+                    preflight_commitment=Confirmed,
+                )
             )
-        )
-        
-        return str(tx_hash.value)
+            return str(tx_hash.value)
+        finally:
+            await rpc_client.close()
 
     except requests.RequestException as e:
         raise RuntimeError(f"HTTP request failed: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Swap execution failed: {str(e)}")
-
 
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
