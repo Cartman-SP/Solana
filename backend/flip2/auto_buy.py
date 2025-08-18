@@ -171,27 +171,25 @@ async def buy_via_jupiter(mint: str):
         try:
             raw_tx = base64.b64decode(swap_data["swapTransaction"])
             
-            # Для solders 0.29 правильный способ подписи
-            tx = Transaction.from_bytes(raw_tx)
-            tx.sign([kp])  # Теперь этот метод должен работать
+            # Для solders 0.26.0 используем Transaction вместо VersionedTransaction
+            tx = Transaction.deserialize(raw_tx)
             
-            # Или альтернативный способ:
-            # tx = VersionedTransaction.from_bytes(raw_tx)
-            # signed_tx = VersionedTransaction(
-            #     message=tx.message,
-            #     signatures=[kp.sign_message(tx.message.serialize())]
-            # )
+            # Подписываем транзакцию
+            tx.sign([kp])
+            
+            # Сериализуем подписанную транзакцию
+            signed_tx_bytes = bytes(tx.serialize())
             
         except Exception as e:
             raise RuntimeError(f"Transaction signing failed: {str(e)}")
 
         # 4. Отправляем транзакцию
-        rpc_client = Client(HELIUS_HTTP)
+        rpc_client = AsyncClient(HELIUS_HTTP)
         tx_hash = await rpc_client.send_raw_transaction(
-            bytes(tx),
+            signed_tx_bytes,
             opts=RpcSendTransactionConfig(
                 skip_preflight=False,
-                preflight_commitment=CommitmentLevel.Confirmed,
+                preflight_commitment=Confirmed,
             )
         )
         
