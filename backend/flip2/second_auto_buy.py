@@ -121,7 +121,6 @@ async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
-        print(any(INSTRUCTION_CREATE_RE.search(log) for log in logs))
         if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
         print(2312)
