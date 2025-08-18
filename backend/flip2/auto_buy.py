@@ -128,7 +128,7 @@ async def buy_via_jupiter(mint: str):
             "slippageBps": slippage_bps
         }
         
-       times.sleep(1)
+        times.sleep(1)
         response = requests.get(f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={amount_lamports}&slippageBps={slippage_bps}")
         
         quote = response.json()
