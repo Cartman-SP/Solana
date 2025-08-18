@@ -117,51 +117,69 @@ async def get_creator_username(session, community_id):
 
 def collect_progdata_bytes_after_create(logs):
     """Собирает байты данных программы после инструкции Create"""
-    if not logs:
-        return None
-    
-    # Ищем строку с Program data
+    chunks, after = [], False
     for line in logs:
-        if not isinstance(line, str):
+        low = str(line).lower()
+        if "instruction" in low and "create" in low:
+            after = True
             continue
-        if "Program data:" in line:
-            # Извлекаем base64 данные
-            match = PROGDATA_RE.search(line)
-            if match:
-                try:
-                    return base64.b64decode(match.group(1))
-                except:
-                    continue
-    return None
+        if not after:
+            continue
+        m = PROGDATA_RE.search(str(line))
+        if m:
+            chunks.append(m.group(1))
+        elif chunks:
+            break
+    if not chunks:
+        return None
+
+    out = bytearray()
+    for c in chunks:
+        try:
+            out += base64.b64decode(c, validate=True)
+        except Exception:
+            try:
+                out += base58.b58decode(c)
+            except Exception:
+                return None
+    return bytes(out)
+
+
+def _read_borsh_string(buf: memoryview, off: int):
+    """Читает Borsh строку из буфера"""
+    if off + 4 > len(buf): return None, off
+    ln = int.from_bytes(buf[off:off+4], "little"); off += 4
+    if ln < 0 or off + ln > len(buf): return None, off
+    try:
+        s = bytes(buf[off:off+ln]).decode("utf-8", "ignore")
+    except Exception:
+        s = ""
+    off += ln
+    return s, off
+
+
+def _take_pk(buf: memoryview, off: int):
+    """Читает публичный ключ из буфера"""
+    if off + 32 > len(buf): return None, off
+    return base58.b58encode(bytes(buf[off:off+32])).decode(), off + 32
+
 
 def parse_pump_create(raw: bytes):
     """Парсит данные создания токена PumpFun"""
-    if not raw or len(raw) < 44:  # Минимальный размер для mint address
-        return None
-    
-    try:
-        # Mint address - последние 32 байта
-        mint = base58.b58encode(raw[-32:]).decode()
-        
-        # URI обычно находится в начале данных
-        # Эвристический поиск URI - ищем http или ipfs
-        uri = ""
-        for prefix in [b"http://", b"https://", b"ipfs://"]:
-            pos = raw.find(prefix)
-            if pos != -1:
-                end = raw.find(b"\x00", pos)
-                uri = raw[pos:end if end != -1 else None].decode('utf-8', errors='ignore')
-                break
-        
-        return {
-            "mint": mint,
-            "uri": uri,
-            "symbol": "",  # Эти поля не используются в вашей логике
-            "name": ""
-        }
-    except Exception as e:
-        print(f"Parse error: {e}")
-        return None
+    if not raw or len(raw) < 8: return None
+    mv = memoryview(raw)
+    off = 8
+    name, off   = _read_borsh_string(mv, off)
+    symbol, off = _read_borsh_string(mv, off)
+    uri, off    = _read_borsh_string(mv, off)
+    mint, off          = _take_pk(mv, off)
+    bonding_curve, off = _take_pk(mv, off)
+    creator, off       = _take_pk(mv, off)
+    return {
+        "name": name or "", "symbol": symbol or "", "uri": uri or "",
+        "mint": mint or "", "bondingCurve": bonding_curve or "", "creator": creator or "",
+        "decimals": 6,
+    }
 
 def find_community_from_uri(uri: str) -> Optional[str]:
     """Ищет community ID в URI"""
