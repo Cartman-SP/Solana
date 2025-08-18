@@ -261,7 +261,7 @@ async def process_message(msg, session):
         if not mint:
             return
         
-        
+        community_id = None
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
