@@ -55,6 +55,32 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 
+def build_buy_tx(mint: str,
+                 buyer_pubkey: str,
+                 sol_amount: float,
+                 slippage_percent: float = 10.0,
+                 priority_fee_sol: float = 0.00005,
+                 pool: str = "pump") -> bytes:
+    """Строит транзакцию покупки через PumpPortal API"""
+    payload = {
+        "publicKey": buyer_pubkey,
+        "action": "buy",
+        "mint": mint,
+        "amount": sol_amount,          # тратим X SOL
+        "denominatedInSol": "true",    # сумма в SOL
+        "slippage": slippage_percent,  # % слиппеджа
+        "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
+        "pool": pool
+    }
+    r = requests.post(PUMPPORTAL_TRADE_LOCAL,
+                      headers={"Content-Type": "application/json"},
+                      data=json.dumps(payload),
+                      timeout=10)
+    if r.status_code != 200:
+        raise RuntimeError(f"PumpPortal error {r.status_code}: {r.text}")
+    return r.content  # сериализованный VersionedTransaction (bytes)
+
+
 def keypair_from_base58(secret_b58: str) -> Keypair:
     """Создает Keypair из base58 строки"""
     return Keypair.from_base58_string(secret_b58.strip())
