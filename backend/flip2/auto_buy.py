@@ -55,57 +55,58 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 
-def build_buy_tx(mint: str,
-                 buyer_pubkey: str,
-                 sol_amount: float,
-                 slippage_percent: float = 10.0,
-                 priority_fee_sol: float = 0.00005,
-                 pool: str = "pump") -> bytes:
-    """Строит транзакцию покупки через PumpPortal API"""
-    payload = {
-        "publicKey": buyer_pubkey,
-        "action": "buy",
-        "mint": mint,
-        "amount": sol_amount,          # тратим X SOL
-        "denominatedInSol": "true",    # сумма в SOL
-        "slippage": slippage_percent,  # % слиппеджа
-        "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
-        "pool": pool
-    }
-    r = requests.post(PUMPPORTAL_TRADE_LOCAL,
-                      headers={"Content-Type": "application/json"},
-                      data=json.dumps(payload),
-                      timeout=10)
-    if r.status_code != 200:
-        raise RuntimeError(f"PumpPortal error {r.status_code}: {r.text}")
-    return r.content  # сериализованный VersionedTransaction (bytes)
-
-
-def keypair_from_base58(secret_b58: str) -> Keypair:
-    """Создает Keypair из base58 строки"""
-    return Keypair.from_base58_string(secret_b58.strip())
-
 async def buy(mint):
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
-        buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
-        sol_amount = float(settings_obj.sol_amount)
-        slippage_percent = float(settings_obj.slippage_percent)
-        priority_fee_sol = float(settings_obj.priority_fee_sol)
-        pool = "pump" 
-        kp = keypair_from_base58(buyer_pubkey)
-        tx_bytes = build_buy_tx(
-            mint=mint,
-            buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
-            sol_amount=sol_amount,
-            slippage_percent=slippage_percent,
-            priority_fee_sol=priority_fee_sol,
-            pool=pool
+        kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
+        
+        # Строим транзакцию
+        payload = {
+            "publicKey": str(kp.pubkey()),
+            "action": "buy",
+            "mint": mint,
+            "amount": float(settings_obj.sol_amount),
+            "denominatedInSol": "true",
+            "slippage": float(settings_obj.slippage_percent),
+            "priorityFee": float(settings_obj.priority_fee_sol),
+            "pool": "pump"
+        }
+        
+        tx_response = requests.post(
+            "PUMPPORTAL_TRADE_LOCAL",  # Замените на реальный URL
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(payload),
+            timeout=10
         )
-        sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
-        print(sig)
+        tx_response.raise_for_status()
+        
+        # Отправляем транзакцию
+        vt = VersionedTransaction.from_bytes(tx_response.content)
+        signed_tx = VersionedTransaction(vt.message, [kp])
+        body = SendVersionedTransaction(
+            signed_tx, 
+            RpcSendTransactionConfig(preflight_commitment=CommitmentLevel.Confirmed)
+        ).to_json()
+        
+        rpc_response = requests.post(
+            "HELIUS_HTTP",  # Замените на реальный URL
+            headers={"Content-Type": "application/json"},
+            data=body,
+            timeout=10
+        )
+        rpc_response.raise_for_status()
+        
+        data = rpc_response.json()
+        if "error" in data:
+            raise RuntimeError(f"Helius error: {data['error']}")
+        
+        return data["result"]
+        
+    except requests.RequestException as e:
+        raise RuntimeError(f"HTTP error: {str(e)}")
     except Exception as e:
-        print(e)
+        raise RuntimeError(f"Transaction failed: {str(e)}")
+
 
                    
 async def _tw_get(session, path, params):
