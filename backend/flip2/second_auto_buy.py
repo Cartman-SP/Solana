@@ -124,7 +124,7 @@ async def process_message(msg, session):
         if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
         print(2312)
-        with open('test555.txt', 'w') as f:
+        with open('test555.txt', 'a') as f:
             f.write(logs)
 
         data = collect_progdata_bytes_after_create(logs)
