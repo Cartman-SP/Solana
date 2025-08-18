@@ -23,7 +23,6 @@ from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solders.message import Message
 from solana.rpc.api import Client
-from solana.rpc.commitment import CommitmentLevel
 from solana.rpc.types import RpcSendTransactionConfig
 
 import time
