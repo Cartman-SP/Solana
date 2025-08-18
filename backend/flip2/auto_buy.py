@@ -16,7 +16,7 @@ from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
 from decimal import Decimal
-
+import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -128,7 +128,7 @@ async def buy_via_jupiter(mint: str):
             "slippageBps": slippage_bps
         }
         
-        times.sleep(1)
+        time.sleep(1)
         response = requests.get(f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={amount_lamports}&slippageBps={slippage_bps}")
         
         quote = response.json()
