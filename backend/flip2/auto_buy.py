@@ -116,26 +116,113 @@ async def check_twitter_whitelist(twitter_name,creator):
         print(e)
         return False
                    
-async def get_creator_username(session, community_id):
-    """Получение username создателя сообщества"""
-    if community_id in COMMUNITY_CACHE:
-        return COMMUNITY_CACHE[community_id]
+async def _tw_get(session, path, params):
+    """Быстрый запрос к Twitter API"""
+    to = aiohttp.ClientTimeout(total=0.8)  # Уменьшаем timeout для скорости
+    async with session.get(f"{TW_BASE}{path}", headers=TW_HEADERS, params=params, timeout=to) as r:
+        r.raise_for_status()
+        return await r.json()
+
+def _extract_username_followers(user_obj: dict) -> tuple[str|None, int|None]:
+    """Извлекает username и followers из объекта пользователя"""
+    if not isinstance(user_obj, dict):
+        return None, None
+    username = user_obj.get("screen_name") or user_obj.get("userName") or user_obj.get("username")
+    followers = (
+        user_obj.get("followers_count")
+        or user_obj.get("followers")
+        or ((user_obj.get("public_metrics") or {}).get("followers_count"))
+    )
+    try:
+        followers = int(followers) if followers is not None else None
+    except Exception:
+        followers = None
+    return (username, followers) if username else (None, None)
+
+async def _get_creator_from_info(session: aiohttp.ClientSession, community_id: str):
+    """Получает создателя community из info API"""
+    try:
+        j = await _tw_get(session, "/twitter/community/info", {"community_id": community_id})
+        ci = (j or {}).get("community_info", {}) or {}
+        u, f = _extract_username_followers(ci.get("creator") or {})
+        if u:
+            return u, f, "creator"
+        u, f = _extract_username_followers(ci.get("first_member") or {})
+        if u:
+            return u, f, "member"
+    except:
+        pass
+    return None, None, None
+
+async def _get_first_member_via_members(session: aiohttp.ClientSession, community_id: str):
+    """Получает первого участника community из members API"""
+    try:
+        j = await _tw_get(session, "/twitter/community/members", {"community_id": community_id, "limit": 1})
+        candidates = []
+        for key in ("members", "data", "users"):
+            arr = j.get(key)
+            if isinstance(arr, list):
+                candidates.extend(arr)
+        if not candidates:
+            data = j.get("data")
+            if isinstance(data, dict) and isinstance(data.get("users"), list):
+                candidates.extend(data["users"])
+        if candidates:
+            u, f = _extract_username_followers(candidates[0] or {})
+            if u:
+                return u, f, "member"
+    except:
+        pass
+    return None, None, None
+
+async def check_twitter_whitelist(twitter_name: str) -> bool:
     
     try:
-        async with session.get(
-            f"{TW_BASE}/twitter/community/info",
-            headers=TW_HEADERS,
-            params={"community_id": community_id},
-            timeout=0.5  # Уменьшенный timeout
-        ) as r:
-            data = await r.json()
-            creator = (data.get("community_info", {}) or {}).get("creator", {})
-            username = creator.get("screen_name") or creator.get("username")
-            if username:
-                COMMUNITY_CACHE[community_id] = username
-                return username
+        # Получаем настройки для фильтрации
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        filter_ath = settings_obj.filter_ath if settings_obj else 0
+        
+        # Ищем Twitter с whitelist=True, указанным именем и ath больше filter_ath
+        twitter_obj = await sync_to_async(lambda: Twitter.objects.filter(
+            whitelist=True, 
+            name=f"@{twitter_name}",
+            ath__gt=filter_ath
+        ).first())()
+    
+        result = twitter_obj is not None
+        
+        return result
+        
     except Exception as e:
-        print(e)
+        print(f"Error checking whitelist: {e}")
+        return False
+
+async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
+    """Получает username с несколькими попытками и fallback методами"""
+    
+    # Пробуем оба метода параллельно для максимальной скорости
+    try:
+        # Создаем задачи для параллельного выполнения
+        task1 = asyncio.create_task(_get_creator_from_info(session, community_id))
+        task2 = asyncio.create_task(_get_first_member_via_members(session, community_id))
+        
+        # Ждем первый успешный результат
+        done, pending = await asyncio.wait([task1, task2], return_when=asyncio.FIRST_COMPLETED)
+        
+        # Отменяем оставшиеся задачи
+        for task in pending:
+            task.cancel()
+        
+        # Проверяем результаты
+        for task in done:
+            try:
+                u, f, src = task.result()
+                if u:
+                    return u
+            except:
+                continue
+                
+    except:
         pass
     
     return None
