@@ -108,38 +108,58 @@ async def buy(mint):
         raise RuntimeError(f"Transaction failed: {str(e)}")
 
 
-from raydium.sdk import create_swap_instruction  # (условно, нужно уточнить актуальный SDK)
+import requests
+from solders.keypair import Keypair
+from solders.transaction import VersionedTransaction
+from solana.rpc.commitment import CommitmentLevel
+from solana.rpc.types import RpcSendTransactionConfig
+from solana.rpc.async_api import AsyncClient
+from solana.rpc.api import Client
 
-async def buy_via_raydium(mint: str):
+JUPITER_API = "https://quote-api.jup.ag/v6"
+SOLANA_RPC = "https://api.mainnet-beta.solana.com"  # или Helius/QuickNode
+
+async def buy_via_jupiter(mint: str):
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
         
-        # 1. Строим инструкцию для свопа SOL → токен
-        swap_ix = create_swap_instruction(
-            source_token=str(PublicKey("So11111111111111111111111111111111111111112")),  # SOL
-            target_token=mint,
-            amount_in=int(settings_obj.sol_amount * 1e9),
-            slippage=settings_obj.slippage_percent,
-            payer=kp.pubkey(),
-        )
+        # 1. Получаем квоту от Jupiter API
+        quote_url = f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={int(settings_obj.sol_amount * 1e9)}&slippageBps={int(settings_obj.slippage_percent * 100)}"
+        quote = requests.get(quote_url).json()
         
-        # 2. Собираем и подписываем транзакцию
-        recent_blockhash = (await AsyncClient(SOLANA_RPC).get_latest_blockhash()).value.blockhash
-        tx = Transaction().add(swap_ix)
-        tx.recent_blockhash = recent_blockhash
-        tx.fee_payer = kp.pubkey()
-        tx.sign(kp)
+        if "error" in quote:
+            raise RuntimeError(f"Jupiter error: {quote['error']}")
         
-        # 3. Отправляем транзакцию
-        rpc_client = AsyncClient(SOLANA_RPC)
-        tx_hash = await rpc_client.send_transaction(tx)
+        # 2. Получаем готовую транзакцию
+        swap_payload = {
+            "quoteResponse": quote,
+            "userPublicKey": str(kp.pubkey()),
+            "wrapAndUnwrapSol": True,
+            "dynamicComputeUnitLimit": True,
+            "priorityFee": int(settings_obj.priority_fee_sol * 1e9),
+        }
+        
+        swap_response = requests.post(
+            f"{JUPITER_API}/swap",
+            headers={"Content-Type": "application/json"},
+            json=swap_payload,
+        ).json()
+        
+        # 3. Подписываем и отправляем транзакцию
+        swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_response["swapTransaction"]))
+        signed_tx = swap_tx.sign([kp])
+        
+        rpc_client = Client(SOLANA_RPC)
+        tx_hash = rpc_client.send_raw_transaction(bytes(signed_tx), opts=RpcSendTransactionConfig(
+            skip_preflight=False,
+            preflight_commitment=CommitmentLevel.Confirmed,
+        ))
         
         return str(tx_hash.value)
     
     except Exception as e:
-        raise RuntimeError(f"Raydium swap failed: {str(e)}")
-
+        raise RuntimeError(f"Jupiter swap failed: {str(e)}")
 
 
                    
@@ -418,7 +438,7 @@ async def process_message(msg, session):
             print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
-                await buy_via_raydium(mint)
+                await buy_via_jupiter(mint)
     except Exception as e:
         print(e)
         pass
