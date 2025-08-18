@@ -82,7 +82,7 @@ async def buy(mint):
         }
         
         tx_response = requests.post(
-            PUMPPORTAL_TRADE_LOCAL,  # Замените на реальный URL
+            "https://quote-api.jup.ag/v6/swap",  # Замените на реальный URL
             headers={"Content-Type": "application/json"},
             data=json.dumps(payload),
             timeout=10
@@ -117,84 +117,8 @@ async def buy(mint):
         raise RuntimeError(f"Transaction failed: {str(e)}")
 
 
-JUPITER_API = "https://quote-api.jup.ag/v6"
 
 
-from solders.transaction import Transaction as LegacyTransaction
-from solders.keypair import Keypair
-from solana.rpc.async_api import AsyncClient
-from solana.rpc.commitment import Confirmed
-import base64
-import requests
-from decimal import Decimal
-
-async def buy_via_jupiter(mint: str):
-    try:
-        # 1. Получение настроек
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
-        amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
-        slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
-        time.sleep(1)
-        # 2. Получение квоты
-        quote_response = requests.get(
-            f"{JUPITER_API}/quote",
-            params={
-                "inputMint": "So11111111111111111111111111111111111111112",
-                "outputMint": mint,
-                "amount": amount_lamports,
-                "slippageBps": slippage_bps
-            },
-            headers={"Accept": "application/json"},
-            timeout=15
-        )
-        quote_response.raise_for_status()
-        quote = quote_response.json()
-
-        if "error" in quote:
-            raise RuntimeError(f"Jupiter quote error: {quote['error']}")
-
-        # 3. Получение транзакции
-        swap_response = requests.post(
-            f"{JUPITER_API}/swap",
-            json={
-                "quoteResponse": quote,
-                "userPublicKey": str(kp.pubkey()),
-                "wrapAndUnwrapSol": True,
-                "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))
-            },
-            headers={"Content-Type": "application/json"},
-            timeout=15
-        )
-        swap_response.raise_for_status()
-        swap_data = swap_response.json()
-
-        if "swapTransaction" not in swap_data:
-            raise RuntimeError("No transaction data in Jupiter response")
-
-        # 4. Подпись транзакции
-        raw_tx = base64.b64decode(swap_data["swapTransaction"])
-        tx = LegacyTransaction.deserialize(raw_tx)
-        tx.sign([kp])
-        signed_tx_bytes = bytes(tx.serialize())
-
-        # 5. Отправка транзакции
-        client = AsyncClient(HELIUS_HTTP)
-        try:
-            # Для solana-py 0.36.9 используем параметры напрямую
-            tx_hash = await client.send_raw_transaction(
-                signed_tx_bytes,
-                skip_preflight=False,
-                preflight_commitment=Confirmed
-            )
-            return str(tx_hash.value)
-        finally:
-            await client.close()
-
-    except requests.RequestException as e:
-        raise RuntimeError(f"HTTP request failed: {str(e)}")
-    except Exception as e:
-        raise RuntimeError(f"Swap execution failed: {str(e)}")
 
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
@@ -471,7 +395,7 @@ async def process_message(msg, session):
             print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
-                await buy_via_jupiter(mint)
+                await buy(mint)
     except Exception as e:
         print(e)
         pass
