@@ -108,13 +108,6 @@ async def buy(mint):
         raise RuntimeError(f"Transaction failed: {str(e)}")
 
 
-import requests
-from solders.keypair import Keypair
-from solders.transaction import VersionedTransaction
-from solana.rpc.types import RpcSendTransactionConfig
-from solana.rpc.async_api import AsyncClient
-from solana.rpc.api import Client
-
 JUPITER_API = "https://quote-api.jup.ag/v6"
 
 
