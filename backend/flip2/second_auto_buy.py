@@ -118,7 +118,6 @@ async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
-        print(333)
         if not looks_like_create(logs) or has_error(logs):
             return
         print(2312)
@@ -173,13 +172,10 @@ async def main_loop():
             ) as ws:
                 await ws.send(LOGS_SUB_JSON)
                 await ws.recv()
-                print(123)
                 async for raw in ws:
                     try:
                         msg = json.loads(raw)
-                        print(321)
                         if msg.get("method") == "logsNotification":
-                            print(122)
                             await process_message(msg, session)
                     except Exception as e:
                         print(e)
