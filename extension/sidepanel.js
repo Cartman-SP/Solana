@@ -197,6 +197,8 @@ class TokenMonitor {
                 // Фильтры пользователя
                 minUserAth: '',
                 maxUserAth: '',
+                minUserTotalTrans: '',
+                maxUserTotalTrans: '',
                 minUserTokens: '',
                 maxUserTokens: '',
                 minUserMigrations: '',
@@ -208,6 +210,8 @@ class TokenMonitor {
                 // Фильтры Twitter
                 minTwitterAth: '',
                 maxTwitterAth: '',
+                minTwitterTotalTrans: '',
+                maxTwitterTotalTrans: '',
                 minTwitterTokens: '',
                 maxTwitterTokens: '',
                 minTwitterMigrations: '',
@@ -261,6 +265,15 @@ class TokenMonitor {
                             return false;
                         }
                     }
+
+                    if (settings.minUserTotalTrans !== '' || settings.maxUserTotalTrans !== '') {
+                        const userTotalTrans = parseFloat(token.user_total_trans) || 0;
+                        const minUserTotalTrans = settings.minUserTotalTrans !== '' ? parseFloat(settings.minUserTotalTrans) : 0;
+                        const maxUserTotalTrans = settings.maxUserTotalTrans !== '' ? parseFloat(settings.maxUserTotalTrans) : Infinity;
+                        if (userTotalTrans < minUserTotalTrans || userTotalTrans > maxUserTotalTrans) {
+                            return false;
+                        }
+                    }
                     
                     if (settings.minUserTokens !== '' || settings.maxUserTokens !== '') {
                         const userTokens = parseInt(token.user_total_tokens) || 0;
@@ -297,6 +310,15 @@ class TokenMonitor {
                         const maxTwitterAth = settings.maxTwitterAth !== '' ? parseFloat(settings.maxTwitterAth) : Infinity;
                         
                         if (twitterAth < minTwitterAth || twitterAth > maxTwitterAth) {
+                            return false;
+                        }
+                    }
+
+                    if (settings.minTwitterTotalTrans !== '' || settings.maxTwitterTotalTrans !== '') {
+                        const twitterTotalTrans = parseFloat(token.twitter_total_trans) || 0;
+                        const minTwitterTotalTrans = settings.minTwitterTotalTrans !== '' ? parseFloat(settings.minTwitterTotalTrans) : 0;
+                        const maxTwitterTotalTrans = settings.maxTwitterTotalTrans !== '' ? parseFloat(settings.maxTwitterTotalTrans) : Infinity;
+                        if (twitterTotalTrans < minTwitterTotalTrans || twitterTotalTrans > maxTwitterTotalTrans) {
                             return false;
                         }
                     }
@@ -450,6 +472,7 @@ class TokenMonitor {
         
         // Заполняем данные пользователя
         tokenElement.querySelector('.user-ath').textContent = this.formatNumber(token.user_ath);
+        tokenElement.querySelector('.user-total-trans').textContent = this.formatNumber(token.user_total_trans);
         tokenElement.querySelector('.user-tokens').textContent = this.formatNumber(token.user_total_tokens);
         tokenElement.querySelector('.user-migrations').textContent = `${this.formatNumber(token.user_migrations)}%`;
         
@@ -463,6 +486,7 @@ class TokenMonitor {
         
         // Заполняем данные Twitter
         tokenElement.querySelector('.twitter-ath').textContent = this.formatNumber(token.twitter_ath);
+        tokenElement.querySelector('.twitter-total-trans').textContent = this.formatNumber(token.twitter_total_trans);
         tokenElement.querySelector('.twitter-tokens').textContent = this.formatNumber(token.twitter_total_tokens);
         tokenElement.querySelector('.twitter-migrations').textContent = `${this.formatNumber(token.twitter_migrations)}%`;
         
@@ -524,6 +548,7 @@ class TokenMonitor {
                 tokenItem.innerHTML = `
                     <span class="recent-token-name">${token.name}</span>
                     <span class="recent-token-ath">ATH: ${this.formatNumber(token.ath)}</span>
+                    <span class="recent-token-trans">TT: ${this.formatNumber(token.total_trans)}</span>
                 `;
                 container.appendChild(tokenItem);
             });

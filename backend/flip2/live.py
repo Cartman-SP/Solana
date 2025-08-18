@@ -75,6 +75,11 @@ async def get_user_dev_data(user_address):
             avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
         else:
             avg_ath = 0
+        # Рассчитываем средний total_trans по тем же последним токенам
+        if recent_tokens:
+            avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens)
+        else:
+            avg_total_trans = 0
         
         # Получаем последние 100 токенов для расчета процента миграций
         recent_100_tokens = await sync_to_async(list)(
@@ -106,11 +111,13 @@ async def get_user_dev_data(user_address):
         for token in recent_dev_tokens:
             recent_tokens_info.append({
                 'name': token.address[:8] + '...',  # Сокращенное название
-                'ath': token.ath
+                'ath': token.ath,
+                'total_trans': token.total_trans
             })
             
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
+            'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
             'total_tokens': user_dev.total_tokens,
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
@@ -148,6 +155,8 @@ async def get_twitter_data(twitter):
         
         # Рассчитываем средний ATH
         avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens) if recent_tokens else 0
+        # Рассчитываем средний total_trans по тем же последним токенам
+        avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens) if recent_tokens else 0
         
         # Получаем последние 100 токенов для расчета процента миграций
         recent_100_tokens = await sync_to_async(list)(
@@ -171,12 +180,15 @@ async def get_twitter_data(twitter):
         # Формируем список последних токенов
         recent_tokens_info = [{
             'name': token.address[:8] + '...',
-            'ath': token.ath
+            'ath': token.ath,
+            'total_trans': token.total_trans
         } for token in recent_dev_tokens]
         
         # Обновляем и сохраняем данные Twitter
         old_ath = user_dev.ath
         user_dev.ath = int(avg_ath)
+        # Сохраняем средний total_trans у Twitter для фильтрации
+        user_dev.total_trans = int(avg_total_trans)
         user_dev.total_tokens = await sync_to_async(Token.objects.filter(twitter=user_dev, processed=True).count)()
         try:
             await sync_to_async(user_dev.save)()
@@ -186,6 +198,7 @@ async def get_twitter_data(twitter):
                 
         return {
             'ath': int(avg_ath),
+            'total_trans': int(avg_total_trans),
             'total_tokens': user_dev.total_tokens,
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
@@ -226,12 +239,21 @@ async def check_twitter_whitelist(twitter_name,creator):
                 return False
         if(settings_obj.whitelist_enabled):
             try:
-                await sync_to_async(Twitter.objects.get)(name=twitter_name,whitelist=True,ath__gt=settings_obj.ath_from)
+                await sync_to_async(Twitter.objects.get)(
+                    name=twitter_name,
+                    whitelist=True,
+                    ath__gt=settings_obj.ath_from,
+                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                )
             except:
                 return False
         else:
             try:
-                await sync_to_async(Twitter.objects.get)(name=twitter_name,ath__gt=settings_obj.ath_from)
+                await sync_to_async(Twitter.objects.get)(
+                    name=twitter_name,
+                    ath__gt=settings_obj.ath_from,
+                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                )
             except:
                 return False
         return True
@@ -277,12 +299,14 @@ async def process_token_data(data):
             'timestamp': datetime.now().strftime('%H:%M:%S'),
             'user_total_tokens': user_dev_data['total_tokens'],
             'user_ath': user_dev_data['ath'],
+            'user_total_trans': user_dev_data.get('total_trans', 0),
             'user_migrations': user_dev_data['migrations'],
             'user_recent_tokens': user_dev_data['recent_tokens'],
             'user_whitelisted': user_dev_data['whitelist'],
             'user_blacklisted': user_dev_data['blacklist'],
             'twitter_total_tokens': twitter_data['total_tokens'],
             'twitter_ath': twitter_data['ath'],
+            'twitter_total_trans': twitter_data.get('total_trans', 0),
             'twitter_migrations': twitter_data['migrations'],
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],

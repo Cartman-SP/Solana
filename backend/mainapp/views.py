@@ -599,6 +599,7 @@ def get_auto_buy_settings(request):
             'one_token_enabled': settings.one_token_enabled,
             'whitelist_enabled': settings.whitelist_enabled,
             'ath_from': settings.ath_from,
+            'total_trans_from': getattr(settings, 'total_trans_from', 0),
             'buyer_pubkey': settings.buyer_pubkey,
             'sol_amount': str(settings.sol_amount),
             'slippage_percent': str(settings.slippage_percent),
@@ -630,6 +631,7 @@ def update_auto_buy_settings(request):
         settings.one_token_enabled = data.get('one_token_enabled', settings.one_token_enabled)
         settings.whitelist_enabled = data.get('whitelist_enabled', settings.whitelist_enabled)
         settings.ath_from = data.get('ath_from', settings.ath_from)
+        settings.total_trans_from = data.get('total_trans_from', getattr(settings, 'total_trans_from', 0))
         settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
         settings.sol_amount = data.get('sol_amount', settings.sol_amount)
         settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
@@ -638,65 +640,7 @@ def update_auto_buy_settings(request):
         response = JsonResponse({'success': True})
         response["Access-Control-Allow-Origin"] = "*"
         return response
-    except Exception as e:
-        response = JsonResponse({'success': False, 'error': str(e)}, status=500)
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-
-# Unified endpoint for GET and POST on the same URL to avoid route conflicts
-@csrf_exempt
-@require_http_methods(["GET", "POST", "OPTIONS"])
-def auto_buy_settings(request):
-    # Handle CORS preflight
-    if request.method == "OPTIONS":
-        response = JsonResponse({})
-        response["Access-Control-Allow-Origin"] = "*"
-        response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "Content-Type"
-        return response
-
-    if request.method == "GET":
-        try:
-            settings = Settings.objects.first()
-            if not settings:
-                settings = Settings.objects.create()
-            data = {
-                'start': settings.start,
-                'one_token_enabled': settings.one_token_enabled,
-                'whitelist_enabled': settings.whitelist_enabled,
-                'ath_from': settings.ath_from,
-                'buyer_pubkey': settings.buyer_pubkey,
-                'sol_amount': str(settings.sol_amount),
-                'slippage_percent': str(settings.slippage_percent),
-                'priority_fee_sol': str(settings.priority_fee_sol),
-            }
-            response = JsonResponse({'success': True, 'settings': data})
-            response["Access-Control-Allow-Origin"] = "*"
-            return response
-        except Exception as e:
-            response = JsonResponse({'success': False, 'error': str(e)}, status=500)
-            response["Access-Control-Allow-Origin"] = "*"
-            return response
-
-    # POST
-    try:
-        data = json.loads(request.body)
-        settings = Settings.objects.first()
-        if not settings:
-            settings = Settings.objects.create()
-        settings.start = data.get('start', settings.start)
-        settings.one_token_enabled = data.get('one_token_enabled', settings.one_token_enabled)
-        settings.whitelist_enabled = data.get('whitelist_enabled', settings.whitelist_enabled)
-        settings.ath_from = data.get('ath_from', settings.ath_from)
-        settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
-        settings.sol_amount = data.get('sol_amount', settings.sol_amount)
-        settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
-        settings.priority_fee_sol = data.get('priority_fee_sol', settings.priority_fee_sol)
-        settings.save()
-        response = JsonResponse({'success': True})
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
+        
     except Exception as e:
         response = JsonResponse({'success': False, 'error': str(e)}, status=500)
         response["Access-Control-Allow-Origin"] = "*"

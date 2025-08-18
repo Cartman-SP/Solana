@@ -164,6 +164,15 @@
                                 <input type="number" id="max-user-ath" class="filter-input range-input" placeholder="∞">
                             </div>
                         </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Total trans пользователя (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-user-total-trans" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-user-total-trans" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
                         
                         <div class="filter-group">
                             <label class="filter-label">Количество токенов пользователя (от - до)</label>
@@ -217,6 +226,15 @@
                                 <input type="number" id="min-twitter-ath" class="filter-input range-input" placeholder="0">
                                 <span class="range-separator">-</span>
                                 <input type="number" id="max-twitter-ath" class="filter-input range-input" placeholder="∞">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Total trans Twitter (от - до)</label>
+                            <div class="range-group">
+                                <input type="number" id="min-twitter-total-trans" class="filter-input range-input" placeholder="0">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="max-twitter-total-trans" class="filter-input range-input" placeholder="∞">
                             </div>
                         </div>
                         
@@ -273,6 +291,10 @@
                 <div class="filter-group">
                     <label class="filter-label" for="auto-buy-ath-from">ATH (от)</label>
                     <input type="number" id="auto-buy-ath-from" class="filter-input" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-total-trans-from">Total trans (от)</label>
+                    <input type="number" id="auto-buy-total-trans-from" class="filter-input" placeholder="0">
                 </div>
                 <div class="filter-group">
                     <label class="filter-label" for="auto-buy-buyer-pubkey">Ключ покупателя</label>

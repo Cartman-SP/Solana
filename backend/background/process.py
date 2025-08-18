@@ -7,7 +7,7 @@ import aiohttp
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import time
 
 # Настройка Django
@@ -62,6 +62,81 @@ async def make_api_request(session: aiohttp.ClientSession, url: str, headers: di
             if "429" in str(e) or "403" in str(e):
                 CANCEL_PROCESSING = True
             raise APIError(f"Ошибка API запроса: {e}")
+
+
+async def fetch_activities_page(
+    session: aiohttp.ClientSession,
+    token_address: str,
+    page: int,
+    activity_type: str = "ACTIVITY_TOKEN_SWAP",
+) -> List[dict]:
+    """Возвращает список активностей для конкретной страницы."""
+    base_url = "https://pro-api.solscan.io/v2.0/account/defi/activities"
+    headers = {
+        "token": API_KEY,
+        "User-Agent": "SolanaFlipper/1.0",
+    }
+    url = (
+        f"{base_url}?address={token_address}&page={page}&page_size=100&activity_type[]={activity_type}"
+    )
+    data = await make_api_request(session, url, headers)
+    return data.get("data", []) or []
+
+
+def extract_tx_values(activities: List[dict], token_address: str) -> List[float]:
+    """Извлекает изменения баланса из активностей для расчета ATH."""
+    values: List[float] = []
+    for tx in activities:
+        try:
+            routers = tx.get("routers", {})
+            sell = routers.get("token1") == token_address
+            change = tx.get("value", 0)
+            if sell:
+                change = -change
+            if change != 0:
+                values.append(float(change))
+        except Exception:
+            continue
+    return values
+
+
+async def get_ath_values_and_total_count(
+    token_address: str, session: aiohttp.ClientSession
+) -> Tuple[List[float], int]:
+    """Возвращает:
+    - список транзакций только из 1-2 страниц для расчёта ATH
+    - total_trans по правилам:
+      1) page1<100 -> total=page1
+      2) page1=100, page2<100 -> total=100+page2
+      3) page1=100, page2=100 -> проверяем page5:
+         - page5 пустая -> total=300
+         - page5<100 -> total=400+page5
+         - page5=100 -> total=600
+    """
+    # Страница 1
+    page1 = await fetch_activities_page(session, token_address, 1)
+    len1 = len(page1)
+    values_for_ath: List[float] = extract_tx_values(page1, token_address)
+
+    if len1 < 100:
+        return values_for_ath, len1
+
+    # Страница 2
+    page2 = await fetch_activities_page(session, token_address, 2)
+    len2 = len(page2)
+    values_for_ath.extend(extract_tx_values(page2, token_address))
+
+    if len2 < 100:
+        return values_for_ath, 100 + len2
+
+    # Страница 5 по заданным правилам
+    page5 = await fetch_activities_page(session, token_address, 5)
+    len5 = len(page5)
+    if len5 == 0:
+        return values_for_ath, 300
+    if len5 < 100:
+        return values_for_ath, 400 + len5
+    return values_for_ath, 600
 
 
 async def check_migration_async(token_address: str, session: aiohttp.ClientSession) -> bool:
@@ -151,31 +226,31 @@ async def get_token_transactions_async(token_address: str, session: aiohttp.Clie
 
 
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
-    """Рассчитывает ATH для токена"""
+    """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
         return ath_cache[token_address]
-    
+
     try:
-        transactions = await get_token_transactions_async(token_address, session)
-        
-        if not transactions:
+        values_for_ath, _ = await get_ath_values_and_total_count(token_address, session)
+
+        if not values_for_ath:
             ath_cache[token_address] = 0
             return 0
-            
+
         initial_balance = 0
         current_balance = initial_balance
         max_balance = initial_balance
-        
+
         # Обрабатываем транзакции в обратном порядке для оптимизации
-        for value in reversed(transactions):
-            current_balance += value        
+        for value in reversed(values_for_ath):
+            current_balance += value
             if current_balance > max_balance:
                 max_balance = current_balance
-        
+
         # Кэшируем результат
         ath_cache[token_address] = int(max_balance)
         return int(max_balance)
-        
+
     except APIError as e:
         print(f"Ошибка при расчете ATH для {token_address}: {e}")
         raise
@@ -186,22 +261,35 @@ async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession
 
 
 async def process_token_complete(token_address: str, session: aiohttp.ClientSession) -> tuple:
-    """Полная обработка токена: проверка миграции и расчет ATH"""
+    """Полная обработка токена: проверка миграции, расчёт ATH (стр. 1-2) и вычисление total_trans."""
     try:
         # Сначала проверяем миграцию
         is_migrated = await check_migration_async(token_address, session)
         if is_migrated:
-            return 60000, is_migrated
+            # Для мигрировавших используем специальное значение ATH и не считаем total_trans
+            return 60000, is_migrated, 0
         else:
-            ath_value = await calculate_ath_async(token_address, session)
-            return ath_value, is_migrated
-            
+            values_for_ath, total_count = await get_ath_values_and_total_count(token_address, session)
+
+            # Расчёт ATH из значений первых 1-2 страниц
+            initial_balance = 0
+            current_balance = initial_balance
+            max_balance = initial_balance
+            for value in reversed(values_for_ath):
+                current_balance += value
+                if current_balance > max_balance:
+                    max_balance = current_balance
+
+            ath_value = int(max_balance)
+            ath_cache[token_address] = ath_value
+            return ath_value, is_migrated, total_count
+
     except APIError as e:
         print(f"API ошибка при полной обработке токена {token_address}: {e}")
         raise
     except Exception as e:
         print(f"Неожиданная ошибка при полной обработке токена {token_address}: {e}")
-        return 0, False
+        return 0, False, 0
 
 
 async def get_tokens_for_processing():
@@ -227,18 +315,19 @@ async def get_tokens_for_processing():
 async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
-        # Получаем ATH и статус миграции
-        ath_result, is_migrated = await process_token_complete(token.address, session)
+        # Получаем ATH, статус миграции и total_trans
+        ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
         
         # Обновляем токен только если не было ошибок API
         await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
         await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
+        await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
         await sync_to_async(lambda: setattr(token, 'processed', True))()
 
         # Сохраняем изменения
         await sync_to_async(token.save)()
         
-        print(f"Обработан токен {token.address}: ATH = {token.ath}, migrated = {token.migrated}")
+        print(f"Обработан токен {token.address}: ATH = {token.ath}, migrated = {token.migrated}, total_trans = {token.total_trans}")
         
     except APIError as e:
         print(f"API ошибка при обработке токена {token.address}: {e}")
