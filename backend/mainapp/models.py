@@ -47,5 +47,3 @@ class Settings(models.Model):
     filter_ath = models.IntegerField(default=0)
     start = models.BooleanField(default=False)
 
-class Community(models.Model):
-    community_id
