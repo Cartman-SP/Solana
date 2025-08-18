@@ -234,7 +234,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
         if(settings_obj.one_token_enabled):
             try:
-                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
+                await sync_to_async(UserDev.objects.get)(adress=creator)
             except:
                 return False
         if(settings_obj.whitelist_enabled):
@@ -243,7 +243,7 @@ async def check_twitter_whitelist(twitter_name,creator):
                     name=twitter_name,
                     whitelist=True,
                     ath__gt=settings_obj.ath_from,
-                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                    total_trans__gt=getattr(settings_obj.total_trans_from)
                 )
             except:
                 return False
@@ -252,7 +252,7 @@ async def check_twitter_whitelist(twitter_name,creator):
                 await sync_to_async(Twitter.objects.get)(
                     name=twitter_name,
                     ath__gt=settings_obj.ath_from,
-                    total_trans__gt=getattr(settings_obj, 'total_trans_from', 0)
+                    total_trans__gt=getattr(settings_obj.total_trans_from)
                 )
             except:
                 return False
@@ -281,13 +281,6 @@ async def process_token_data(data):
         user_dev_data = await get_user_dev_data(user)
         twitter_data = await get_twitter_data(twitter)
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
-        if user_dev_data is None:
-            return
-        print(123)
-        # Проверяем twitter_data и устанавливаем значения по умолчанию
-        if twitter_data is None:
-            return
-        print(321)
         extension_data = {
             'mint': mint,
             'user': user,
