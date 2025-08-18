@@ -8,7 +8,7 @@ import base64
 import websockets
 import aiohttp
 import requests
-
+from typing import Optional, List, Dict, Tuple
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -244,7 +244,7 @@ async def process_message(msg, session):
             return
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
-        
+        print(mint,uri)
         if not mint:
             return
         
