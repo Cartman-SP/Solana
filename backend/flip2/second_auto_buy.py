@@ -123,7 +123,7 @@ async def process_message(msg, session):
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
         if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
-        print(2312)
+        print(logs)
         with open('test555.txt', 'a') as f:
             f.write(logs)
 
