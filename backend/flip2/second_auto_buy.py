@@ -49,7 +49,7 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 async def buy(mint):
-   print(f"buy: {mint}")
+    print(f"buy: {mint}")
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not settings_obj:
