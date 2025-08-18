@@ -75,6 +75,7 @@ async def buy(mint):
         pass
 
 async def check_twitter_whitelist(twitter_name,creator):
+    print(twitter_name)
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         if(settings_obj.one_token_enabled):
