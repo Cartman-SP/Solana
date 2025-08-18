@@ -175,28 +175,6 @@ async def _get_first_member_via_members(session: aiohttp.ClientSession, communit
         pass
     return None, None, None
 
-async def check_twitter_whitelist(twitter_name: str) -> bool:
-    
-    try:
-        # Получаем настройки для фильтрации
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        filter_ath = settings_obj.filter_ath if settings_obj else 0
-        
-        # Ищем Twitter с whitelist=True, указанным именем и ath больше filter_ath
-        twitter_obj = await sync_to_async(lambda: Twitter.objects.filter(
-            whitelist=True, 
-            name=f"@{twitter_name}",
-            ath__gt=filter_ath
-        ).first())()
-    
-        result = twitter_obj is not None
-        
-        return result
-        
-    except Exception as e:
-        print(f"Error checking whitelist: {e}")
-        return False
-
 async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
     """Получает username с несколькими попытками и fallback методами"""
     
