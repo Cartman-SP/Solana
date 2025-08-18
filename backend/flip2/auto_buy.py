@@ -122,8 +122,8 @@ async def buy_via_jupiter(mint: str):
         quote_params = {
             "inputMint": "So11111111111111111111111111111111111111112",
             "outputMint": mint,
-            "amount": str(int(settings_obj.sol_amount * Decimal(1e9))),  # SOL в лампортах (строка)
-            "slippageBps": str(min(int(settings_obj.slippage_percent * 100), 1000))  # Ограничение 10%
+            "amount": str(int(settings_obj.sol_amount * Decimal(1e9))),
+            "slippageBps": str(min(int(settings_obj.slippage_percent * 100), 1000))
         }
         
         quote_response = requests.get(
@@ -138,12 +138,12 @@ async def buy_via_jupiter(mint: str):
         if "error" in quote:
             raise RuntimeError(f"Quote error: {quote['error']}")
 
-        # 2. Получаем транзакцию для подписи
+        # 2. Получаем транзакцию
         swap_payload = {
             "quoteResponse": quote,
             "userPublicKey": str(Keypair.from_base58_string(settings_obj.buyer_pubkey.strip()).pubkey()),
             "wrapAndUnwrapSol": True,
-            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))  # Приоритетная комиссия
+            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))
         }
         
         swap_response = requests.post(
@@ -154,13 +154,18 @@ async def buy_via_jupiter(mint: str):
         )
         swap_response.raise_for_status()
         swap_data = swap_response.json()
-        print(swap_data)
-        # 3. Проверяем наличие swapTransaction
-        if "swapTransaction" not in swap_data:
-            raise RuntimeError(f"Jupiter did not return a transaction. Full response: {swap_data}")
 
-        # 4. Декодируем и отправляем транзакцию
-        swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_data["swapTransaction"]))
+        # 3. Декодируем транзакцию (исправлено!)
+        if "swapTransaction" not in swap_data:
+            raise RuntimeError(f"Jupiter did not return a transaction. Response: {swap_data}")
+
+        try:
+            raw_tx = base64.b64decode(swap_data["swapTransaction"])
+            swap_tx = VersionedTransaction.from_bytes(raw_tx)
+        except Exception as e:
+            raise RuntimeError(f"Transaction decode error: {str(e)}")
+
+        # 4. Подписываем и отправляем
         signed_tx = swap_tx.sign([Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())])
         
         rpc_client = Client(HELIUS_HTTP)
@@ -178,7 +183,6 @@ async def buy_via_jupiter(mint: str):
         raise RuntimeError(f"HTTP error: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Swap failed: {str(e)}")
-
                    
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
