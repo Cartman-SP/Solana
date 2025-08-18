@@ -114,11 +114,14 @@ async def get_creator_username(session, community_id):
     
     return None
 
+
+
+
 async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
-        if not looks_like_create(logs):
+        if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
         print(2312)
         # Быстрый парсинг данных
