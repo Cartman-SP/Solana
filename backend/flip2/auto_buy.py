@@ -14,7 +14,7 @@ from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
-from solana.rpc.commitment import CommitmentLevel
+from solders.commitment_config import CommitmentLevel
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -111,7 +111,6 @@ async def buy(mint):
 import requests
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
-from solana.rpc.commitment import CommitmentLevel
 from solana.rpc.types import RpcSendTransactionConfig
 from solana.rpc.async_api import AsyncClient
 from solana.rpc.api import Client
