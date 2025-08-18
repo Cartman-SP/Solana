@@ -9,6 +9,7 @@ import websockets
 import aiohttp
 import requests
 from typing import Optional, List, Dict, Tuple
+import base58
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -161,7 +162,7 @@ def parse_pump_create(raw: bytes):
     except Exception as e:
         print(f"Parse error: {e}")
         return None
-        
+
 def find_community_from_uri(uri: str) -> Optional[str]:
     """Ищет community ID в URI"""
     if not uri:
