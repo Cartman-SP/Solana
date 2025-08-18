@@ -256,7 +256,7 @@ async def process_message(msg, session):
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
-
+        print(mint)
         if not mint:
             return
         
