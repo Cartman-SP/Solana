@@ -114,41 +114,41 @@ JUPITER_API = "https://quote-api.jup.ag/v6"
 
 async def buy_via_jupiter(mint: str):
     try:
-        # Получаем настройки
         settings_obj = await Settings.objects.afirst()
+
+        # Конвертация с проверками
+        amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))  # -> строка
+        slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))  # ограничение 10%
         
-        # Преобразуем Decimal в int (lamports)
-        amount_lamports = int(settings_obj.sol_amount * Decimal(1e9))
-        slippage_bps = int(settings_obj.slippage_percent * Decimal(100))
-        priority_fee_lamports = int(settings_obj.priority_fee_sol * Decimal(1e9))
+        # Параметры запроса
+        params = {
+            "inputMint": "So11111111111111111111111111111111111111112",
+            "outputMint": mint,
+            "amount": amount_lamports,
+            "slippageBps": slippage_bps
+        }
         
-        # Инициализируем ключ
-        kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
-        
-        # 1. Получаем квоту от Jupiter API
-        quote_url = (
-            f"{JUPITER_API}/quote?"
-            f"inputMint=So11111111111111111111111111111111111111112&"
-            f"outputMint={mint}&"
-            f"amount={amount_lamports}&"
-            f"slippageBps={slippage_bps}"
+        # 1. Запрос квоты
+        response = requests.get(
+            f"{JUPITER_API}/quote",
+            params=params,
+            headers={"Accept": "application/json"},
+            timeout=10
         )
+        response.raise_for_status()
+        quote = response.json()
         
-        quote_response = requests.get(quote_url)
-        quote_response.raise_for_status()
-        quote = quote_response.json()
-        
-        if "error" in quote:
-            raise RuntimeError(f"Jupiter quote error: {quote['error']}")
-        
-        # 2. Получаем транзакцию для подписи
+        if not quote.get("outAmount"):
+            raise RuntimeError(f"Invalid quote: {quote.get('error', 'No outAmount')}")
+
+        # 2. Подготовка swap
         swap_payload = {
             "quoteResponse": quote,
-            "userPublicKey": str(kp.pubkey()),
+            "userPublicKey": str(Keypair.from_base58_string(settings_obj.buyer_pubkey.strip()).pubkey()),
             "wrapAndUnwrapSol": True,
-            "dynamicComputeUnitLimit": True,
-            "priorityFee": priority_fee_lamports,
+            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))  # -> строка
         }
+        
         
         swap_response = requests.post(
             f"{JUPITER_API}/swap",
