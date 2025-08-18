@@ -243,7 +243,7 @@ async def check_twitter_whitelist(twitter_name,creator):
                     name=twitter_name,
                     whitelist=True,
                     ath__gt=settings_obj.ath_from,
-                    total_trans__gt=getattr(settings_obj.total_trans_from)
+                    total_trans__gt=settings_obj.total_trans_from
                 )
             except:
                 return False
@@ -252,7 +252,7 @@ async def check_twitter_whitelist(twitter_name,creator):
                 await sync_to_async(Twitter.objects.get)(
                     name=twitter_name,
                     ath__gt=settings_obj.ath_from,
-                    total_trans__gt=getattr(settings_obj.total_trans_from)
+                    total_trans__gt=settings_obj.total_trans_from
                 )
             except:
                 return False
