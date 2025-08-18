@@ -123,9 +123,9 @@ async def process_message(msg, session):
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
         if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
-        print(logs)
+        print(123)
         with open('test555.txt', 'a') as f:
-            f.write(str(logs))
+            f.write(str(msg))
 
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data)
