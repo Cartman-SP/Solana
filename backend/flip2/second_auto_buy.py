@@ -34,7 +34,7 @@ URI_META_CACHE = {}
 
 # Регулярные выражения
 COMMUNITY_ID_RE = re.compile(r"/communities/(\d+)", re.IGNORECASE)
-INSTRUCTION_CREATE_RE = re.compile(r"instruction.*create", re.IGNORECASE)
+INSTRUCTION_CREATE_RE = re.compile(r"instruction.*initializemint", re.IGNORECASE)
 FAILED_ERROR_RE = re.compile(r"(failed:|custom program error)", re.IGNORECASE)
 PROGDATA_RE = re.compile(r"Program data:\s*([A-Za-z0-9+/=]+)")
 
@@ -228,7 +228,6 @@ async def process_message(msg, session):
             return
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
-        print(data,parsed)
         if not parsed:
             return
         mint = (parsed["mint"] or "").strip()
