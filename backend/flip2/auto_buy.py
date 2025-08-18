@@ -54,6 +54,11 @@ LOGS_SUB_JSON = json.dumps({
     ]
 })
 
+
+def keypair_from_base58(secret_b58: str) -> Keypair:
+    """Создает Keypair из base58 строки"""
+    return Keypair.from_base58_string(secret_b58.strip())
+
 async def buy(mint):
     settings_obj = await sync_to_async(Settings.objects.first)()
     buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
