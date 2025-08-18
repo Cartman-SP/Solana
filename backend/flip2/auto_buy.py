@@ -113,45 +113,69 @@ JUPITER_API = "https://quote-api.jup.ag/v6"
 
 async def buy_via_jupiter(mint: str):
     try:
-        settings_obj = await sync_to_async(Settings.objects.first)()
+        # Получаем настройки
+        settings_obj = await Settings.objects.afirst()
+        
+        # Преобразуем Decimal в int (lamports)
+        amount_lamports = int(settings_obj.sol_amount * Decimal(1e9))
+        slippage_bps = int(settings_obj.slippage_percent * Decimal(100))
+        priority_fee_lamports = int(settings_obj.priority_fee_sol * Decimal(1e9))
+        
+        # Инициализируем ключ
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
         
         # 1. Получаем квоту от Jupiter API
-        quote_url = f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={int(settings_obj.sol_amount * 1e9)}&slippageBps={int(settings_obj.slippage_percent * 100)}"
-        quote = requests.get(quote_url).json()
+        quote_url = (
+            f"{JUPITER_API}/quote?"
+            f"inputMint=So11111111111111111111111111111111111111112&"
+            f"outputMint={mint}&"
+            f"amount={amount_lamports}&"
+            f"slippageBps={slippage_bps}"
+        )
+        
+        quote_response = requests.get(quote_url)
+        quote_response.raise_for_status()
+        quote = quote_response.json()
         
         if "error" in quote:
-            raise RuntimeError(f"Jupiter error: {quote['error']}")
+            raise RuntimeError(f"Jupiter quote error: {quote['error']}")
         
-        # 2. Получаем готовую транзакцию
+        # 2. Получаем транзакцию для подписи
         swap_payload = {
             "quoteResponse": quote,
             "userPublicKey": str(kp.pubkey()),
             "wrapAndUnwrapSol": True,
             "dynamicComputeUnitLimit": True,
-            "priorityFee": int(settings_obj.priority_fee_sol * 1e9),
+            "priorityFee": priority_fee_lamports,
         }
         
         swap_response = requests.post(
             f"{JUPITER_API}/swap",
             headers={"Content-Type": "application/json"},
             json=swap_payload,
-        ).json()
+        )
+        swap_response.raise_for_status()
+        swap_data = swap_response.json()
         
         # 3. Подписываем и отправляем транзакцию
-        swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_response["swapTransaction"]))
+        swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_data["swapTransaction"]))
         signed_tx = swap_tx.sign([kp])
         
         rpc_client = Client(HELIUS_HTTP)
-        tx_hash = rpc_client.send_raw_transaction(bytes(signed_tx), opts=RpcSendTransactionConfig(
-            skip_preflight=False,
-            preflight_commitment=CommitmentLevel.Confirmed,
-        ))
+        tx_hash = await rpc_client.send_raw_transaction(
+            bytes(signed_tx),
+            opts=RpcSendTransactionConfig(
+                skip_preflight=False,
+                preflight_commitment=CommitmentLevel.Confirmed,
+            )
+        )
         
         return str(tx_hash.value)
     
+    except requests.RequestException as e:
+        raise RuntimeError(f"HTTP error: {str(e)}")
     except Exception as e:
-        raise RuntimeError(f"Jupiter swap failed: {str(e)}")
+        raise RuntimeError(f"Swap failed: {str(e)}")
 
 
                    
