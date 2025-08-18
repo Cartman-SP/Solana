@@ -114,6 +114,121 @@ async def get_creator_username(session, community_id):
     
     return None
 
+def collect_progdata_bytes_after_create(logs):
+    """Собирает байты данных программы после инструкции Create"""
+    chunks, after = [], False
+    for line in logs:
+        low = str(line).lower()
+        if "instruction" in low and "create" in low:
+            after = True
+            continue
+        if not after:
+            continue
+        m = PROGDATA_RE.search(str(line))
+        if m:
+            chunks.append(m.group(1))
+        elif chunks:
+            break
+    if not chunks:
+        return None
+
+    out = bytearray()
+    for c in chunks:
+        try:
+            out += base64.b64decode(c, validate=True)
+        except Exception:
+            try:
+                out += base58.b58decode(c)
+            except Exception:
+                return None
+    return bytes(out)
+
+def parse_pump_create(raw: bytes):
+    """Парсит данные создания токена PumpFun"""
+    if not raw or len(raw) < 8: return None
+    
+    # Упрощенный парсинг без полной проверки структуры
+    try:
+        # Пропускаем первые 8 байт (вероятно, заголовок)
+        data = raw[8:]
+        
+        # Быстрый поиск URI (эвристический подход)
+        uri_start = data.find(b"https://") 
+        if uri_start == -1:
+            uri_start = data.find(b"http://")
+        
+        if uri_start != -1:
+            uri_end = data.find(b"\x00", uri_start)
+            uri = data[uri_start:uri_end].decode('utf-8', errors='ignore')
+        else:
+            uri = ""
+            
+        # Поиск mint address (последние 32 байта)
+        mint = base58.b58encode(raw[-32:]).decode() if len(raw) >= 32 else ""
+        
+        return {
+            "uri": uri,
+            "mint": mint,
+            "symbol": "",  # Не используется в вашей логике
+            "name": ""     # Не используется в вашей логике
+        }
+    except Exception:
+        return None
+
+def find_community_from_uri(uri: str) -> Optional[str]:
+    """Ищет community ID в URI"""
+    if not uri:
+        return None
+    match = COMMUNITY_ID_RE.search(uri)
+    return match.group(1) if match else None
+
+async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Загружает метаданные с URI"""
+    if not uri:
+        return None
+        
+    try:
+        # Пробуем только один раз с коротким таймаутом
+        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+            data = await r.json()
+            return data
+    except Exception:
+        return None
+
+def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
+    """Ищет community ID в метаданных"""
+    # Проверяем основные поля
+    for field in ['twitter', 'x', 'external_url', 'website']:
+        if field in meta_json:
+            url, cid = canonicalize_community_url(meta_json[field])
+            if cid:
+                return url, cid, field
+    
+    # Проверяем extensions если есть
+    if 'extensions' in meta_json:
+        for field in ['twitter', 'x', 'website']:
+            if field in meta_json['extensions']:
+                url, cid = canonicalize_community_url(meta_json['extensions'][field])
+                if cid:
+                    return url, cid, f"extensions.{field}"
+    
+    return None, None, None
+
+def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
+    """Нормализует URL community и извлекает ID"""
+    if not url_or_id:
+        return None, None
+        
+    # Если это просто цифры - считаем это ID
+    if url_or_id.isdigit():
+        return f"https://x.com/i/communities/{url_or_id}", url_or_id
+        
+    # Ищем ID в URL
+    match = COMMUNITY_ID_RE.search(url_or_id)
+    if match:
+        return f"https://x.com/i/communities/{match.group(1)}", match.group(1)
+        
+    return None, None
 
 
 
@@ -123,12 +238,8 @@ async def process_message(msg, session):
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
         if not any(INSTRUCTION_CREATE_RE.search(log) for log in logs):
             return
-        print(123)
-        with open('test555.txt', 'a') as f:
-            f.write(str(msg))
-
         data = collect_progdata_bytes_after_create(logs)
-        parsed = parse_pump_create(data)
+        parsed = parse_pump_create(data or b"")
         if not parsed:
             return
         mint = (parsed["mint"] or "").strip()
