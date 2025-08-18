@@ -81,40 +81,6 @@ async def buy(mint):
     except Exception as e:
         print(e)
 
-async def check_twitter_whitelist(twitter_name,creator):
-    try:
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        if not(settings_obj.start):
-            return False
-        if(settings_obj.one_token_enabled):
-            try:
-                await sync_to_async(UserDev.objects.get)(adress=creator)
-                return False
-            except:
-                pass
-        if(settings_obj.whitelist_enabled):
-            try:
-                await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
-                    whitelist=True,
-                    ath__gte=settings_obj.ath_from,
-                    total_trans__gte=settings_obj.total_trans_from
-                )
-            except:
-                return False
-        else:
-            try:
-                await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
-                    ath__gte=settings_obj.ath_from,
-                    total_trans__gte=settings_obj.total_trans_from
-                )
-            except:
-                return False
-        return True
-    except Exception as e:
-        print(e)
-        return False
                    
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
@@ -327,6 +293,40 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
+async def check_twitter_whitelist(twitter_name,creator):
+    try:
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        if not(settings_obj.start):
+            return False
+        if(settings_obj.one_token_enabled):
+            try:
+                await sync_to_async(UserDev.objects.get)(adress=creator)
+                return False
+            except:
+                pass
+        if(settings_obj.whitelist_enabled):
+            try:
+                await sync_to_async(Twitter.objects.get)(
+                    name=twitter_name,
+                    whitelist=True,
+                    ath__gte=settings_obj.ath_from,
+                    total_trans__gte=settings_obj.total_trans_from
+                )
+            except:
+                return False
+        else:
+            try:
+                await sync_to_async(Twitter.objects.get)(
+                    name=twitter_name,
+                    ath__gte=settings_obj.ath_from,
+                    total_trans__gte=settings_obj.total_trans_from
+                )
+            except:
+                return False
+        return True
+    except Exception as e:
+        print(e)
+        return False
 
 
 async def process_message(msg, session):
@@ -354,6 +354,7 @@ async def process_message(msg, session):
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
             check = await check_twitter_whitelist(twitter_name,creator)
+            print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
                 await buy(mint)
