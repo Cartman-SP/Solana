@@ -267,7 +267,7 @@ async def process_token_complete(token_address: str, session: aiohttp.ClientSess
         is_migrated = await check_migration_async(token_address, session)
         if is_migrated:
             # Для мигрировавших используем специальное значение ATH и не считаем total_trans
-            return 60000, is_migrated, 0
+            return 60000, is_migrated, 1000
         else:
             values_for_ath, total_count = await get_ath_values_and_total_count(token_address, session)
 
@@ -304,8 +304,6 @@ async def get_tokens_for_processing():
             ath=0,
             processed = False,
             created_at__lt=sixty_minutes_ago,
-            dev__blacklist=False,
-            dev__total_tokens__lte=300
         ).select_related('dev')[:100]
     )
     print(len(tokens))
