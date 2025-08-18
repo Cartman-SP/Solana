@@ -255,23 +255,40 @@
             
             <div class="settings-section">
                 <div class="settings-title">
-                    <span>🔧</span>
-                    Дополнительные настройки
+                    <span>🤖</span>
+                    Настройки автоматической покупки
                 </div>
-                
                 <div class="filter-group">
-                    <label class="filter-label">Источник токена</label>
-                    <select id="source-filter" class="filter-input">
-                        <option value="">Все источники</option>
-                        <option value="pump">Pump</option>
-                        <option value="flip">Flip</option>
-                        <option value="other">Другие</option>
-                    </select>
+                    <input type="checkbox" id="auto-buy-start" class="filter-checkbox">
+                    <label for="auto-buy-start" class="checkbox-label">Включить автобаей</label>
                 </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="show-only-new" class="filter-checkbox">
-                    <label for="show-only-new" class="checkbox-label">Показывать только новые токены (за последний час)</label>
+                <div class="filter-group">
+                    <input type="checkbox" id="auto-buy-one-token" class="filter-checkbox">
+                    <label for="auto-buy-one-token" class="checkbox-label">Покупать только 1 токен</label>
+                </div>
+                <div class="filter-group">
+                    <input type="checkbox" id="auto-buy-whitelist" class="filter-checkbox">
+                    <label for="auto-buy-whitelist" class="checkbox-label">Покупать только если в вайтлисте</label>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-ath-from">ATH (от)</label>
+                    <input type="number" id="auto-buy-ath-from" class="filter-input" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-buyer-pubkey">Ключ покупателя</label>
+                    <input type="text" id="auto-buy-buyer-pubkey" class="filter-input" placeholder="Введите публичный ключ">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-sol-amount">Количество SOL для покупки</label>
+                    <input type="number" id="auto-buy-sol-amount" class="filter-input" step="0.00000001" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-slippage">Slippage %</label>
+                    <input type="number" id="auto-buy-slippage" class="filter-input" step="0.00000001" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="auto-buy-priority-fee">Priority fee (SOL)</label>
+                    <input type="number" id="auto-buy-priority-fee" class="filter-input" step="0.00000001" placeholder="0">
                 </div>
             </div>
             

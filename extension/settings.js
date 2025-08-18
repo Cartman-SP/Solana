@@ -15,6 +15,7 @@ class SettingsManager {
     }
     
     loadSettings() {
+        // Старые фильтры (chrome.storage)
         chrome.storage.sync.get({
             // Фильтры пользователя
             minUserAth: '',
@@ -66,9 +67,26 @@ class SettingsManager {
             document.getElementById('source-filter').value = items.sourceFilter;
             document.getElementById('show-only-new').checked = items.showOnlyNew;
         });
+        // Новый блок: автобаей
+        fetch('https://goodelivery.ru/api/auto_buy_settings/', { method: 'GET' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.settings) {
+                    const s = data.settings;
+                    document.getElementById('auto-buy-start').checked = s.start;
+                    document.getElementById('auto-buy-one-token').checked = s.one_token_enabled;
+                    document.getElementById('auto-buy-whitelist').checked = s.whitelist_enabled;
+                    document.getElementById('auto-buy-ath-from').value = s.ath_from;
+                    document.getElementById('auto-buy-buyer-pubkey').value = s.buyer_pubkey;
+                    document.getElementById('auto-buy-sol-amount').value = s.sol_amount;
+                    document.getElementById('auto-buy-slippage').value = s.slippage_percent;
+                    document.getElementById('auto-buy-priority-fee').value = s.priority_fee_sol;
+                }
+            });
     }
     
     saveSettings() {
+        // Старые фильтры (chrome.storage)
         const settings = {
             // Фильтры пользователя
             minUserAth: document.getElementById('min-user-ath').value,
@@ -98,6 +116,33 @@ class SettingsManager {
         
         chrome.storage.sync.set(settings, () => {
             this.showStatus('Настройки сохранены!', 'success');
+        });
+        // Новый блок: автобаей
+        const autoBuy = {
+            start: document.getElementById('auto-buy-start').checked,
+            one_token_enabled: document.getElementById('auto-buy-one-token').checked,
+            whitelist_enabled: document.getElementById('auto-buy-whitelist').checked,
+            ath_from: parseInt(document.getElementById('auto-buy-ath-from').value) || 0,
+            buyer_pubkey: document.getElementById('auto-buy-buyer-pubkey').value,
+            sol_amount: document.getElementById('auto-buy-sol-amount').value,
+            slippage_percent: document.getElementById('auto-buy-slippage').value,
+            priority_fee_sol: document.getElementById('auto-buy-priority-fee').value
+        };
+        fetch('https://goodelivery.ru/api/auto_buy_settings/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(autoBuy)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                this.showStatus('Настройки автобая сохранены!', 'success');
+            } else {
+                this.showStatus('Ошибка сохранения автобая', 'error');
+            }
+        })
+        .catch(() => {
+            this.showStatus('Ошибка соединения с сервером', 'error');
         });
     }
     

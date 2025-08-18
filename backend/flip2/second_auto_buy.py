@@ -176,9 +176,9 @@ def parse_pump_create(raw: bytes):
     bonding_curve, off = _take_pk(mv, off)
     creator, off       = _take_pk(mv, off)
     return {
-        "name": name or "", "symbol": symbol or "", "uri": uri or "",
-        "mint": mint or "", "bondingCurve": bonding_curve or "", "creator": creator or "",
-        "decimals": 6,
+        "uri": uri,
+        "mint": mint ,
+        "creator": creator,
     }
 
 def find_community_from_uri(uri: str) -> Optional[str]:
@@ -251,7 +251,8 @@ async def process_message(msg, session):
             return
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
-        print(mint,uri)
+        creator = (parsed["creator"] or "").strip()
+        print(mint,uri,creator)
         if not mint:
             return
         

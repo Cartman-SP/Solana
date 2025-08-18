@@ -15,6 +15,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import AdminDev, Token
 from django.shortcuts import redirect
+from .models import Settings
+from django.views.decorators.http import require_GET, require_POST
 
 LOCAL_WS_URL = "ws://localhost:9393"
 
@@ -583,3 +585,60 @@ def pump_hook(request):
         with open('pump_hook.txt', 'a') as f:
             f.write(str(e)+"\n"+str(request.body))
         return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@require_GET
+def get_auto_buy_settings(request):
+    try:
+        settings = Settings.objects.first()
+        if not settings:
+            settings = Settings.objects.create()
+        data = {
+            'start': settings.start,
+            'one_token_enabled': settings.one_token_enabled,
+            'whitelist_enabled': settings.whitelist_enabled,
+            'ath_from': settings.ath_from,
+            'buyer_pubkey': settings.buyer_pubkey,
+            'sol_amount': str(settings.sol_amount),
+            'slippage_percent': str(settings.slippage_percent),
+            'priority_fee_sol': str(settings.priority_fee_sol),
+        }
+        response = JsonResponse({'success': True, 'settings': data})
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+    except Exception as e:
+        response = JsonResponse({'success': False, 'error': str(e)}, status=500)
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def update_auto_buy_settings(request):
+    if request.method == "OPTIONS":
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    try:
+        data = json.loads(request.body)
+        settings = Settings.objects.first()
+        if not settings:
+            settings = Settings.objects.create()
+        settings.start = data.get('start', settings.start)
+        settings.one_token_enabled = data.get('one_token_enabled', settings.one_token_enabled)
+        settings.whitelist_enabled = data.get('whitelist_enabled', settings.whitelist_enabled)
+        settings.ath_from = data.get('ath_from', settings.ath_from)
+        settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
+        settings.sol_amount = data.get('sol_amount', settings.sol_amount)
+        settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
+        settings.priority_fee_sol = data.get('priority_fee_sol', settings.priority_fee_sol)
+        settings.save()
+        response = JsonResponse({'success': True})
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+    except Exception as e:
+        response = JsonResponse({'success': False, 'error': str(e)}, status=500)
+        response["Access-Control-Allow-Origin"] = "*"
+        return response

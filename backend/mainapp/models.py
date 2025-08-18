@@ -44,6 +44,8 @@ class Settings(models.Model):
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
     slippage_percent = models.DecimalField(max_digits=16, decimal_places=8, default=0)
     priority_fee_sol = models.DecimalField(max_digits=16, decimal_places=8, default=0)
-    filter_ath = models.IntegerField(default=0)
     start = models.BooleanField(default=False)
+    one_token_enabled = models.BooleanField(default=False)
+    whitelist_enabled = models.BooleanField(default=False)
+    ath_from = models.IntegerField(default=0)
 
