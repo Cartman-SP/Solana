@@ -185,6 +185,7 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     """Ищет community ID в URI"""
     if not uri:
         return None
+    print(uri)
     match = COMMUNITY_ID_RE.search(uri)
     return match.group(1) if match else None
 
@@ -254,8 +255,8 @@ async def process_message(msg, session):
         if not mint:
             return
         
-        # Поиск community_id
-        community_id = find_community_from_uri(uri)
+        
+        community_id = None
         if not community_id:
             meta = await fetch_meta_with_retries(session, uri)
             if meta:
