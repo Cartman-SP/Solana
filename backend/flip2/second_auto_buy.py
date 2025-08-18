@@ -93,7 +93,9 @@ async def check_twitter_whitelist(twitter_name,creator):
             except:
                 return False
         return True
-
+    except:
+        return False
+        
 async def get_creator_username(session, community_id):
     """Получение username создателя сообщества"""
     if community_id in COMMUNITY_CACHE:

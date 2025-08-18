@@ -233,6 +233,8 @@ async def check_twitter_whitelist(twitter_name,creator):
             except:
                 return False
         return True
+    except:
+        return False
 
 
 
