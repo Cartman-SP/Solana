@@ -233,9 +233,6 @@ async def process_message(msg, session):
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         print(mint,uri)
-        with open('test555.json', 'a') as f:
-            json.dump(msg, f)
-            f.write('\n'*5)
         if not mint:
             return
         
