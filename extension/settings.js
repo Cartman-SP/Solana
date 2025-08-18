@@ -63,9 +63,15 @@ class SettingsManager {
             document.getElementById('twitter-whitelisted').checked = items.twitterWhitelisted;
             document.getElementById('twitter-blacklisted').checked = items.twitterBlacklisted;
             
-            // Загружаем дополнительные настройки
-            document.getElementById('source-filter').value = items.sourceFilter;
-            document.getElementById('show-only-new').checked = items.showOnlyNew;
+            // Загружаем дополнительные настройки (если элементы присутствуют в DOM)
+            const sourceFilterElement = document.getElementById('source-filter');
+            if (sourceFilterElement) {
+                sourceFilterElement.value = items.sourceFilter;
+            }
+            const showOnlyNewElement = document.getElementById('show-only-new');
+            if (showOnlyNewElement) {
+                showOnlyNewElement.checked = items.showOnlyNew;
+            }
         });
         // Новый блок: автобаей
         fetch('https://goodelivery.ru/api/auto_buy_settings/', { method: 'GET' })
@@ -110,8 +116,8 @@ class SettingsManager {
             twitterBlacklisted: document.getElementById('twitter-blacklisted').checked,
             
             // Дополнительные настройки
-            sourceFilter: document.getElementById('source-filter').value,
-            showOnlyNew: document.getElementById('show-only-new').checked
+            sourceFilter: (document.getElementById('source-filter') || { value: '' }).value,
+            showOnlyNew: (document.getElementById('show-only-new') || { checked: false }).checked
         };
         
         chrome.storage.sync.set(settings, () => {

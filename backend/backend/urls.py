@@ -31,6 +31,6 @@ urlpatterns = [
     path('api/get_wallets/', get_wallets, name='get_wallets'),
     path('api/admin_data', admin_data, name='get_admin_devs'),
     path('api/pump_hook/', pump_hook, name='pump_hook'),
-    path('api/auto_buy_settings/', get_auto_buy_settings, name='get_auto_buy_settings'),
-    path('api/auto_buy_settings/', update_auto_buy_settings, name='update_auto_buy_settings'),
+    # Unified endpoint for both GET and POST to avoid 405
+    path('api/auto_buy_settings/', auto_buy_settings, name='auto_buy_settings'),
 ]
