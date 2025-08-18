@@ -268,6 +268,7 @@ async def process_message(msg, session):
         print(community_id)
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
+            print(f"|{twitter_name}|")
             if twitter_name and await check_twitter_whitelist(twitter_name,creator):
                 print(mint,twitter_name,creator)
                 #await buy(mint)
