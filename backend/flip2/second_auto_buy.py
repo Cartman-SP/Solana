@@ -125,7 +125,7 @@ async def process_message(msg, session):
             return
         print(2312)
         with open ('test555.txt') as f:
-            f.write(data)
+            f.write(logs)
 
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data)
