@@ -108,6 +108,40 @@ async def buy(mint):
         raise RuntimeError(f"Transaction failed: {str(e)}")
 
 
+from raydium.sdk import create_swap_instruction  # (условно, нужно уточнить актуальный SDK)
+
+async def buy_via_raydium(mint: str):
+    try:
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
+        
+        # 1. Строим инструкцию для свопа SOL → токен
+        swap_ix = create_swap_instruction(
+            source_token=str(PublicKey("So11111111111111111111111111111111111111112")),  # SOL
+            target_token=mint,
+            amount_in=int(settings_obj.sol_amount * 1e9),
+            slippage=settings_obj.slippage_percent,
+            payer=kp.pubkey(),
+        )
+        
+        # 2. Собираем и подписываем транзакцию
+        recent_blockhash = (await AsyncClient(SOLANA_RPC).get_latest_blockhash()).value.blockhash
+        tx = Transaction().add(swap_ix)
+        tx.recent_blockhash = recent_blockhash
+        tx.fee_payer = kp.pubkey()
+        tx.sign(kp)
+        
+        # 3. Отправляем транзакцию
+        rpc_client = AsyncClient(SOLANA_RPC)
+        tx_hash = await rpc_client.send_transaction(tx)
+        
+        return str(tx_hash.value)
+    
+    except Exception as e:
+        raise RuntimeError(f"Raydium swap failed: {str(e)}")
+
+
+
                    
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
@@ -384,7 +418,7 @@ async def process_message(msg, session):
             print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
-                await buy(mint)
+                await buy_via_raydium(mint)
     except Exception as e:
         print(e)
         pass
