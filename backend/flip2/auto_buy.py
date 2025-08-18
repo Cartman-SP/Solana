@@ -393,7 +393,7 @@ async def process_message(msg, session):
             print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
-                await buy_via_jupiter(mint)
+                await buy(mint)
     except Exception as e:
         print(e)
         pass
