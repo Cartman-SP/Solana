@@ -240,6 +240,7 @@ async def process_message(msg, session):
             return
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
+        print(data,parsed)
         if not parsed:
             return
         mint = (parsed["mint"] or "").strip()
