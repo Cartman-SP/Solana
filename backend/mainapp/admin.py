@@ -45,7 +45,7 @@ class TokenAdmin(admin.ModelAdmin):
 
 @admin.register(Settings)
 class SettingsAdmin(admin.ModelAdmin):
-    list_display = ('buyer_pubkey', 'sol_amount', 'slippage_percent', 'priority_fee_sol', , 'start')
+    list_display = ('buyer_pubkey', 'sol_amount', 'slippage_percent', 'priority_fee_sol',  'start')
     list_filter = ('start')
     search_fields = ('buyer_pubkey',)
     ordering = ('-sol_amount',)
