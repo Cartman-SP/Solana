@@ -97,32 +97,29 @@ async def check_twitter_whitelist(twitter_name,creator):
     except:
         return False
         
-async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
-    """Получает username с несколькими попытками и fallback методами"""
+async def get_creator_username(session, community_id):
+    """Получение username создателя сообщества"""
+    if community_id in COMMUNITY_CACHE:
+        return COMMUNITY_CACHE[community_id]
+    
     try:
-        # Создаем задачи для параллельного выполнения
-        task1 = asyncio.create_task(_get_creator_from_info(session, community_id))
-        task2 = asyncio.create_task(_get_first_member_via_members(session, community_id))
-        
-        # Ждем первый успешный результат
-        done, pending = await asyncio.wait([task1, task2], return_when=asyncio.FIRST_COMPLETED)
-        
-        # Отменяем оставшиеся задачи
-        for task in pending:
-            task.cancel()
-        
-        # Проверяем результаты
-        for task in done:
-            try:
-                u, f, src = task.result()
-                if u:
-                    COMMUNITY_CACHE[community_id] = u
-                    return u
-            except:
-                continue
-                
-    except:
+        async with session.get(
+            f"{TW_BASE}/twitter/community/info",
+            headers=TW_HEADERS,
+            params={"community_id": community_id},
+            timeout=0.5  # Уменьшенный timeout
+        ) as r:
+            data = await r.json()
+            creator = (data.get("community_info", {}) or {}).get("creator", {})
+            username = creator.get("screen_name") or creator.get("username")
+            if username:
+                COMMUNITY_CACHE[community_id] = username
+                return username
+    except Exception as e:
+        print(e)
         pass
+    
+    return None
 
 def collect_progdata_bytes_after_create(logs):
     """Собирает байты данных программы после инструкции Create"""
