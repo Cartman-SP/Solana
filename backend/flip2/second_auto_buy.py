@@ -289,7 +289,7 @@ async def main_loop():
             settings_obj = await sync_to_async(Settings.objects.first)()
             if not settings_obj.start:
                 await asyncio.sleep(1)
-                continue
+                return
                 
             async with websockets.connect(
                 WS_URL,
