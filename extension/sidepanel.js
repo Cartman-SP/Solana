@@ -423,6 +423,11 @@ class TokenMonitor {
     createTokenElement(token) {
         const template = document.getElementById('token-template');
         const tokenElement = template.content.cloneNode(true);
+        const card = tokenElement.querySelector('.token-card');
+        // Визуальное выделение для autobuy
+        if (token.autobuy === true) {
+            card.classList.add('autobuy-token');
+        }
         
         // Заполняем основную информацию
         tokenElement.querySelector('.token-symbol').textContent = token.symbol || 'N/A';

@@ -261,7 +261,7 @@ async def process_token_data(data):
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],
             'twitter_blacklisted': twitter_data['blacklist'],
-            'autobuy': twitter_data['autobuy']
+            'autobuy': True
         }
         
         await broadcast_to_extension(extension_data)
