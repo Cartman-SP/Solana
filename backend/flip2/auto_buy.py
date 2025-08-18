@@ -154,7 +154,7 @@ async def buy_via_jupiter(mint: str):
         )
         swap_response.raise_for_status()
         swap_data = swap_response.json()
-
+        print(swap_data)
         # 3. Проверяем наличие swapTransaction
         if "swapTransaction" not in swap_data:
             raise RuntimeError(f"Jupiter did not return a transaction. Full response: {swap_data}")
