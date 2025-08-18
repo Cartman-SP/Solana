@@ -285,6 +285,7 @@ async def process_message(msg, session):
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
         if community_id:
+            print(community_id)
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
             if twitter_name and await check_twitter_whitelist(twitter_name,creator):
