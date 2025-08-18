@@ -208,7 +208,7 @@ async def get_twitter_data(twitter):
                 'whitelist': False,
                 'blacklist': False,
                 'migrations': 0,
-                'recent_tokens': []
+                'recent_tokens': [],
                 'autobuy': False
             }
         except Exception as e:
