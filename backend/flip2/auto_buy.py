@@ -135,7 +135,7 @@ async def buy_via_jupiter(mint: str):
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
         amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
         slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
-
+        time.sleep(1)
         # 2. Получение квоты
         quote_response = requests.get(
             f"{JUPITER_API}/quote",
