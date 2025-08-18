@@ -130,8 +130,7 @@ async def buy_via_jupiter(mint: str):
         
         # 1. Запрос квоты
         response = requests.get(
-            f"{JUPITER_API}/quote",
-            params=params,
+            f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={amount_lamports}&slippageBps={slippage_bps}",
             headers={"Accept": "application/json"},
             timeout=10
         )
