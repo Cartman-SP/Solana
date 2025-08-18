@@ -82,7 +82,7 @@ async def buy(mint):
         }
         
         tx_response = requests.post(
-            "https://quote-api.jup.ag/v6/swap",  # Замените на реальный URL
+            PUMPPORTAL_TRADE_LOCAL,  # Замените на реальный URL
             headers={"Content-Type": "application/json"},
             data=json.dumps(payload),
             timeout=10
@@ -115,8 +115,6 @@ async def buy(mint):
         raise RuntimeError(f"HTTP error: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Transaction failed: {str(e)}")
-
-
 
 
 
@@ -395,7 +393,7 @@ async def process_message(msg, session):
             print(check)
             if twitter_name and check :
                 print(f"buy {mint}")
-                await buy(mint)
+                await buy_via_jupiter(mint)
     except Exception as e:
         print(e)
         pass
