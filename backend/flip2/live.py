@@ -221,16 +221,19 @@ async def check_twitter_whitelist(twitter_name,creator):
             try:
                 await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
             except:
+                print(1)
                 return False
         if(settings_obj.whitelist_enabled):
             try:
                 await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",whitelist=True,ath__gt=settings_obj.ath_from)
             except:
+                print(2)
                 return False
         else:
             try:
                 await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",ath__gt=settings_obj.ath_from)
             except:
+                print(3)
                 return False
         return True
     except Exception as e:
@@ -255,6 +258,7 @@ async def process_token_data(data):
             return
 
         autobuy = await check_twitter_whitelist(twitter,user)
+        print(autobuy)
         user_dev_data = await get_user_dev_data(user)
         twitter_data = await get_twitter_data(twitter)
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
