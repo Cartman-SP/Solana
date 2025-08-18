@@ -46,3 +46,6 @@ class Settings(models.Model):
     priority_fee_sol = models.DecimalField(max_digits=16, decimal_places=8, default=0)
     filter_ath = models.IntegerField(default=0)
     start = models.BooleanField(default=False)
+
+class Community(models.Model):
+    community_id
