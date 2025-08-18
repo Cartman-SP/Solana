@@ -229,7 +229,7 @@ async def process_token_data(data):
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
         twitter_user = await sync_to_async(Twitter.objects.get)(name=twitter)
-
+        print(symbol)
         if twitter == '':
             return
         user_dev_data = await get_user_dev_data(user)
@@ -237,9 +237,11 @@ async def process_token_data(data):
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
         if user_dev_data is None:
             return
+        print(123)
         # Проверяем twitter_data и устанавливаем значения по умолчанию
         if twitter_data is None:
             return
+        print(321)
         extension_data = {
             'mint': mint,
             'user': user,
