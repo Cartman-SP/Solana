@@ -262,12 +262,10 @@ async def process_message(msg, session):
             return
         
         
-        community_id = None
-        if not community_id:
-            meta = await fetch_meta_with_retries(session, uri)
-            if meta:
-                community_url, community_id, _ = find_community_anywhere_with_src(meta)
-        
+        meta = await fetch_meta_with_retries(session, uri)
+        if meta:
+            community_url, community_id, _ = find_community_anywhere_with_src(meta)
+        print(community_id)
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
             if twitter_name and await check_twitter_whitelist(twitter_name,creator):
