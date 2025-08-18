@@ -73,7 +73,7 @@ async def buy(mint):
         }
         
         tx_response = requests.post(
-            "PUMPPORTAL_TRADE_LOCAL",  # Замените на реальный URL
+            "https://pumpportal.fun/api/trade-local",  # Замените на реальный URL
             headers={"Content-Type": "application/json"},
             data=json.dumps(payload),
             timeout=10
