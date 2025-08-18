@@ -129,10 +129,10 @@ async def buy_via_jupiter(mint: str):
         }
         
         # 1. Запрос квоты
-        response = requests.get("https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=5P36GScrTe2sUoeQFLNh1fuXmX62981sVkhxDLR8pump&amount=10000000&slippageBps=990")
-        print(response.text)
-        quote = response.json()
+        response = requests.get(f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={amount_lamports}&slippageBps={slippage_bps}")
         
+        quote = response.json()
+        print(quote)
         if not quote.get("outAmount"):
             raise RuntimeError(f"Invalid quote: {quote.get('error', 'No outAmount')}")
 
