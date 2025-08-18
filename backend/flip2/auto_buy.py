@@ -60,23 +60,26 @@ def keypair_from_base58(secret_b58: str) -> Keypair:
     return Keypair.from_base58_string(secret_b58.strip())
 
 async def buy(mint):
-    settings_obj = await sync_to_async(Settings.objects.first)()
-    buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
-    sol_amount = float(settings_obj.sol_amount)
-    slippage_percent = float(settings_obj.slippage_percent)
-    priority_fee_sol = float(settings_obj.priority_fee_sol)
-    pool = "pump" 
-    kp = keypair_from_base58(buyer_pubkey)
-    tx_bytes = build_buy_tx(
-        mint=mint,
-        buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
-        sol_amount=sol_amount,
-        slippage_percent=slippage_percent,
-        priority_fee_sol=priority_fee_sol,
-        pool=pool
-    )
-    sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
-    print(sig)
+    try:
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
+        sol_amount = float(settings_obj.sol_amount)
+        slippage_percent = float(settings_obj.slippage_percent)
+        priority_fee_sol = float(settings_obj.priority_fee_sol)
+        pool = "pump" 
+        kp = keypair_from_base58(buyer_pubkey)
+        tx_bytes = build_buy_tx(
+            mint=mint,
+            buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
+            sol_amount=sol_amount,
+            slippage_percent=slippage_percent,
+            priority_fee_sol=priority_fee_sol,
+            pool=pool
+        )
+        sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
+        print(sig)
+    except Exception as e:
+        print(e)
 
 async def check_twitter_whitelist(twitter_name,creator):
     try:
