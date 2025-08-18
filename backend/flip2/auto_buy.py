@@ -117,7 +117,7 @@ from solana.rpc.async_api import AsyncClient
 from solana.rpc.api import Client
 
 JUPITER_API = "https://quote-api.jup.ag/v6"
-SOLANA_RPC = "https://api.mainnet-beta.solana.com"  # или Helius/QuickNode
+
 
 async def buy_via_jupiter(mint: str):
     try:
@@ -150,7 +150,7 @@ async def buy_via_jupiter(mint: str):
         swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_response["swapTransaction"]))
         signed_tx = swap_tx.sign([kp])
         
-        rpc_client = Client(SOLANA_RPC)
+        rpc_client = Client(HELIUS_HTTP)
         tx_hash = rpc_client.send_raw_transaction(bytes(signed_tx), opts=RpcSendTransactionConfig(
             skip_preflight=False,
             preflight_commitment=CommitmentLevel.Confirmed,
