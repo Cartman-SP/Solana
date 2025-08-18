@@ -116,7 +116,7 @@ async def get_creator_username(session, community_id):
                 COMMUNITY_CACHE[community_id] = username
                 return username
     except Exception as e:
-        print(e)
+
         pass
     
     return None
@@ -191,7 +191,6 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     """Ищет community ID в URI"""
     if not uri:
         return None
-    print(uri)
     match = COMMUNITY_ID_RE.search(uri)
     return match.group(1) if match else None
 
@@ -258,7 +257,6 @@ async def process_message(msg, session):
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
-        print(mint)
         if not mint:
             return
         
@@ -266,10 +264,8 @@ async def process_message(msg, session):
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
-        print(community_id)
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
-            print(f"|{twitter_name}|")
             if twitter_name and await check_twitter_whitelist(twitter_name,creator):
                 print(mint,twitter_name,creator)
                 #await buy(mint)
