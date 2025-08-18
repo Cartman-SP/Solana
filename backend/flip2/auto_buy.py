@@ -126,7 +126,7 @@ async def buy_via_jupiter(mint: str):
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
         amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))
         slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))
-        time.sleep(1)
+        
         # 1. Получаем квоту от Jupiter
         quote_params = {
             "inputMint": "So11111111111111111111111111111111111111112",
@@ -167,24 +167,28 @@ async def buy_via_jupiter(mint: str):
         if "swapTransaction" not in swap_data:
             raise RuntimeError("No transaction data in Jupiter response")
 
-        # 3. Декодируем и подписываем транзакцию (правильный способ для solders 0.29)
+        # 3. Декодируем и подписываем транзакцию
         try:
             raw_tx = base64.b64decode(swap_data["swapTransaction"])
-            tx = VersionedTransaction.from_bytes(raw_tx)
             
-            # Создаем подписанную транзакцию
-            signatures = [kp.sign(tx.message.serialize())]
-            signed_tx = VersionedTransaction(
-                message=tx.message,
-                signatures=signatures
-            )
+            # Для solders 0.29 правильный способ подписи
+            tx = Transaction.from_bytes(raw_tx)
+            tx.sign([kp])  # Теперь этот метод должен работать
+            
+            # Или альтернативный способ:
+            # tx = VersionedTransaction.from_bytes(raw_tx)
+            # signed_tx = VersionedTransaction(
+            #     message=tx.message,
+            #     signatures=[kp.sign_message(tx.message.serialize())]
+            # )
+            
         except Exception as e:
             raise RuntimeError(f"Transaction signing failed: {str(e)}")
 
         # 4. Отправляем транзакцию
         rpc_client = Client(HELIUS_HTTP)
         tx_hash = await rpc_client.send_raw_transaction(
-            bytes(signed_tx),
+            bytes(tx),
             opts=RpcSendTransactionConfig(
                 skip_preflight=False,
                 preflight_commitment=CommitmentLevel.Confirmed,
@@ -197,6 +201,7 @@ async def buy_via_jupiter(mint: str):
         raise RuntimeError(f"HTTP request failed: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Swap execution failed: {str(e)}")
+
 
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
