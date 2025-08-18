@@ -176,8 +176,6 @@ async def get_twitter_data(twitter):
         
         # Обновляем и сохраняем данные Twitter
         old_ath = user_dev.ath
-        settings_obj =  await sync_to_async(Settings.objects.first)()
-        autobuy = old_ath > settings_obj.ath and user_dev.whitelist and settings_obj.start
         user_dev.ath = int(avg_ath)
         user_dev.total_tokens = await sync_to_async(Token.objects.filter(twitter=user_dev, processed=True).count)()
         try:
@@ -193,7 +191,6 @@ async def get_twitter_data(twitter):
             'blacklist': user_dev.blacklist,
             'migrations': round(migration_percentage, 1),
             'recent_tokens': recent_tokens_info,
-            'autobuy': autobuy
         }
     except Twitter.DoesNotExist:
         print(f"DEBUG: Twitter аккаунт {twitter} не найден в базе данных")
@@ -209,7 +206,6 @@ async def get_twitter_data(twitter):
                 'blacklist': False,
                 'migrations': 0,
                 'recent_tokens': [],
-                'autobuy': False
             }
         except Exception as e:
             print(f"ERROR: Не удалось создать Twitter аккаунт {twitter}: {str(e)}")
