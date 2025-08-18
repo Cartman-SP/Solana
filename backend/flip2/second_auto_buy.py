@@ -49,7 +49,7 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 async def buy(mint):
-    """Функция покупки токена"""
+   print(f"buy: {mint}")
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not settings_obj:
@@ -145,6 +145,8 @@ async def process_message(msg, session):
             twitter_name = await get_creator_username(session, community_id)
             if twitter_name and await check_twitter_whitelist(twitter_name):
                 await buy(mint)
+            else:
+                print(f"not_buy:{twitter,mint}")
     except Exception:
         pass
 
