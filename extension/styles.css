@@ -526,6 +526,12 @@ body {
     font-weight: 600;
 }
 
+/* Для автобая меняем цвет total_trans на белый */
+.autobuy-token .stat-value.user-total-trans,
+.autobuy-token .stat-value.twitter-total-trans {
+    color: white;
+}
+
 .stat-badges {
     display: flex;
     gap: 4px;
