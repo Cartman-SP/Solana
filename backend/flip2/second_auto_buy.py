@@ -34,7 +34,7 @@ URI_META_CACHE = {}
 
 # Регулярные выражения
 COMMUNITY_ID_RE = re.compile(r"/communities/(\d+)", re.IGNORECASE)
-INSTRUCTION_CREATE_RE = re.compile(r"instruction.*initializemint", re.IGNORECASE)
+INSTRUCTION_CREATE_RE = re.compile(r"instruction.*create", re.IGNORECASE)
 FAILED_ERROR_RE = re.compile(r"(failed:|custom program error)", re.IGNORECASE)
 PROGDATA_RE = re.compile(r"Program data:\s*([A-Za-z0-9+/=]+)")
 
@@ -232,7 +232,8 @@ async def process_message(msg, session):
             return
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
-        print(mint,uri)
+        with open('test555.json', 'a') as f:
+            f.write(json.dump(msg))
         if not mint:
             return
         
