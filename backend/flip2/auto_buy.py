@@ -116,10 +116,9 @@ JUPITER_API = "https://quote-api.jup.ag/v6"
 
 async def buy_via_jupiter(mint: str):
     try:
-        settings_obj = await Settings.objects.afirst()
+        settings_obj = await sync_to_async(Settings.objects.first)()
         kp = Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())
 
-        # 1. Получаем квоту
         quote = requests.get(
             f"{JUPITER_API}/quote",
             params={
@@ -153,8 +152,8 @@ async def buy_via_jupiter(mint: str):
     except Exception as e:
         raise RuntimeError(f"Swap failed: {str(e)}")
 
-        
-                           
+
+
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
     to = aiohttp.ClientTimeout(total=0.8)  # Уменьшаем timeout для скорости
