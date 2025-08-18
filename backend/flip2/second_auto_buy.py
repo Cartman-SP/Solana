@@ -126,10 +126,11 @@ async def process_message(msg, session):
         print(2312)
         # Быстрый парсинг данных
         data = collect_progdata_bytes_after_create(logs)
-        parsed = parse_pump_create(data or b"")
+        parsed = parse_pump_create(data)
+        with open ('test555.txt') as f:
+            f.write(data)
         if not parsed:
             return
-        print(3125123)
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         
