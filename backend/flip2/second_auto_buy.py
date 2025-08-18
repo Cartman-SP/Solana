@@ -118,7 +118,7 @@ async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
-        if not looks_like_create(logs) or has_error(logs):
+        if not looks_like_create(logs):
             return
         print(2312)
         # Быстрый парсинг данных
