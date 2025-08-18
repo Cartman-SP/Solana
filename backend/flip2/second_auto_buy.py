@@ -75,7 +75,6 @@ async def buy(mint):
         pass
 
 async def check_twitter_whitelist(twitter_name,creator):
-    print(twitter_name)
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         if(settings_obj.one_token_enabled):
@@ -258,7 +257,6 @@ async def process_message(msg, session):
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
-        print(mint)
         if not mint:
             return
         
@@ -266,10 +264,8 @@ async def process_message(msg, session):
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
-        print(community_id)
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
-            print(f"|{twitter_name}|")
             if twitter_name and await check_twitter_whitelist(twitter_name,creator):
                 print(f"\nBUY:{mint,twitter_name,creator}\n")
                 #await buy(mint)
