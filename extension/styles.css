@@ -244,23 +244,6 @@ body {
     animation: autobuyPulse 2s ease-in-out infinite;
 }
 
-.token-card.autobuy-token::before {
-    content: "🚀 AUTOBUY";
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #ff8c00;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 10;
-}
-
 .token-card.autobuy-token .token-symbol {
     color: white;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);

@@ -214,6 +214,28 @@ async def get_twitter_data(twitter):
         print(f"ERROR: Ошибка при обработке Twitter {twitter}: {str(e)}")
         return None
 
+async def check_twitter_whitelist(twitter_name,creator):
+    try:
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        if(settings_obj.one_token_enabled):
+            try:
+                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
+            except:
+                return False
+        if(settings_obj.whitelist_enabled):
+            try:
+                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",whitelist=True,ath__gt=settings_obj.ath_from)
+            except:
+                return False
+        else:
+            try:
+                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",ath__gt=settings_obj.ath_from)
+            except:
+                return False
+        return True
+
+
+
 async def process_token_data(data):
     """Обрабатывает данные токена и отправляет в расширение"""
     try:
@@ -228,6 +250,8 @@ async def process_token_data(data):
         print(symbol)
         if twitter == '':
             return
+
+        autobuy = check_twitter_whitelist(twitter,user)
         user_dev_data = await get_user_dev_data(user)
         twitter_data = await get_twitter_data(twitter)
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
@@ -259,7 +283,7 @@ async def process_token_data(data):
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],
             'twitter_blacklisted': twitter_data['blacklist'],
-            'autobuy': True
+            'autobuy': autobuy
         }
         
         await broadcast_to_extension(extension_data)

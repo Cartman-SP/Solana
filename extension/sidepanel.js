@@ -8,6 +8,7 @@ class TokenMonitor {
         this.pingInterval = null;
         this.lastPingTime = 0;
         this.pingHistory = [];
+        this.autobuyOpenedMints = new Set(); // защита от повторных открытий вкладок
         
         this.init();
     }
@@ -162,10 +163,10 @@ class TokenMonitor {
             return; // Токен уже существует, не добавляем повторно
         }
         
-        // Проверяем поле autobuy и редиректим основное окно если нужно
-        if (data.autobuy === true && data.mint) {
-            console.log(`Получен autobuy=true для токена ${data.mint}, редиректим основное окно`);
-            this.redirectMainWindow(data.mint);
+        // Если autobuy=true — открываем новую вкладку (однократно на mint)
+        if (data.autobuy === true && data.mint && !this.autobuyOpenedMints.has(data.mint)) {
+            this.autobuyOpenedMints.add(data.mint);
+            this.openAutobuyTab(data.mint);
         }
         
         // Токены всегда добавляются в конец
@@ -328,15 +329,10 @@ class TokenMonitor {
         });
     }
     
-    removeToken(data) {
-        const index = this.tokens.findIndex(token => 
-            token.mint === data.mint && token.timestamp === data.timestamp
-        );
-        
-        if (index !== -1) {
-            this.tokens.splice(index, 1);
-            this.renderTokens();
-        }
+    removeToken({ mint, timestamp }) {
+        // Удаляем токен из массива и перерисовываем
+        this.tokens = this.tokens.filter(t => t.mint !== mint || t.timestamp !== timestamp);
+        this.renderTokens();
     }
     
     clearAllTokens() {
@@ -435,6 +431,23 @@ class TokenMonitor {
         tokenElement.querySelector('.token-time').textContent = token.timestamp || 'N/A';
         tokenElement.querySelector('.token-name').textContent = token.user_name || 'N/A';
         
+        // Вставляем маркер AUTOBUY слева от source на одной линии
+        const source = tokenElement.querySelector('.token-source');
+        if (token.autobuy === true && source) {
+            // Создаем flex-контейнер
+            const flexWrap = document.createElement('div');
+            flexWrap.style.display = 'flex';
+            flexWrap.style.alignItems = 'center';
+            // Создаем label
+            const autobuyMark = document.createElement('span');
+            autobuyMark.className = 'autobuy-label';
+            autobuyMark.textContent = '🚀 AUTOBUY';
+            autobuyMark.style = 'background:#ff8c00;color:white;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle;';
+            flexWrap.appendChild(autobuyMark);
+            flexWrap.appendChild(source.cloneNode(true));
+            source.replaceWith(flexWrap);
+        }
+        
         // Заполняем данные пользователя
         tokenElement.querySelector('.user-ath').textContent = this.formatNumber(token.user_ath);
         tokenElement.querySelector('.user-tokens').textContent = this.formatNumber(token.user_total_tokens);
@@ -481,9 +494,18 @@ class TokenMonitor {
             tokenElement.querySelector('.token-card').classList.add('new-token');
         }
         
-        // Добавляем стили для токенов с autobuy
-        if (token.autobuy === true) {
-            tokenElement.querySelector('.token-card').classList.add('autobuy-token');
+        // Настраиваем remove-token-btn
+        const removeBtn = tokenElement.querySelector('.remove-token-btn');
+        if (removeBtn) {
+            removeBtn.setAttribute('data-mint', token.mint || '');
+            removeBtn.setAttribute('data-timestamp', token.timestamp || '');
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeToken({ mint: token.mint, timestamp: token.timestamp });
+                // Удаляем из DOM
+                const card = e.target.closest('.token-card');
+                if (card) card.remove();
+            });
         }
         
         return tokenElement;
@@ -868,6 +890,18 @@ class TokenMonitor {
                         console.log(`Открыта новая вкладка с: https://trade.padre.gg/trade/solana/${mint}`);
                     }
                 });
+            }
+        });
+    }
+
+    openAutobuyTab(mint) {
+        const url = `https://trade.padre.gg/trade/solana/${mint}`;
+        console.log(`Открываем новую вкладку для автобая: ${url}`);
+        chrome.tabs.create({ url }, (newTab) => {
+            if (chrome.runtime.lastError) {
+                console.error('Ошибка при создании новой вкладки:', chrome.runtime.lastError);
+            } else {
+                console.log(`Открыта новая вкладка: ${url}`);
             }
         });
     }

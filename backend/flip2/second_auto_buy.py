@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from mainapp.models import Settings, Twitter
+from mainapp.models import Settings, Twitter, UserDev
 from asgiref.sync import sync_to_async
 
 # Конфигурация
@@ -74,23 +74,25 @@ async def buy(mint):
     except Exception:
         pass
 
-async def check_twitter_whitelist(twitter_name):
-    """Проверка Twitter в whitelist"""
+async def check_twitter_whitelist(twitter_name,creator):
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
-        filter_ath = settings_obj.filter_ath if settings_obj else 0
-        
-        twitter_obj = await sync_to_async(
-            Twitter.objects.filter(
-                whitelist=True,
-                name=f"@{twitter_name}",
-                ath__gt=filter_ath
-            ).first
-        )()
-        
-        return twitter_obj is not None
-    except Exception:
-        return False
+        if(settings_obj.one_token_enabled):
+            try:
+                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
+            except:
+                return False
+        if(settings_obj.whitelist_enabled):
+            try:
+                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",whitelist=True,ath__gt=settings_obj.ath_from)
+            except:
+                return False
+        else:
+            try:
+                await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",ath__gt=settings_obj.ath_from)
+            except:
+                return False
+        return True
 
 async def get_creator_username(session, community_id):
     """Получение username создателя сообщества"""
@@ -252,7 +254,7 @@ async def process_message(msg, session):
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
-        print(mint,uri,creator)
+
         if not mint:
             return
         
@@ -265,8 +267,9 @@ async def process_message(msg, session):
         
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
-            if twitter_name and await check_twitter_whitelist(twitter_name):
-                await buy(mint)
+            if twitter_name and await check_twitter_whitelist(twitter_name,creator):
+                print(mint,twitter_name,creator)
+                #await buy(mint)
     except Exception as e:
         print(e)
         pass
@@ -282,7 +285,7 @@ async def main_loop():
     while True:
         try:
             settings_obj = await sync_to_async(Settings.objects.first)()
-            if not settings_obj or not settings_obj.start:
+            if not settings_obj.start:
                 await asyncio.sleep(1)
                 continue
                 
