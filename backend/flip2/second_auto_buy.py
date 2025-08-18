@@ -116,65 +116,52 @@ async def get_creator_username(session, community_id):
 
 def collect_progdata_bytes_after_create(logs):
     """Собирает байты данных программы после инструкции Create"""
-    chunks, after = [], False
-    for line in logs:
-        low = str(line).lower()
-        if "instruction" in low and "create" in low:
-            after = True
-            continue
-        if not after:
-            continue
-        m = PROGDATA_RE.search(str(line))
-        if m:
-            chunks.append(m.group(1))
-        elif chunks:
-            break
-    if not chunks:
+    if not logs:
         return None
-
-    out = bytearray()
-    for c in chunks:
-        try:
-            out += base64.b64decode(c, validate=True)
-        except Exception:
-            try:
-                out += base58.b58decode(c)
-            except Exception:
-                return None
-    return bytes(out)
+    
+    # Ищем строку с Program data
+    for line in logs:
+        if not isinstance(line, str):
+            continue
+        if "Program data:" in line:
+            # Извлекаем base64 данные
+            match = PROGDATA_RE.search(line)
+            if match:
+                try:
+                    return base64.b64decode(match.group(1))
+                except:
+                    continue
+    return None
 
 def parse_pump_create(raw: bytes):
     """Парсит данные создания токена PumpFun"""
-    if not raw or len(raw) < 8: return None
+    if not raw or len(raw) < 44:  # Минимальный размер для mint address
+        return None
     
-    # Упрощенный парсинг без полной проверки структуры
     try:
-        # Пропускаем первые 8 байт (вероятно, заголовок)
-        data = raw[8:]
+        # Mint address - последние 32 байта
+        mint = base58.b58encode(raw[-32:]).decode()
         
-        # Быстрый поиск URI (эвристический подход)
-        uri_start = data.find(b"https://") 
-        if uri_start == -1:
-            uri_start = data.find(b"http://")
-        
-        if uri_start != -1:
-            uri_end = data.find(b"\x00", uri_start)
-            uri = data[uri_start:uri_end].decode('utf-8', errors='ignore')
-        else:
-            uri = ""
-            
-        # Поиск mint address (последние 32 байта)
-        mint = base58.b58encode(raw[-32:]).decode() if len(raw) >= 32 else ""
+        # URI обычно находится в начале данных
+        # Эвристический поиск URI - ищем http или ipfs
+        uri = ""
+        for prefix in [b"http://", b"https://", b"ipfs://"]:
+            pos = raw.find(prefix)
+            if pos != -1:
+                end = raw.find(b"\x00", pos)
+                uri = raw[pos:end if end != -1 else None].decode('utf-8', errors='ignore')
+                break
         
         return {
-            "uri": uri,
             "mint": mint,
-            "symbol": "",  # Не используется в вашей логике
-            "name": ""     # Не используется в вашей логике
+            "uri": uri,
+            "symbol": "",  # Эти поля не используются в вашей логике
+            "name": ""
         }
-    except Exception:
+    except Exception as e:
+        print(f"Parse error: {e}")
         return None
-
+        
 def find_community_from_uri(uri: str) -> Optional[str]:
     """Ищет community ID в URI"""
     if not uri:
@@ -262,7 +249,8 @@ async def process_message(msg, session):
                 await buy(mint)
             else:
                 print(f"not_buy:{twitter,mint}")
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
 
 async def main_loop():
