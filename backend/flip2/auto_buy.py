@@ -115,47 +115,53 @@ JUPITER_API = "https://quote-api.jup.ag/v6"
 async def buy_via_jupiter(mint: str):
     try:
         settings_obj = await Settings.objects.afirst()
-
-        # Конвертация с проверками
-        amount_lamports = str(int(settings_obj.sol_amount * Decimal(1e9)))  # -> строка
-        slippage_bps = str(min(int(settings_obj.slippage_percent * 100), 1000))  # ограничение 10%
-        
-        # Параметры запроса
-        params = {
+        if not settings_obj:
+            raise RuntimeError("Settings not found")
+        time.sleep(1)
+        # 1. Получаем квоту
+        quote_params = {
             "inputMint": "So11111111111111111111111111111111111111112",
             "outputMint": mint,
-            "amount": amount_lamports,
-            "slippageBps": slippage_bps
+            "amount": str(int(settings_obj.sol_amount * Decimal(1e9))),  # SOL в лампортах (строка)
+            "slippageBps": str(min(int(settings_obj.slippage_percent * 100), 1000))  # Ограничение 10%
         }
         
-        time.sleep(1)
-        response = requests.get(f"{JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint={mint}&amount={amount_lamports}&slippageBps={slippage_bps}")
-        
-        quote = response.json()
-        print(quote)
-        if not quote.get("outAmount"):
-            raise RuntimeError(f"Invalid quote: {quote.get('error', 'No outAmount')}")
+        quote_response = requests.get(
+            f"{JUPITER_API}/quote",
+            params=quote_params,
+            headers={"Accept": "application/json"},
+            timeout=10
+        )
+        quote_response.raise_for_status()
+        quote = quote_response.json()
 
-        # 2. Подготовка swap
+        if "error" in quote:
+            raise RuntimeError(f"Quote error: {quote['error']}")
+
+        # 2. Получаем транзакцию для подписи
         swap_payload = {
             "quoteResponse": quote,
             "userPublicKey": str(Keypair.from_base58_string(settings_obj.buyer_pubkey.strip()).pubkey()),
             "wrapAndUnwrapSol": True,
-            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))  # -> строка
+            "priorityFee": str(int(settings_obj.priority_fee_sol * Decimal(1e9)))  # Приоритетная комиссия
         }
-        
         
         swap_response = requests.post(
             f"{JUPITER_API}/swap",
-            headers={"Content-Type": "application/json"},
             json=swap_payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10
         )
         swap_response.raise_for_status()
         swap_data = swap_response.json()
-        
-        # 3. Подписываем и отправляем транзакцию
+
+        # 3. Проверяем наличие swapTransaction
+        if "swapTransaction" not in swap_data:
+            raise RuntimeError(f"Jupiter did not return a transaction. Full response: {swap_data}")
+
+        # 4. Декодируем и отправляем транзакцию
         swap_tx = VersionedTransaction.from_bytes(bytes.fromhex(swap_data["swapTransaction"]))
-        signed_tx = swap_tx.sign([kp])
+        signed_tx = swap_tx.sign([Keypair.from_base58_string(settings_obj.buyer_pubkey.strip())])
         
         rpc_client = Client(HELIUS_HTTP)
         tx_hash = await rpc_client.send_raw_transaction(
@@ -167,12 +173,11 @@ async def buy_via_jupiter(mint: str):
         )
         
         return str(tx_hash.value)
-    
+
     except requests.RequestException as e:
         raise RuntimeError(f"HTTP error: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Swap failed: {str(e)}")
-
 
                    
 async def _tw_get(session, path, params):
