@@ -73,7 +73,7 @@ async def buy(mint):
         }
         
         tx_response = requests.post(
-            "https://pumpportal.fun/api/trade-local",  # Замените на реальный URL
+            PUMPPORTAL_TRADE_LOCAL,  # Замените на реальный URL
             headers={"Content-Type": "application/json"},
             data=json.dumps(payload),
             timeout=10
@@ -89,7 +89,7 @@ async def buy(mint):
         ).to_json()
         
         rpc_response = requests.post(
-            "HELIUS_HTTP",  # Замените на реальный URL
+            HELIUS_HTTP,  # Замените на реальный URL
             headers={"Content-Type": "application/json"},
             data=body,
             timeout=10
