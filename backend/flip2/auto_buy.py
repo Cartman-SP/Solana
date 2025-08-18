@@ -307,7 +307,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         if(settings_obj.whitelist_enabled):
             try:
                 await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
+                    name=f"@{twitter_name}",
                     whitelist=True,
                     ath__gte=settings_obj.ath_from,
                     total_trans__gte=settings_obj.total_trans_from
@@ -317,7 +317,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         else:
             try:
                 await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
+                    name=f"@{twitter_name}",
                     ath__gte=settings_obj.ath_from,
                     total_trans__gte=settings_obj.total_trans_from
                 )
