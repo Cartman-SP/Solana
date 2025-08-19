@@ -527,11 +527,11 @@ async def process_message(msg, session):
                         qn_http_url="https://wispy-little-river.solana-mainnet.quiknode.pro/134b4b837e97bb3711c20296010e32eff69ad1af",
                         payer_secret_b58=settings_obj.buyer_pubkey,
                         mint=mint,
-                        sol_in_lamports=settings_obj.sol_amount * 1e9,  # 0.10 SOL
+                        sol_in_lamports=int(settings_obj.sol_amount * Decimal('1000000000')),  # 0.10 SOL
                         slippage_bps=int(settings_obj.slippage_percent * 100),
                         priority_fee_level="extreme",
                         jito_region="frankfurt",
-                        tip_lamports=settings_obj.priority_fee_sol * 1e9,   #
+                        tip_lamports=int(settings_obj.priority_fee_sol * Decimal('1000000000')),   #
                         return_bundle_status=False,
                     )
 
