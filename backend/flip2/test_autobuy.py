@@ -53,9 +53,7 @@ def buy_pumpfun_via_quicknode(
         return j["result"]
 
     def _pumpfun_swap_tx(wallet: str) -> str:
-        url = "https://crimson-indulgent-sanctuary.solana-mainnet.quiknode.pro.jupiterapi.com/c52cff6028619a1d3ce102170734805304c499fc/pump-fun/swap"
-        "https://public.jupiterapi.com"
-        
+        url = "https://jupiter-swap-api.quiknode.pro/pump-fun/swap"
         print(url)
         payload = {
             "wallet": wallet,
@@ -63,8 +61,6 @@ def buy_pumpfun_via_quicknode(
             "mint": mint,
             "inAmount": str(sol_in_lamports),
             "priorityFeeLevel": priority_fee_level,
-            "slippageBps": str(slippage_bps),
-            "commitment": commitment,
         }
         r = s.post(url, json=payload)
         print(r.text)
@@ -172,8 +168,9 @@ def buy_pumpfun_via_quicknode(
     return out
 
 
+
 result = buy_pumpfun_via_quicknode(
-    qn_http_url="",
+    qn_http_url="https://wispy-little-river.solana-mainnet.quiknode.pro/134b4b837e97bb3711c20296010e32eff69ad1af",
     payer_secret_b58="58mqJoN4nu67vqT45pP6uspZ7RRsjxXkyQjx61X52XUyH7wL6kiJei97DLps2c7peigZv9SvF4rHbzK3wEPuk8Yo",
     mint="5XA5z7d9keFfebVbm1AGaUigaojgdGSkZ9Rwmqrcpump",
     sol_in_lamports=50_000_000,  # 0.10 SOL
@@ -184,3 +181,5 @@ result = buy_pumpfun_via_quicknode(
     return_bundle_status=False,
 )
 print(result)
+
+                    

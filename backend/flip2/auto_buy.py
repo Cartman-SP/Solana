@@ -131,33 +131,13 @@ def buy_pumpfun_via_quicknode(
             "slippageBps": str(slippage_bps),
             "commitment": commitment,
         }
-        print(payload)
-        # Повторяем запросы без задержки до получения валидного ответа с ключом "tx"
-        while True:
-            try:
-                r = s.post(url, json=payload)
-                try:
-                    print(r.text)
-                except Exception:
-                    pass
-                if r.status_code == 200:
-                    try:
-                        j = r.json()
-                        tx = j.get("tx")
-                        if tx:
-                            return tx  # base64 unsigned
-                    except Exception:
-                        # Невалидный JSON — пробуем снова
-                        pass
-                # Любой иной ответ — пробуем снова без паузы
-                continue
-            except Exception as e:
-                # Ошибка сети/таймаут — моментальный повтор
-                try:
-                    print(e)
-                except Exception:
-                    pass
-                continue
+        r = s.post(url, json=payload)
+        print(r.text)
+        r.raise_for_status()
+        j = r.json()
+        if "tx" not in j:
+            raise QuickNodeBuyerError(f"/pump-fun/swap bad response: {j}")
+        return j["tx"]  # base64 unsigned
 
     def _get_tip_account() -> str:
         if tip_account:
@@ -549,7 +529,7 @@ async def process_message(msg, session):
                         mint=mint,
                         sol_in_lamports=int(settings_obj.sol_amount * Decimal('1000000000')),  # 0.10 SOL
                         slippage_bps=int(settings_obj.slippage_percent * 100),
-                        priority_fee_level="high",
+                        priority_fee_level="extreme",
                         jito_region="frankfurt",
                         tip_lamports=int(settings_obj.priority_fee_sol * Decimal('1000000000')),   #
                         return_bundle_status=False,
