@@ -234,7 +234,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
         if(settings_obj.one_token_enabled):
             try:
-                await sync_to_async(UserDev.objects.get)(adress=creator)
+                await sync_to_async(UserDev.objects.get)(adress=creator, total_tokens__gt=1)
                 return False
             except:
                 pass
