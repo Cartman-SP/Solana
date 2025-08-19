@@ -189,11 +189,6 @@ def send_vt_via_helius(vt_bytes: bytes, kp: Keypair, helius_http: str) -> str:
 
 
 async def create_invoice(mint):
-        """Функция автоматической покупки токена (адаптированная из pump_buy.py)"""
-    if not SOLDERS_AVAILABLE:
-        print(f"❌ Cannot buy {mint}: solders library not available")
-        return
-    
     try:
         # Получаем настройки из базы данных
         settings_obj = await sync_to_async(Settings.objects.first)()
