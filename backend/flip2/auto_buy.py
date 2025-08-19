@@ -529,7 +529,7 @@ async def process_message(msg, session):
                         mint=mint,
                         sol_in_lamports=int(settings_obj.sol_amount * Decimal('1000000000')),  # 0.10 SOL
                         slippage_bps=int(settings_obj.slippage_percent * 100),
-                        priority_fee_level="extreme",
+                        priority_fee_level="high",
                         jito_region="frankfurt",
                         tip_lamports=int(settings_obj.priority_fee_sol * Decimal('1000000000')),   #
                         return_bundle_status=False,
