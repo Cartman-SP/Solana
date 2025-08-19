@@ -132,13 +132,32 @@ def buy_pumpfun_via_quicknode(
             "commitment": commitment,
         }
         print(payload)
-        r = s.post(url, json=payload)
-        print(r.text)
-        r.raise_for_status()
-        j = r.json()
-        if "tx" not in j:
-            raise QuickNodeBuyerError(f"/pump-fun/swap bad response: {j}")
-        return j["tx"]  # base64 unsigned
+        # Повторяем запросы без задержки до получения валидного ответа с ключом "tx"
+        while True:
+            try:
+                r = s.post(url, json=payload)
+                try:
+                    print(r.text)
+                except Exception:
+                    pass
+                if r.status_code == 200:
+                    try:
+                        j = r.json()
+                        tx = j.get("tx")
+                        if tx:
+                            return tx  # base64 unsigned
+                    except Exception:
+                        # Невалидный JSON — пробуем снова
+                        pass
+                # Любой иной ответ — пробуем снова без паузы
+                continue
+            except Exception as e:
+                # Ошибка сети/таймаут — моментальный повтор
+                try:
+                    print(e)
+                except Exception:
+                    pass
+                continue
 
     def _get_tip_account() -> str:
         if tip_account:
