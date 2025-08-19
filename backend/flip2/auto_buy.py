@@ -8,23 +8,13 @@ import base64
 import websockets
 import aiohttp
 import requests
-from typing import Optional, List, Dict, Tuple, Any
+from typing import Optional, List, Dict, Tuple
 import base58
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
-from decimal import Decimal
-import base64
-from decimal import Decimal
-import requests
-from solders.keypair import Keypair
-from solders.transaction import VersionedTransaction
-from solders.message import Message
-from solana.rpc.api import Client
-from concurrent.futures import CancelledError
-import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -43,9 +33,6 @@ TW_API_KEY = "8879aa53d815484ebea0313718172fea"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
-# Конфигурация провайдеров
-AXIOM_API_URL = "https://api.axiom.xyz/v1/actions/solana/pumpfun/buy"
-BLOOM_API_URL = "https://api.bloom.xyz/v1/actions/solana/pumpfun/buy"
 # Кэши
 COMMUNITY_CACHE = {}
 URI_META_CACHE = {}
@@ -56,7 +43,90 @@ FAILED_ERROR_RE = re.compile(r"(failed:|custom program error)", re.IGNORECASE)
 PROGDATA_RE = re.compile(r"Program data:\s*([A-Za-z0-9+/=]+)")
 INSTRUCTION_MINT_RE = re.compile(r"Program log: Instruction: (InitializeMint2|InitializeMint)", re.IGNORECASE)
 
-# WebSocket подписка
+import json
+import os
+import sys
+import django
+from datetime import datetime
+# Настройка Django
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from mainapp.models import UserDev, Token, Twitter, Settings
+from asgiref.sync import sync_to_async
+
+try:
+    import uvloop
+    uvloop.install()
+except ImportError:
+    pass
+import time
+import asyncio
+import re
+import base64
+import websockets
+import aiohttp
+import requests
+from typing import Optional, Tuple, List, Dict, Any
+
+# Импорт solders для работы с Solana
+try:
+    from solders.keypair import Keypair
+    from solders.transaction import VersionedTransaction
+    from solders.rpc.requests import SendVersionedTransaction
+    from solders.rpc.config import RpcSendTransactionConfig
+    from solders.commitment_config import CommitmentLevel
+    SOLDERS_AVAILABLE = True
+except ImportError:
+    SOLDERS_AVAILABLE = False
+    print("Warning: solders not available, buy function will not work")
+
+# Быстрый JSON парсер
+try:
+    import orjson
+    def jloads(b: bytes | str):
+        if isinstance(b, str): b = b.encode()
+        return orjson.loads(b)
+    def jdumps(o): return orjson.dumps(o).decode()
+except ImportError:
+    import json
+    def jloads(b: bytes | str):
+        if isinstance(b, bytes): b = b.decode("utf-8", "ignore")
+        return json.loads(b.lstrip("\ufeff").strip())
+    def jdumps(o): return json.dumps(o, separators=(",", ":"))
+
+# Импорт base58
+try:
+    from base58 import b58encode, b58decode
+except ImportError:
+    # Fallback если base58 не установлен
+    def b58encode(data: bytes) -> str:
+        return data.hex()
+    def b58decode(data: str) -> bytes:
+        return bytes.fromhex(data)
+
+# ===================== CONFIG =====================
+HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
+WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
+PUMP_FUN = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+HELIUS_HTTP = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
+
+# PumpPortal API
+PUMPPORTAL_TRADE_LOCAL = "https://pumpportal.fun/api/trade-local"
+
+# X/Twitter API
+TW_API_KEY = "8879aa53d815484ebea0313718172fea"
+TW_BASE = "https://api.twitterapi.io"
+TW_HEADERS = {"X-API-Key": TW_API_KEY}
+
+# Solana private key (из переменной окружения)
+SOLANA_PRIVATE_KEY = os.getenv("SOLANA_PRIVATE_KEY")
+
+# Default values (как в pump_buy.py)
+DEFAULT_SLIPPAGE = 10.0
+DEFAULT_PRIORITY_FEE = 0.00005
+DEFAULT_POOL = "pump"   # варианты: pump | pump-amm | raydium | auto
 LOGS_SUB_JSON = json.dumps({
     "jsonrpc": "2.0",
     "id": "logs-auto-buy",
@@ -68,6 +138,124 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 
+def clean_amount(s: str) -> float:
+    """Очищает строку с числом и конвертирует в float"""
+    s = s.strip().replace(",", ".")
+    s = s.strip("()[]")
+    return float(s)
+
+def keypair_from_base58(secret_b58: str) -> Keypair:
+    """Создает Keypair из base58 строки"""
+    return Keypair.from_base58_string(secret_b58.strip())
+
+def build_buy_tx(mint: str,
+                 buyer_pubkey: str,
+                 sol_amount: float,
+                 slippage_percent: float = DEFAULT_SLIPPAGE,
+                 priority_fee_sol: float = DEFAULT_PRIORITY_FEE,
+                 pool: str = DEFAULT_POOL) -> bytes:
+    """Строит транзакцию покупки через PumpPortal API"""
+    payload = {
+        "publicKey": buyer_pubkey,
+        "action": "buy",
+        "mint": mint,
+        "amount": sol_amount,          # тратим X SOL
+        "denominatedInSol": "true",    # сумма в SOL
+        "slippage": slippage_percent,  # % слиппеджа
+        "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
+        "pool": pool
+    }
+    
+    # Отладочная информация
+    print(f"🔍 Sending to PumpPortal: {jdumps(payload)}")
+    
+    r = requests.post(PUMPPORTAL_TRADE_LOCAL,
+                      headers={"Content-Type": "application/json"},
+                      data=json.dumps(payload),
+                      timeout=10)
+    if r.status_code != 200:
+        raise RuntimeError(f"PumpPortal error {r.status_code}: {r.text}")
+    return r.content  # сериализованный VersionedTransaction (bytes)
+
+def send_vt_via_helius(vt_bytes: bytes, kp: Keypair, helius_http: str) -> str:
+    """Отправляет подписанную транзакцию через Helius RPC"""
+    vt = VersionedTransaction.from_bytes(vt_bytes)
+    signed_tx = VersionedTransaction(vt.message, [kp])
+    cfg = RpcSendTransactionConfig(preflight_commitment=CommitmentLevel.Confirmed)
+    body = SendVersionedTransaction(signed_tx, cfg).to_json()
+    r = requests.post(helius_http,
+                      headers={"Content-Type": "application/json"},
+                      data=body,
+                      timeout=10)
+    data = r.json()
+    if "error" in data:
+        raise RuntimeError(f"Helius send error: {data['error']}")
+    sig = data.get("result")
+    if not sig:
+        raise RuntimeError(f"Unexpected Helius response: {data}")
+    return sig
+
+
+
+async def create_invoice(mint):
+    try:
+        # Получаем настройки из базы данных
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        if not settings_obj:
+            print(f"❌ Cannot buy {mint}: no settings found")
+            return
+            
+        # Получаем настройки из Settings (как в pump_buy.py)
+        buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
+        sol_amount = float(settings_obj.sol_amount)
+        slippage_percent = float(settings_obj.slippage_percent)
+        priority_fee_sol = float(settings_obj.priority_fee_sol)
+        pool = "pump"  # используем pump pool по умолчанию
+        
+        # Проверяем, что у нас есть все необходимые параметры
+        if not buyer_pubkey or sol_amount <= 0:
+            print(f"❌ Cannot buy {mint}: invalid buyer_pubkey or sol_amount")
+            return
+            
+        print(f"🚀 BUYING: {mint}")
+        print(f"   Amount: {sol_amount} SOL")
+        print(f"   Slippage: {slippage_percent}%")
+        print(f"   Priority Fee: {priority_fee_sol} SOL")
+        print(f"   Pool: {pool}")
+        
+        # Создаем Keypair из приватного ключа (как в pump_buy.py)
+        try:
+            kp = keypair_from_base58(buyer_pubkey)
+            print(f"   Buyer: {str(kp.pubkey())}")
+        except Exception as e:
+            print(f"❌ Error creating keypair from buyer_pubkey: {str(e)}")
+            print(f"   Make sure buyer_pubkey contains a valid base58 private key")
+            return
+        
+        # Строим транзакцию покупки (точно как в pump_buy.py)
+        tx_bytes = build_buy_tx(
+            mint=mint,
+            buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
+            sol_amount=sol_amount,
+            slippage_percent=slippage_percent,
+            priority_fee_sol=priority_fee_sol,
+            pool=pool
+        )
+        
+        return tx_bytes, kp, HELIUS_HTTP
+    except Exception as e:
+        print(f"❌ Error buying {mint}: {str(e)}")    
+
+
+
+async def buy(tx_bytes, kp, HELIUS_HTTP):
+        sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
+        print(f"✅ Transaction sent successfully: {sig}")
+        print(f"   View: https://solscan.io/tx/{sig}")
+        
+
+
+                   
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
     to = aiohttp.ClientTimeout(total=0.8)  # Уменьшаем timeout для скорости
@@ -314,152 +502,19 @@ async def check_twitter_whitelist(twitter_name,creator):
         print(e)
         return False
 
-
-
-
-
-class ProviderResponse:
-    """Класс для хранения ответов от провайдеров"""
-    def __init__(self, provider_name: str, success: bool, data: Any = None, error: str = None):
-        self.provider_name = provider_name
-        self.success = success
-        self.data = data
-        self.error = error
-        self.timestamp = time.time()
-
-async def create_axiom_invoice(session: aiohttp.ClientSession, mint: str, amount: float) -> ProviderResponse:
-    """Создание инвойса через Axiom"""
-    try:
-        payload = {
-            "mint": mint,
-            "amount": int(amount * 10**9),  # SOL to lamports
-            "slippageBps": 1000,  # 1%
-            "user": "7zuTkt3jpKVMH3ahHujeFuP5mYozXX1nwww8Jow4onC5"  # Замените на ваш адрес
-        }
-        
-        async with session.post(AXIOM_API_URL, json=payload, timeout=1.0) as response:
-            if response.status == 200:
-                data = await response.json()
-                return ProviderResponse("axiom", True, data)
-            else:
-                return ProviderResponse("axiom", False, error=f"HTTP {response.status}")
-                
-    except asyncio.TimeoutError:
-        return ProviderResponse("axiom", False, error="Timeout")
-    except Exception as e:
-        return ProviderResponse("axiom", False, error=str(e))
-
-async def create_bloom_invoice(session: aiohttp.ClientSession, mint: str, amount: float) -> ProviderResponse:
-    """Создание инвойса через Bloom"""
-    try:
-        payload = {
-            "mint": mint,
-            "amount": int(amount * 10**9),
-            "slippageBps": 1000,
-            "user": "7zuTkt3jpKVMH3ahHujeFuP5mYozXX1nwww8Jow4onC5"
-        }
-        
-        async with session.post(BLOOM_API_URL, json=payload, timeout=1.0) as response:
-            if response.status == 200:
-                data = await response.json()
-                return ProviderResponse("bloom", True, data)
-            else:
-                return ProviderResponse("bloom", False, error=f"HTTP {response.status}")
-                
-    except asyncio.TimeoutError:
-        return ProviderResponse("bloom", False, error="Timeout")
-    except Exception as e:
-        return ProviderResponse("bloom", False, error=str(e))
-
-
-async def create_invoice(mint: str, amount: float = 0.02) -> ProviderResponse:
-    """Параллельное создание инвойсов у всех провайдеров"""
-    async with aiohttp.ClientSession() as session:
-        # Создаем задачи для всех провайдеров
-        tasks = [
-            asyncio.create_task(create_axiom_invoice(session, mint, amount)),
-            asyncio.create_task(create_bloom_invoice(session, mint, amount)),
-        ]
-        
-        try:
-            # Ждем первого успешного ответа
-            done, pending = await asyncio.wait(
-                tasks, 
-                return_when=asyncio.FIRST_COMPLETED,
-                timeout=2.0
-            )
+async def checker(session, uri,creator):
+        community_id = None
+        meta = await fetch_meta_with_retries(session, uri)
+        if meta:
+            community_url, community_id, _ = find_community_anywhere_with_src(meta)
+        if community_id:
+            print(community_id)
+            twitter_name = await get_creator_username(session, community_id)
+            print(twitter_name)
+            return await check_twitter_whitelist(twitter_name,creator)
             
-            # Отменяем оставшиеся задачи
-            for task in pending:
-                task.cancel()
-            
-            # Ищем первый успешный ответ
-            for task in done:
-                try:
-                    result = task.result()
-                    if result.success:
-                        print(f"✅ First successful response from {result.provider_name}")
-                        return result
-                except Exception as e:
-                    continue
-            
-            # Если ни один не успел за timeout, берем первый завершившийся
-            for task in done:
-                try:
-                    return task.result()
-                except:
-                    continue
-                    
-            return ProviderResponse("all", False, error="All providers failed or timed out")
-            
-        except asyncio.TimeoutError:
-            # Отменяем все задачи если превышен общий timeout
-            for task in tasks:
-                task.cancel()
-            return ProviderResponse("all", False, error="Overall timeout")
-        except Exception as e:
-            return ProviderResponse("all", False, error=str(e))
 
 
-async def get_and_check_twitter(session: aiohttp.ClientSession, uri: str, creator: str) -> Tuple[bool, Optional[str]]:
-    """Проверка Twitter с возвратом результата и имени"""
-    community_id = None
-    meta = await fetch_meta_with_retries(session, uri)
-    if meta:
-        community_url, community_id, _ = find_community_anywhere_with_src(meta)
-    
-    if community_id:
-        twitter_name = await get_creator_username(session, community_id)
-        if twitter_name:
-            check = await check_twitter_whitelist(twitter_name, creator)
-            return check, twitter_name
-    
-    return False, None
-
-async def buy(mint: str, invoice_response: ProviderResponse):
-    """Выполнение покупки на основе инвойса"""
-    try:
-        if invoice_response.provider_name == "axiom":
-            # Обработка ответа от Axiom
-            transaction_data = invoice_response.data.get('transaction')
-            if transaction_data:
-                # Декодируем и отправляем транзакцию
-                transaction_bytes = base64.b64decode(transaction_data)
-                transaction = Transaction.deserialize(transaction_bytes)
-                # ... подпись и отправка
-                print(f"Buying via Axiom: {mint}")
-                
-        elif invoice_response.provider_name == "bloom":
-            # Обработка ответа от Bloom
-            treasury_address = invoice_response.data.get('treasury')
-            amount = invoice_response.data.get('amount')
-            if treasury_address and amount:
-                # Отправляем SOL на адрес Bloom
-                print(f"Buying via Bloom: {mint}")
-                
-                
-    except Exception as e:
-        print(f"Buy failed for {mint}: {e}")
 
 async def process_message(msg, session):
     """Обработка входящего сообщения"""
@@ -467,41 +522,42 @@ async def process_message(msg, session):
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
         if not any(INSTRUCTION_MINT_RE.search(log) for log in logs):
             return
-            
-        with open('tests1235123.txt', 'a', encoding='utf-8') as f:
-            json.dump(msg, f, ensure_ascii=False, indent=2)
-            f.write('\n')
-
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
         if not parsed:
             return
-            
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
-        
         if not mint:
             return
-
-        # Параллельно запускаем создание инвойсов и проверку Twitter
-        invoice_task = asyncio.create_task(create_invoice(mint))
-        twitter_task = asyncio.create_task(get_and_check_twitter(session, uri, creator))
         
-        # Ждем оба результата
-        invoice_response, twitter_result = await asyncio.gather(invoice_task, twitter_task)
+        # Асинхронно запускаем create_invoice и checker одновременно
+        create_invoice_task = create_invoice(mint)
+        checker_task = checker(session, uri, creator)
         
-        twitter_ok, twitter_name = twitter_result
+        # Ждем завершения обеих задач
+        results = await asyncio.gather(
+            create_invoice_task, 
+            checker_task
+        )
         
-        if twitter_ok and invoice_response.success:
-            print(f"✅ Buying {mint} from {twitter_name} via {invoice_response.provider_name}")
-            await buy(mint, invoice_response)
-        else:
-            print(f"❌ Skip {mint}: Twitter={twitter_ok}, Invoice={invoice_response.success}")
+        # Распаковываем результаты
+        create_result, need_to_buy = results
+        
+        # Проверяем, что create_invoice вернул результат
+        if create_result is None:
+            print(f"❌ Failed to create invoice for {mint}")
+            return
             
-    except Exception as e:
-        print(f"Error in process_message: {e}")
+        tx_bytes, kp, HELIUS_HTTP = create_result
 
+        # Вызываем buy только если checker вернул True
+        if need_to_buy:
+            await buy(tx_bytes, kp, HELIUS_HTTP)
+    except Exception as e:
+        print(e)
+        pass
 
 async def main_loop():
     """Основной цикл обработки"""
@@ -532,6 +588,8 @@ async def main_loop():
         except Exception as e:
             print(e)
             await asyncio.sleep(0.1)
+        finally:
+            await session.close()
 
 if __name__ == "__main__":
     asyncio.run(main_loop())
