@@ -8,7 +8,7 @@ import base64
 import websockets
 import aiohttp
 import requests
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 import base58
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
@@ -23,8 +23,9 @@ from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solders.message import Message
 from solana.rpc.api import Client
-
+from concurrent.futures import CancelledError
 import time
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -42,6 +43,9 @@ TW_API_KEY = "8879aa53d815484ebea0313718172fea"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
+# Конфигурация провайдеров
+AXIOM_API_URL = "https://api.axiom.xyz/v1/actions/solana/pumpfun/buy"
+BLOOM_API_URL = "https://api.bloom.xyz/v1/actions/solana/pumpfun/buy"
 # Кэши
 COMMUNITY_CACHE = {}
 URI_META_CACHE = {}
@@ -59,21 +63,9 @@ LOGS_SUB_JSON = json.dumps({
     "method": "logsSubscribe",
     "params": [
         {"mentions": [PUMP_FUN]},
-        {"commitment": "processed","encoding": "jsonParsed"}
+        {"commitment": "processed"}
     ]
 })
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 async def _tw_get(session, path, params):
@@ -323,46 +315,193 @@ async def check_twitter_whitelist(twitter_name,creator):
         return False
 
 
+
+
+
+class ProviderResponse:
+    """Класс для хранения ответов от провайдеров"""
+    def __init__(self, provider_name: str, success: bool, data: Any = None, error: str = None):
+        self.provider_name = provider_name
+        self.success = success
+        self.data = data
+        self.error = error
+        self.timestamp = time.time()
+
+async def create_axiom_invoice(session: aiohttp.ClientSession, mint: str, amount: float) -> ProviderResponse:
+    """Создание инвойса через Axiom"""
+    try:
+        payload = {
+            "mint": mint,
+            "amount": int(amount * 10**9),  # SOL to lamports
+            "slippageBps": 1000,  # 1%
+            "user": "7zuTkt3jpKVMH3ahHujeFuP5mYozXX1nwww8Jow4onC5"  # Замените на ваш адрес
+        }
+        
+        async with session.post(AXIOM_API_URL, json=payload, timeout=1.0) as response:
+            if response.status == 200:
+                data = await response.json()
+                return ProviderResponse("axiom", True, data)
+            else:
+                return ProviderResponse("axiom", False, error=f"HTTP {response.status}")
+                
+    except asyncio.TimeoutError:
+        return ProviderResponse("axiom", False, error="Timeout")
+    except Exception as e:
+        return ProviderResponse("axiom", False, error=str(e))
+
+async def create_bloom_invoice(session: aiohttp.ClientSession, mint: str, amount: float) -> ProviderResponse:
+    """Создание инвойса через Bloom"""
+    try:
+        payload = {
+            "mint": mint,
+            "amount": int(amount * 10**9),
+            "slippageBps": 1000,
+            "user": "7zuTkt3jpKVMH3ahHujeFuP5mYozXX1nwww8Jow4onC5"
+        }
+        
+        async with session.post(BLOOM_API_URL, json=payload, timeout=1.0) as response:
+            if response.status == 200:
+                data = await response.json()
+                return ProviderResponse("bloom", True, data)
+            else:
+                return ProviderResponse("bloom", False, error=f"HTTP {response.status}")
+                
+    except asyncio.TimeoutError:
+        return ProviderResponse("bloom", False, error="Timeout")
+    except Exception as e:
+        return ProviderResponse("bloom", False, error=str(e))
+
+
+async def create_invoice(mint: str, amount: float = 0.02) -> ProviderResponse:
+    """Параллельное создание инвойсов у всех провайдеров"""
+    async with aiohttp.ClientSession() as session:
+        # Создаем задачи для всех провайдеров
+        tasks = [
+            asyncio.create_task(create_axiom_invoice(session, mint, amount)),
+            asyncio.create_task(create_bloom_invoice(session, mint, amount)),
+        ]
+        
+        try:
+            # Ждем первого успешного ответа
+            done, pending = await asyncio.wait(
+                tasks, 
+                return_when=asyncio.FIRST_COMPLETED,
+                timeout=2.0
+            )
+            
+            # Отменяем оставшиеся задачи
+            for task in pending:
+                task.cancel()
+            
+            # Ищем первый успешный ответ
+            for task in done:
+                try:
+                    result = task.result()
+                    if result.success:
+                        print(f"✅ First successful response from {result.provider_name}")
+                        return result
+                except Exception as e:
+                    continue
+            
+            # Если ни один не успел за timeout, берем первый завершившийся
+            for task in done:
+                try:
+                    return task.result()
+                except:
+                    continue
+                    
+            return ProviderResponse("all", False, error="All providers failed or timed out")
+            
+        except asyncio.TimeoutError:
+            # Отменяем все задачи если превышен общий timeout
+            for task in tasks:
+                task.cancel()
+            return ProviderResponse("all", False, error="Overall timeout")
+        except Exception as e:
+            return ProviderResponse("all", False, error=str(e))
+
+
+async def get_and_check_twitter(session: aiohttp.ClientSession, uri: str, creator: str) -> Tuple[bool, Optional[str]]:
+    """Проверка Twitter с возвратом результата и имени"""
+    community_id = None
+    meta = await fetch_meta_with_retries(session, uri)
+    if meta:
+        community_url, community_id, _ = find_community_anywhere_with_src(meta)
+    
+    if community_id:
+        twitter_name = await get_creator_username(session, community_id)
+        if twitter_name:
+            check = await check_twitter_whitelist(twitter_name, creator)
+            return check, twitter_name
+    
+    return False, None
+
+async def buy(mint: str, invoice_response: ProviderResponse):
+    """Выполнение покупки на основе инвойса"""
+    try:
+        if invoice_response.provider_name == "axiom":
+            # Обработка ответа от Axiom
+            transaction_data = invoice_response.data.get('transaction')
+            if transaction_data:
+                # Декодируем и отправляем транзакцию
+                transaction_bytes = base64.b64decode(transaction_data)
+                transaction = Transaction.deserialize(transaction_bytes)
+                # ... подпись и отправка
+                print(f"Buying via Axiom: {mint}")
+                
+        elif invoice_response.provider_name == "bloom":
+            # Обработка ответа от Bloom
+            treasury_address = invoice_response.data.get('treasury')
+            amount = invoice_response.data.get('amount')
+            if treasury_address and amount:
+                # Отправляем SOL на адрес Bloom
+                print(f"Buying via Bloom: {mint}")
+                
+                
+    except Exception as e:
+        print(f"Buy failed for {mint}: {e}")
+
 async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
         if not any(INSTRUCTION_MINT_RE.search(log) for log in logs):
             return
+            
         with open('tests1235123.txt', 'a', encoding='utf-8') as f:
             json.dump(msg, f, ensure_ascii=False, indent=2)
             f.write('\n')
-
-        #create_invoice()
 
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
         if not parsed:
             return
+            
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
+        
         if not mint:
             return
-        
-        community_id = None
-        meta = await fetch_meta_with_retries(session, uri)
-        if meta:
-            community_url, community_id, _ = find_community_anywhere_with_src(meta)
-        if community_id:
-            print(community_id)
-            twitter_name = await get_creator_username(session, community_id)
-            print(twitter_name)
-            check = await check_twitter_whitelist(twitter_name,creator)
-            print(check)
-            if twitter_name and check :
-                print(f"buy {mint}")
-                settings_obj = await sync_to_async(Settings.objects.first)()
-                #await buy()
 
+        # Параллельно запускаем создание инвойсов и проверку Twitter
+        invoice_task = asyncio.create_task(create_invoice(mint))
+        twitter_task = asyncio.create_task(get_and_check_twitter(session, uri, creator))
+        
+        # Ждем оба результата
+        invoice_response, twitter_result = await asyncio.gather(invoice_task, twitter_task)
+        
+        twitter_ok, twitter_name = twitter_result
+        
+        if twitter_ok and invoice_response.success:
+            print(f"✅ Buying {mint} from {twitter_name} via {invoice_response.provider_name}")
+            await buy(mint, invoice_response)
+        else:
+            print(f"❌ Skip {mint}: Twitter={twitter_ok}, Invoice={invoice_response.success}")
+            
     except Exception as e:
-        print(e)
-        pass
+        print(f"Error in process_message: {e}")
+
 
 async def main_loop():
     """Основной цикл обработки"""
@@ -393,8 +532,6 @@ async def main_loop():
         except Exception as e:
             print(e)
             await asyncio.sleep(0.1)
-        finally:
-            await session.close()
 
 if __name__ == "__main__":
     asyncio.run(main_loop())
