@@ -59,7 +59,7 @@ LOGS_SUB_JSON = json.dumps({
     "method": "logsSubscribe",
     "params": [
         {"mentions": [PUMP_FUN]},
-        {"commitment": "processed"}
+        {"commitment": "processed","encoding": "jsonParsed"}
     ]
 })
 
