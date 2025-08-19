@@ -127,6 +127,15 @@ SOLANA_PRIVATE_KEY = os.getenv("SOLANA_PRIVATE_KEY")
 DEFAULT_SLIPPAGE = 10.0
 DEFAULT_PRIORITY_FEE = 0.00005
 DEFAULT_POOL = "pump"   # варианты: pump | pump-amm | raydium | auto
+LOGS_SUB_JSON = json.dumps({
+    "jsonrpc": "2.0",
+    "id": "logs-auto-buy",
+    "method": "logsSubscribe",
+    "params": [
+        {"mentions": [PUMP_FUN]},
+        {"commitment": "processed"}
+    ]
+})
 
 
 def clean_amount(s: str) -> float:
