@@ -535,11 +535,24 @@ async def process_message(msg, session):
         # Асинхронно запускаем create_invoice и checker одновременно
         create_invoice_task = create_invoice(mint)
         checker_task = checker(session, uri, creator)
-        tx_bytes, kp, HELIUS_HTTP, need_to_buy = await asyncio.gather(
+        
+        # Ждем завершения обеих задач
+        results = await asyncio.gather(
             create_invoice_task, 
             checker_task
         )
+        
+        # Распаковываем результаты
+        create_result, need_to_buy = results
+        
+        # Проверяем, что create_invoice вернул результат
+        if create_result is None:
+            print(f"❌ Failed to create invoice for {mint}")
+            return
+            
+        tx_bytes, kp, HELIUS_HTTP = create_result
 
+        # Вызываем buy только если checker вернул True
         if need_to_buy:
             await buy(tx_bytes, kp, HELIUS_HTTP)
     except Exception as e:
