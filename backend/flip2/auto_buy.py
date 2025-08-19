@@ -131,6 +131,7 @@ def buy_pumpfun_via_quicknode(
             "slippageBps": str(slippage_bps),
             "commitment": commitment,
         }
+        print(payload)
         r = s.post(url, json=payload)
         print(r.text)
         r.raise_for_status()
