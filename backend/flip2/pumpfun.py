@@ -246,11 +246,24 @@ def _ensure_scheme(url: str) -> str:
 # ================= WebSocket Client =================
 async def send_to_websocket_server(websocket_data: dict):
     """Отправляет данные о токене с username через веб-сокет"""
-    try:
-        async with websockets.connect(WEBSOCKET_SERVER_URL, timeout=2.0) as ws:
-            await ws.send(jdumps(websocket_data))
-    except Exception as e:
-        print(Fore.RED + f"[WS] Ошибка отправки в веб-сокет: {e}" + Style.RESET_ALL)
+    for attempt in (1, 2, 3):
+        try:
+            async with websockets.connect(
+                WEBSOCKET_SERVER_URL,
+                ping_interval=20,
+                ping_timeout=30,
+                close_timeout=5,
+                open_timeout=2.0,
+                max_size=None,
+            ) as ws:
+                await ws.send(jdumps(websocket_data))
+                return
+        except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+            await asyncio.sleep(0.2)
+        except Exception as e:
+            if attempt == 3:
+                print(Fore.RED + f"[WS] Ошибка отправки в веб-сокет: {e}" + Style.RESET_ALL)
+            await asyncio.sleep(0.2)
 
 def _strings_in_json(obj):
     if isinstance(obj, str):

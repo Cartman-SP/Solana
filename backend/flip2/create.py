@@ -83,6 +83,7 @@ async def listen_to_websocket():
                 ping_interval=20,
                 ping_timeout=30,
                 close_timeout=5,
+                open_timeout=3,
                 max_size=None,
             ) as websocket:
                 try:

@@ -38,7 +38,7 @@ async def main():
     """Запуск веб-сокет сервера"""
     async with websockets.serve(
         handler,
-        "localhost",
+        "0.0.0.0",
         9393,
         ping_interval=20,
         ping_timeout=30,

@@ -277,13 +277,19 @@ async def process_token_data(data):
         symbol = data.get('symbol', '')
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
-        twitter_user = await sync_to_async(Twitter.objects.get)(name=twitter)
         print(symbol)
         if twitter == '':
             return
         autobuy = await check_twitter_whitelist(twitter,user)
         user_dev_data = await get_user_dev_data(user)
-        twitter_data = await get_twitter_data(twitter)
+        twitter_data = await get_twitter_data(twitter) or {
+            'ath': 0,
+            'total_tokens': 0,
+            'whitelist': False,
+            'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': [],
+        }
         print(f"DEBUG: Получены данные Twitter: {twitter_data}")
         extension_data = {
             'mint': mint,
@@ -330,6 +336,7 @@ async def listen_to_websocket():
                 ping_interval=20,
                 ping_timeout=30,
                 close_timeout=5,
+                open_timeout=3,
                 max_size=None,
             ) as websocket:
                 try:
