@@ -237,14 +237,16 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
         if(settings_obj.one_token_enabled):
             try:
-                await sync_to_async(UserDev.objects.get)(adress=creator, total_tokens__gt=1)
+                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
                 return False
             except:
                 pass
+
+        twitter_obj = None
         if(settings_obj.whitelist_enabled):
             try:
-                await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
+                twitter_obj = await sync_to_async(Twitter.objects.get)(
+                    name=twitter_name",
                     whitelist=True,
                     ath__gte=settings_obj.ath_from,
                     total_trans__gte=settings_obj.total_trans_from
@@ -253,13 +255,30 @@ async def check_twitter_whitelist(twitter_name,creator):
                 return False
         else:
             try:
-                await sync_to_async(Twitter.objects.get)(
+                twitter_obj = await sync_to_async(Twitter.objects.get)(
                     name=twitter_name,
                     ath__gte=settings_obj.ath_from,
                     total_trans__gte=settings_obj.total_trans_from
                 )
             except:
                 return False
+
+        # Проверяем последние 3 обработанных токена для найденного твиттера
+        try:
+            last_tokens = await sync_to_async(lambda: list(
+                Token.objects.filter(twitter=twitter_obj, processed=True)
+                .order_by('-created_at')[:3]
+            ))()
+        except Exception:
+            return False
+
+        if len(last_tokens) < 3:
+            return False
+
+        for token in last_tokens:
+            if token.total_trans < 100:
+                return False
+
         return True
     except Exception as e:
         print(e)
