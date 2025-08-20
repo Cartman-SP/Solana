@@ -15,6 +15,11 @@ from solders.transaction import VersionedTransaction
 from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
+import requests
+import base58
+from solders.transaction import VersionedTransaction
+from solders.keypair import Keypair
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -148,102 +153,66 @@ def keypair_from_base58(secret_b58: str) -> Keypair:
     """Создает Keypair из base58 строки"""
     return Keypair.from_base58_string(secret_b58.strip())
 
-def build_buy_tx(mint: str,
-                 buyer_pubkey: str,
-                 sol_amount: float,
-                 slippage_percent: float = DEFAULT_SLIPPAGE,
-                 priority_fee_sol: float = DEFAULT_PRIORITY_FEE,
-                 pool: str = DEFAULT_POOL) -> bytes:
-    """Строит транзакцию покупки через PumpPortal API"""
-    payload = {
-        "publicKey": buyer_pubkey,
-        "action": "buy",
-        "mint": mint,
-        "amount": sol_amount,          # тратим X SOL
-        "denominatedInSol": "true",    # сумма в SOL
-        "slippage": slippage_percent,  # % слиппеджа
-        "priorityFee": priority_fee_sol,  # приорити-комиссия, SOL
-        "pool": pool
-    }
-    
-    # Отладочная информация
-    
-    r = requests.post(PUMPPORTAL_TRADE_LOCAL,
-                      headers={"Content-Type": "application/json"},
-                      data=json.dumps(payload),
-                      timeout=10)
-    if r.status_code != 200:
-        raise RuntimeError(f"PumpPortal error {r.status_code}: {r.text}")
-    return r.content  # сериализованный VersionedTransaction (bytes)
-
-def send_vt_via_helius(vt_bytes: bytes, kp: Keypair, helius_http: str) -> str:
-    """Отправляет подписанную транзакцию через Helius RPC"""
-    vt = VersionedTransaction.from_bytes(vt_bytes)
-    signed_tx = VersionedTransaction(vt.message, [kp])
-    cfg = RpcSendTransactionConfig(preflight_commitment=CommitmentLevel.Confirmed)
-    body = SendVersionedTransaction(signed_tx, cfg).to_json()
-    r = requests.post(helius_http,
-                      headers={"Content-Type": "application/json"},
-                      data=body,
-                      timeout=10)
-    data = r.json()
-    if "error" in data:
-        raise RuntimeError(f"Helius send error: {data['error']}")
-    sig = data.get("result")
-    if not sig:
-        raise RuntimeError(f"Unexpected Helius response: {data}")
-    return sig
 
 
 
-async def create_invoice(mint):
-    try:
-        # Получаем настройки из базы данных
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        if not settings_obj:
-            print(f"❌ Cannot buy {mint}: no settings found")
-            return
-            
-        # Получаем настройки из Settings (как в pump_buy.py)
-        buyer_pubkey = settings_obj.buyer_pubkey  # это приватный ключ
-        sol_amount = float(settings_obj.sol_amount)
-        slippage_percent = float(settings_obj.slippage_percent)
-        priority_fee_sol = float(settings_obj.priority_fee_sol)
-        pool = "pump"  # используем pump pool по умолчанию
-        
-        # Проверяем, что у нас есть все необходимые параметры
-        if not buyer_pubkey or sol_amount <= 0:
-            print(f"❌ Cannot buy {mint}: invalid buyer_pubkey or sol_amount")
-            return
-            
-        try:
-            kp = keypair_from_base58(buyer_pubkey)
-        except Exception as e:
-            print(f"❌ Error creating keypair from buyer_pubkey: {str(e)}")
-            print(f"   Make sure buyer_pubkey contains a valid base58 private key")
-            return
-        
-        # Строим транзакцию покупки (точно как в pump_buy.py)
-        tx_bytes = build_buy_tx(
-            mint=mint,
-            buyer_pubkey=str(kp.pubkey()),  # используем публичный ключ для API
-            sol_amount=sol_amount,
-            slippage_percent=slippage_percent,
-            priority_fee_sol=priority_fee_sol,
-            pool=pool
-        )
-        
-        return tx_bytes, kp, HELIUS_HTTP
-    except Exception as e:
-        print(f"❌ Error buying {mint}: {str(e)}")    
 
 
+def generate_tx(pubkey, mint, amount, slippage, priorityFee):
+    signerKeypairs = [
+        Keypair.from_base58_string(pubkey),
+    ]
 
-async def buy(tx_bytes, kp, HELIUS_HTTP):
-        sig = send_vt_via_helius(tx_bytes, kp, HELIUS_HTTP)
-        print(f"✅ Transaction sent successfully: {sig}")
-        print(f"   View: https://solscan.io/tx/{sig}")
-        
+    response = requests.post(
+        "https://pumpportal.fun/api/trade-local",
+        headers={"Content-Type": "application/json"},
+        json=[
+            {
+                "publicKey": str(signerKeypairs[0].pubkey()),
+                "action": "buy", 
+                "mint": mint,
+                "denominatedInSol": "false",
+                "amount": amount,
+                "slippage": slippage,
+                "priorityFee": priorityFee,
+                "pool": "pump"
+            },
+        ]
+    )
+
+    if response.status_code != 200: 
+        print("Failed to generate transactions.")
+        print(response.reason)
+    else:
+        encodedTransactions = response.json()
+        encodedSignedTransactions = []
+        txSignatures = []
+
+        for index, encodedTransaction in enumerate(encodedTransactions):
+            signedTx = VersionedTransaction(VersionedTransaction.from_bytes(base58.b58decode(encodedTransaction)).message, [signerKeypairs[index]])
+            encodedSignedTransactions.append(base58.b58encode(bytes(signedTx)).decode())
+            txSignatures.append(str(signedTx.signatures[0]))
+
+        return encodedSignedTransactions, txSignatures
+
+
+def send_tx(encodedSignedTransactions, txSignatures):
+    jito_response = requests.post(
+        "https://wispy-little-river.solana-mainnet.quiknode.pro/134b4b837e97bb3711c20296010e32eff69ad1af/",
+        headers={"Content-Type": "application/json"},
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "sendBundle",
+            "params": [
+                encodedSignedTransactions
+            ]
+        }
+    )
+
+    for i, signature in enumerate(txSignatures):
+        print(f'Transaction {i}: https://solscan.io/tx/{signature}')
+
 
 
                    
@@ -544,8 +513,14 @@ async def process_message(msg, session):
         if not mint:
             return
         
-        # Асинхронно запускаем create_invoice и checker одновременно
-        create_invoice_task = create_invoice(mint)
+
+        settings_obj = await sync_to_async(Settings.objects.first)()
+        pubkey = settings_obj.buyer_pubkey
+        amount = settings_obj.sol_amount * 10**9
+        slippage = settings_obj.slippage_percent * 100
+        priorityFee = settings_obj.priority_fee_sol
+
+        create_invoice_task = generate_tx(pubkey, mint, amount, slippage, priorityFee)
         checker_task = checker(session, uri, creator)
         
         # Ждем завершения обеих задач
@@ -562,11 +537,9 @@ async def process_message(msg, session):
             print(f"❌ Failed to create invoice for {mint}")
             return
             
-        tx_bytes, kp, HELIUS_HTTP = create_result
-
-        # Вызываем buy только если checker вернул True
+        encodedSignedTransactions, txSignatures = create_result
         if need_to_buy:
-            await buy(tx_bytes, kp, HELIUS_HTTP)
+            await send_tx(encodedSignedTransactions, txSignatures)
     except Exception as e:
         print(e)
         pass
