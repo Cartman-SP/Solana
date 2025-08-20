@@ -217,16 +217,8 @@ async def create_invoice(mint):
             print(f"❌ Cannot buy {mint}: invalid buyer_pubkey or sol_amount")
             return
             
-        print(f"🚀 BUYING: {mint}")
-        print(f"   Amount: {sol_amount} SOL")
-        print(f"   Slippage: {slippage_percent}%")
-        print(f"   Priority Fee: {priority_fee_sol} SOL")
-        print(f"   Pool: {pool}")
-        
-        # Создаем Keypair из приватного ключа (как в pump_buy.py)
         try:
             kp = keypair_from_base58(buyer_pubkey)
-            print(f"   Buyer: {str(kp.pubkey())}")
         except Exception as e:
             print(f"❌ Error creating keypair from buyer_pubkey: {str(e)}")
             print(f"   Make sure buyer_pubkey contains a valid base58 private key")
