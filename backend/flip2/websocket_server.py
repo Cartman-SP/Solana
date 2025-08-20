@@ -36,7 +36,15 @@ async def broadcast_message(message):
 
 async def main():
     """Запуск веб-сокет сервера"""
-    async with websockets.serve(handler, "localhost", 9393):
+    async with websockets.serve(
+        handler,
+        "localhost",
+        9393,
+        ping_interval=20,
+        ping_timeout=30,
+        close_timeout=5,
+        max_size=None,
+    ):
         await asyncio.Future()  # Бесконечный цикл
 
 if __name__ == "__main__":

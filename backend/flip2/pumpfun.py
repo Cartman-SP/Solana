@@ -397,106 +397,113 @@ async def main():
                 await ws.send(jdumps(build_logs_sub()))
                 ack = await ws.recv()
 
-                async for raw in ws:
-                    msg = jloads(raw)
-                    if msg.get("method") != "logsNotification":
-                        continue
-
-                    logs, sig, _slot = unpack_logs_notification(msg)
-                    if not sig or sig in SEEN_SIGS:
-                        continue
-
-                    # быстрая диагностика, если вдруг ничего не ловится
-                    global _debug_left
-                    if DEBUG_SUB and _debug_left > 0:
-                        _debug_left -= 1
-
-                    # ---- фильтры ----
-                    if MODE == "strict":
-                        if not (looks_like_complete(logs) and not has_program_error(logs)):
+                try:
+                    async for raw in ws:
+                        msg = jloads(raw)
+                        if msg.get("method") != "logsNotification":
                             continue
-                        if STRICT_COMPLETE_SUCCESS and not complete_was_successful(logs):
+
+                        logs, sig, _slot = unpack_logs_notification(msg)
+                        if not sig or sig in SEEN_SIGS:
                             continue
-                    else:  # fast
-                        # минимально строгие условия: есть Create, нет явной ошибки
-                        if not (looks_like_create(logs) and not has_program_error(logs)):
+
+                        # быстрая диагностика, если вдруг ничего не ловится
+                        global _debug_left
+                        if DEBUG_SUB and _debug_left > 0:
+                            _debug_left -= 1
+
+                        # ---- фильтры ----
+                        if MODE == "strict":
+                            if not (looks_like_complete(logs) and not has_program_error(logs)):
+                                continue
+                            if STRICT_COMPLETE_SUCCESS and not complete_was_successful(logs):
+                                continue
+                        else:  # fast
+                            # минимально строгие условия: есть Create, нет явной ошибки
+                            if not (looks_like_create(logs) and not has_program_error(logs)):
+                                continue
+                            # если явно виден success у pump.fun — отлично; если нет, всё равно печатаем (ради скорости)
+                            # но отсекаем явный провал
+                            # (ничего не делаем тут — логика уже выше)
+
+                        # Парсим данные из блока Create
+                        data = collect_progdata_bytes_after_create(logs)
+                        parsed = parse_pump_create(data or b"")
+                        if not parsed:
                             continue
-                        # если явно виден success у pump.fun — отлично; если нет, всё равно печатаем (ради скорости)
-                        # но отсекаем явный провал
-                        # (ничего не делаем тут — логика уже выше)
 
-                    # Парсим данные из блока Create
-                    data = collect_progdata_bytes_after_create(logs)
-                    parsed = parse_pump_create(data or b"")
-                    if not parsed:
-                        continue
+                        uri  = (parsed["uri"] or "").strip()
+                        mint = (parsed["mint"] or "").strip()
+                        sym  = (parsed["symbol"] or "").strip()
 
-                    uri  = (parsed["uri"] or "").strip()
-                    mint = (parsed["mint"] or "").strip()
-                    sym  = (parsed["symbol"] or "").strip()
+                        if not mint or mint in SEEN_MINTS:
+                            continue
+                        if not sym:
+                            continue
 
-                    if not mint or mint in SEEN_MINTS:
-                        continue
-                    if not sym:
-                        continue
+                        # помечаем после всех фильтров
+                        SEEN_SIGS.add(sig)
+                        SEEN_MINTS.add(mint)
 
-                    # помечаем после всех фильтров
-                    SEEN_SIGS.add(sig)
-                    SEEN_MINTS.add(mint)
+                        stage = "LAUNCHED" if looks_like_complete(logs) else "CREATED"
 
-                    stage = "LAUNCHED" if looks_like_complete(logs) else "CREATED"
+                        # Быстрый вывод готов, ниже — «мягкие» HTTP (не RPC) для доп. инфы
+                        links = {}
+                        img   = None
+                        community_url = community_id = community_src = None
 
-                    # Быстрый вывод готов, ниже — «мягкие» HTTP (не RPC) для доп. инфы
-                    links = {}
-                    img   = None
-                    community_url = community_id = community_src = None
+                        if MODE != "fast" or uri:  # в fast тоже можно, но мы уже распечатали основное
+                            if uri:
+                                meta = await fetch_meta_with_retries(http, uri)
+                                if isinstance(meta, dict):
+                                    for k in ("external_url","website","twitter","x","telegram","discord"):
+                                        v = meta.get(k) or (meta.get("extensions", {}) if isinstance(meta.get("extensions"), dict) else {}).get(k)
+                                        if isinstance(v, str) and v.strip():
+                                            links[k] = v.strip()
+                                    # картинка / community
+                                    img = normalize_image_link(meta)
+                                    # найти community id где угодно
+                                    for s in (links.get("x"), links.get("twitter"), links.get("external_url"), links.get("website")):
+                                        if isinstance(s, str):
+                                            m = COMMUNITY_ID_RE.search(s)
+                                            if m:
+                                                community_id = m.group(1)
+                                                community_url = f"https://x.com/i/communities/{community_id}"
+                                                community_src = "link"
+                                                break
 
-                    if MODE != "fast" or uri:  # в fast тоже можно, но мы уже распечатали основное
-                        if uri:
-                            meta = await fetch_meta_with_retries(http, uri)
-                            if isinstance(meta, dict):
-                                for k in ("external_url","website","twitter","x","telegram","discord"):
-                                    v = meta.get(k) or (meta.get("extensions", {}) if isinstance(meta.get("extensions"), dict) else {}).get(k)
-                                    if isinstance(v, str) and v.strip():
-                                        links[k] = v.strip()
-                                # картинка / community
-                                img = normalize_image_link(meta)
-                                # найти community id где угодно
-                                for s in (links.get("x"), links.get("twitter"), links.get("external_url"), links.get("website")):
-                                    if isinstance(s, str):
-                                        m = COMMUNITY_ID_RE.search(s)
-                                        if m:
-                                            community_id = m.group(1)
-                                            community_url = f"https://x.com/i/communities/{community_id}"
-                                            community_src = "link"
-                                            break
-
-                    websocket_data = {
-                        "source": "pumpfun",
-                        "mint": mint,
-                        "user": parsed['creator'],
-                        "name": parsed['name'],
-                        "symbol": parsed['symbol'],
-                        "uri": uri,
-                    }
-                    if community_id:
-                        try:
-                            username, followers, who = await get_creator_or_member(http, community_id)
-                            line = f"★ X COMMUNITY: {community_url}"
-                            if username:
-                                label = "создатель" if who == "creator" else "участник"
-                                line += f"  |  {label}: @{username}"
-                                if isinstance(followers, int):
-                                    line += f"  |  подписчиков: {followers:,}"
-                                websocket_data["twitter_name"] = f"@{username}"
-                                websocket_data["twitter_followers"] = followers
+                        websocket_data = {
+                            "source": "pumpfun",
+                            "mint": mint,
+                            "user": parsed['creator'],
+                            "name": parsed['name'],
+                            "symbol": parsed['symbol'],
+                            "uri": uri,
+                        }
+                        if community_id:
+                            try:
+                                username, followers, who = await get_creator_or_member(http, community_id)
+                                line = f"★ X COMMUNITY: {community_url}"
+                                if username:
+                                    label = "создатель" if who == "creator" else "участник"
+                                    line += f"  |  {label}: @{username}"
+                                    if isinstance(followers, int):
+                                        line += f"  |  подписчиков: {followers:,}"
+                                    websocket_data["twitter_name"] = f"@{username}"
+                                    websocket_data["twitter_followers"] = followers
 
 
-                                
-                        except Exception:
-                            pass
-                    await send_to_websocket_server(websocket_data)
+                                    
+                            except Exception:
+                                pass
+                        await send_to_websocket_server(websocket_data)
+                except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+                    # Нормальная ситуация: удалённая сторона закрыла соединение без close frame — просто переподключаемся
+                    await asyncio.sleep(0.3)
 
+        except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+            # Тихо переподключаемся без лишнего шума в логах
+            await asyncio.sleep(0.3)
         except Exception as e:
             print("WS reconnect after error:", e)
             await asyncio.sleep(0.7)

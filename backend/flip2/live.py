@@ -37,7 +37,8 @@ async def handler(websocket, path):
             except json.JSONDecodeError:
                 # Если сообщение не является JSON, игнорируем его
                 pass
-    except:
+    except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+        # Нормальные закрытия соединения
         pass
     finally:
         extension_clients.discard(websocket)
@@ -51,7 +52,9 @@ async def broadcast_to_extension(data):
     for client in extension_clients:
         try:
             await client.send(json.dumps(data))
-        except:
+        except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+            disconnected_clients.add(client)
+        except Exception:
             disconnected_clients.add(client)
     
     extension_clients.difference_update(disconnected_clients)
@@ -322,19 +325,37 @@ async def listen_to_websocket():
     """Слушает основной веб-сокет и обрабатывает данные"""
     while True:
         try:
-            async with websockets.connect("ws://localhost:9393") as websocket:
-                async for message in websocket:
-                    try:
-                        data = json.loads(message)
-                        await process_token_data(data)
-                    except:
-                        pass
-        except:
+            async with websockets.connect(
+                "ws://localhost:9393",
+                ping_interval=20,
+                ping_timeout=30,
+                close_timeout=5,
+                max_size=None,
+            ) as websocket:
+                try:
+                    async for message in websocket:
+                        try:
+                            data = json.loads(message)
+                            await process_token_data(data)
+                        except Exception:
+                            pass
+                except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+                    # Тихий выход — переподключимся в следующей итерации
+                    pass
+        except Exception:
             await asyncio.sleep(1)
 
 async def start_extension_server():
     """Запускает веб-сокет сервер для расширения"""
-    async with websockets.serve(handler, "0.0.0.0", 8765):
+    async with websockets.serve(
+        handler,
+        "0.0.0.0",
+        8765,
+        ping_interval=20,
+        ping_timeout=30,
+        close_timeout=5,
+        max_size=None,
+    ):
         await asyncio.Future()
 
 async def main():

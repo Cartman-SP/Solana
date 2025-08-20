@@ -78,18 +78,25 @@ async def create_user_and_token(data):
 async def listen_to_websocket():
     while True:
         try:
-            async with websockets.connect("ws://localhost:9393") as websocket:
-                async for message in websocket:
-                    try:
-                        data = json.loads(message)
-                        
-                        # Создаем записи в базе данных
-                        await create_user_and_token(data)
-                        
-                    except:
-                        pass
-                        
-        except:
+            async with websockets.connect(
+                "ws://localhost:9393",
+                ping_interval=20,
+                ping_timeout=30,
+                close_timeout=5,
+                max_size=None,
+            ) as websocket:
+                try:
+                    async for message in websocket:
+                        try:
+                            data = json.loads(message)
+                            # Создаем записи в базе данных
+                            await create_user_and_token(data)
+                        except Exception:
+                            pass
+                except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
+                    # Соединение закрыто — тихо переподключаемся
+                    pass
+        except Exception:
             await asyncio.sleep(2)
 
 if __name__ == "__main__":
