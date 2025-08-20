@@ -27,6 +27,7 @@ django.setup()
 
 from mainapp.models import Settings, Twitter, UserDev
 from asgiref.sync import sync_to_async
+from decimal import Decimal
 
 # Конфигурация
 HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
@@ -93,13 +94,19 @@ try:
     def jloads(b: bytes | str):
         if isinstance(b, str): b = b.encode()
         return orjson.loads(b)
-    def jdumps(o): return orjson.dumps(o).decode()
+    def jdumps(o): return orjson.dumps(o, separators=(",", ":"))
 except ImportError:
     import json
     def jloads(b: bytes | str):
         if isinstance(b, bytes): b = b.decode("utf-8", "ignore")
         return json.loads(b.lstrip("\ufeff").strip())
     def jdumps(o): return json.dumps(o, separators=(",", ":"))
+
+def safe_decimal_to_float(value):
+    """Безопасно преобразует Decimal в float для JSON сериализации"""
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
 
 # Импорт base58
 try:
@@ -163,21 +170,24 @@ def generate_tx(pubkey, mint, amount, slippage, priorityFee):
         Keypair.from_base58_string(pubkey),
     ]
 
+    # Убеждаемся, что все значения могут быть сериализованы в JSON
+    payload = [
+        {
+            "publicKey": str(signerKeypairs[0].pubkey()),
+            "action": "buy", 
+            "mint": mint,
+            "denominatedInSol": "false",
+            "amount": safe_decimal_to_float(amount),
+            "slippage": safe_decimal_to_float(slippage),
+            "priorityFee": safe_decimal_to_float(priorityFee),
+            "pool": "pump"
+        },
+    ]
+
     response = requests.post(
         "https://pumpportal.fun/api/trade-local",
         headers={"Content-Type": "application/json"},
-        json=[
-            {
-                "publicKey": str(signerKeypairs[0].pubkey()),
-                "action": "buy", 
-                "mint": mint,
-                "denominatedInSol": "false",
-                "amount": amount,
-                "slippage": slippage,
-                "priorityFee": priorityFee,
-                "pool": "pump"
-            },
-        ]
+        json=payload
     )
 
     if response.status_code != 200: 
@@ -516,9 +526,9 @@ async def process_message(msg, session):
 
         settings_obj = await sync_to_async(Settings.objects.first)()
         pubkey = settings_obj.buyer_pubkey
-        amount = settings_obj.sol_amount * 10**9
-        slippage = settings_obj.slippage_percent * 100
-        priorityFee = settings_obj.priority_fee_sol
+        amount = safe_decimal_to_float(settings_obj.sol_amount) * 10**9
+        slippage = safe_decimal_to_float(settings_obj.slippage_percent) * 100
+        priorityFee = safe_decimal_to_float(settings_obj.priority_fee_sol)
 
         create_invoice_task = generate_tx(pubkey, mint, amount, slippage, priorityFee)
         checker_task = checker(session, uri, creator)
