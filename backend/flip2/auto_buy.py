@@ -521,7 +521,9 @@ async def checker(session, uri,creator):
             print(community_id)
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
-            return await check_twitter_whitelist(twitter_name,creator)
+            check = await check_twitter_whitelist(twitter_name,creator)
+            print(check)
+            return check
             
 
 
