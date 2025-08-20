@@ -276,7 +276,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
 
         for token in last_tokens:
-            if token.total_trans < 100:
+            if token.total_trans < 75:
                 return False
 
         return True
