@@ -167,7 +167,6 @@ def build_buy_tx(mint: str,
     }
     
     # Отладочная информация
-    print(f"🔍 Sending to PumpPortal: {jdumps(payload)}")
     
     r = requests.post(PUMPPORTAL_TRADE_LOCAL,
                       headers={"Content-Type": "application/json"},
