@@ -105,6 +105,7 @@ async def get_user_dev_data(user_address):
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except Exception as e:
+        print(e)
         return{
             'ath': 0,
             'total_tokens': 1,
@@ -160,6 +161,7 @@ async def get_twitter_data(name):
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except Exception as e:
+        print(e)
         return{
             'ath': 0,
             'total_tokens': 1,
