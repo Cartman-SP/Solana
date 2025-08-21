@@ -369,7 +369,8 @@ async def process_message(msg, session):
             create_live_task, 
             create_create_task,
         )
-        
+    except Exception:
+        pass
         
 
 async def main_loop():
