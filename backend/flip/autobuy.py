@@ -414,8 +414,8 @@ async def process_message(msg, session):
         priorityFee = float(settings_obj.priority_fee_sol)
 
         # Запускаем обе операции как awaitable
-        create_invoice_task = asyncio.create_task(generate_tx, pubkey, mint, amount, slippage, priorityFee)
-        checker_task = asyncio.create_task(checker(session, uri, creator))
+        create_invoice_task = generate_tx, pubkey, mint, amount, slippage, priorityFee
+        checker_task = checker(session, uri, creator)
 
         # Ждем завершения обеих задач
         results = await asyncio.gather(
