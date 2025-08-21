@@ -357,7 +357,7 @@ async def process_message(msg, session):
         data = {
             'source': 'pumpfun',
             'mint': mint,
-            'user': user,
+            'user': creator,
             'name': name,
             'symbol': symbol,
             'twitter_name': twitter_name,
