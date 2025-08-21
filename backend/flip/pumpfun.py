@@ -365,10 +365,10 @@ async def process_message(msg, session):
             'twitter_name': f"@{twitter_name}",
         }
         print(data)
-        create_live_task = asyncio.create_task(process_live(data))
-        create_create_task = asyncio.create_task(process_create(data))
+        create_live_task = process_live(data)
+        create_create_task = process_create(data)
         
-        await asyncio.gather(
+        result = await asyncio.gather(
             create_live_task, 
             create_create_task,
         )
