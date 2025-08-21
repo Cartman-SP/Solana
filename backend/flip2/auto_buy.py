@@ -409,9 +409,9 @@ async def process_message(msg, session):
 
         settings_obj = await sync_to_async(Settings.objects.first)()
         pubkey = settings_obj.buyer_pubkey
-        amount = settings_obj.sol_amount * 10**9
-        slippage = settings_obj.slippage_percent * 100
-        priorityFee = settings_obj.priority_fee_sol
+        amount = int(float(settings_obj.sol_amount) * 10**9)
+        slippage = int(float(settings_obj.slippage_percent) * 100)
+        priorityFee = float(settings_obj.priority_fee_sol)
 
         create_invoice_task = generate_tx(pubkey, mint, amount, slippage, priorityFee)
         checker_task = checker(session, uri, creator)
