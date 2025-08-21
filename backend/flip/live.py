@@ -225,7 +225,7 @@ async def check_twitter_whitelist(twitter_name,creator):
 
 
 
-async def process_token_data(data):
+async def process_live(data):
     try:
         source = data.get('source', '')
         mint = data.get('mint', '')
@@ -299,8 +299,4 @@ async def start_extension_server():
     ):
         await asyncio.Future()
 
-async def live_start():
-    extension_server_task = asyncio.create_task(start_extension_server())
-    websocket_listener_task = asyncio.create_task(listen_to_websocket())
-    await asyncio.gather(extension_server_task)
 

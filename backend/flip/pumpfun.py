@@ -18,8 +18,10 @@ from solders.commitment_config import CommitmentLevel
 import base58
 import time
 import uvloop
+import contextlib
 from base58 import b58encode, b58decode
-
+from live import *
+from create import *
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -322,63 +324,6 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
-async def check_twitter_whitelist(twitter_name,creator):
-    try:
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        if not(settings_obj.start):
-            return False
-        if(settings_obj.one_token_enabled):
-            try:
-                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
-                return False
-            except:
-                pass
-
-        twitter_obj = None
-        if(settings_obj.whitelist_enabled):
-            try:
-                twitter_obj = await sync_to_async(Twitter.objects.get)(
-                    name=f"@{twitter_name}",
-                    whitelist=True,
-                    ath__gte=settings_obj.ath_from,
-                    total_trans__gte=settings_obj.total_trans_from
-                )
-            except:
-                return False
-        else:
-            try:
-                twitter_obj = await sync_to_async(Twitter.objects.get)(
-                    name=f"@{twitter_name}",
-                    ath__gte=settings_obj.ath_from,
-                    total_trans__gte=settings_obj.total_trans_from
-                )
-            except:
-                return False
-
-        # Проверяем последние 3 обработанных токена для найденного твиттера
-        try:
-            last_tokens = await sync_to_async(lambda: list(
-                Token.objects.filter(twitter=twitter_obj, processed=True)
-                .order_by('-created_at')[:3]
-            ))()
-        except Exception:
-            return False
-
-        if len(last_tokens) < 3:
-            return False
-
-        for token in last_tokens:
-            if token.total_trans < 100:
-                return False
-
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-            
-
-
 
 async def process_message(msg, session):
     """Обработка входящего сообщения"""
@@ -434,30 +379,42 @@ async def main_loop():
         headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
         timeout=aiohttp.ClientTimeout(total=1)
     )
-    
-    while True:
-        try:
-            async with websockets.connect(
-                WS_URL,
-                ping_interval=30,
-                max_size=2**20,
-                compression=None
-            ) as ws:
-                await ws.send(LOGS_SUB_JSON)
-                await ws.recv()
-                async for raw in ws:
-                    try:
-                        msg = json.loads(raw)
-                        if msg.get("method") == "logsNotification":
-                            await process_message(msg, session)
-                    except Exception as e:
-                        print(e)
-                        continue
-        except Exception as e:
-            print(e)
-            await asyncio.sleep(0.1)
-        finally:
-            await session.close()
+
+    try:
+        while True:
+            try:
+                async with websockets.connect(
+                    WS_URL,
+                    ping_interval=30,
+                    max_size=2**20,
+                    compression=None
+                ) as ws:
+                    await ws.send(LOGS_SUB_JSON)
+                    await ws.recv()
+                    async for raw in ws:
+                        try:
+                            msg = json.loads(raw)
+                            if msg.get("method") == "logsNotification":
+                                await process_message(msg, session)
+                        except Exception as e:
+                            print(e)
+                            continue
+            except Exception as e:
+                print(e)
+                await asyncio.sleep(0.1)
+    finally:
+        await session.close()
+
+
+async def runner():
+    """Запускает сервер для расширения и основной цикл параллельно"""
+    server_task = asyncio.create_task(start_extension_server())
+    try:
+        await main_loop()
+    finally:
+        server_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await server_task
 
 if __name__ == "__main__":
-    asyncio.run(main_loop())
+    asyncio.run(runner())
