@@ -361,7 +361,7 @@ async def process_message(msg, session):
             'symbol': symbol,
             'twitter_name': twitter_name,
         }
-
+        print(data)
         create_live_task = process_live(data)
         create_create_task = process_create(data)
         

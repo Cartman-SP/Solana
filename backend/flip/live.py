@@ -240,15 +240,15 @@ async def process_live(data):
         autobuy_task = check_twitter_whitelist(twitter,user)
         user_dev_data_task = get_user_dev_data(user)
         twitter_data_task = get_twitter_data(twitter)
-
+        print(123)
         results = await asyncio.gather(
             autobuy_task, 
             user_dev_data_task,
             twitter_data_task,
         )
-
+        print(321)
         autobuy, user_dev_data, twitter_data = results
-
+        print(456)
         extension_data = {
             'mint': mint,
             'user': user,
