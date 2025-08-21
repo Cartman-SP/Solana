@@ -342,7 +342,7 @@ async def process_message(msg, session):
         creator = (parsed["creator"] or "").strip()
         name = (parsed["name"] or "").strip()
         symbol = (parsed["symbol"] or "").strip()
-
+        print(mint)
         if not mint:
             return
         
