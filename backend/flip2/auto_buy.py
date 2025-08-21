@@ -413,12 +413,12 @@ async def process_message(msg, session):
         slippage = int(float(settings_obj.slippage_percent) * 100)
         priorityFee = float(settings_obj.priority_fee_sol)
 
-        create_invoice_task = generate_tx(pubkey, mint, amount, slippage, priorityFee)
+        create_invoice_task = asyncio.to_thread(generate_tx, pubkey, mint, amount, slippage, priorityFee)
         checker_task = checker(session, uri, creator)
-        
+
         # Ждем завершения обеих задач
         results = await asyncio.gather(
-            create_invoice_task, 
+            create_invoice_task,
             checker_task
         )
         
@@ -432,7 +432,7 @@ async def process_message(msg, session):
             
         encodedSignedTransactions, txSignatures = create_result
         if need_to_buy:
-            await send_tx(encodedSignedTransactions, txSignatures)
+            await asyncio.to_thread(send_tx, encodedSignedTransactions, txSignatures)
     except Exception as e:
         print(e)
         pass
