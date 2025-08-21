@@ -370,7 +370,8 @@ async def process_message(msg, session):
             create_live_task, 
             create_create_task,
         )
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
         
 
