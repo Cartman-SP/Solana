@@ -47,7 +47,7 @@ LOGS_SUB_JSON = json.dumps({
     "id": "logs-auto-buy",
     "method": "logsSubscribe",
     "params": [
-        {"mentions": [PUMP_FUN]},
+        {"mentions": ["6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"]},
         {"commitment": "processed"}
     ]
 })
