@@ -262,6 +262,8 @@ def parse_pump_create(raw: bytes):
         "uri": uri,
         "mint": mint ,
         "creator": creator,
+        'name': name,
+        'symbol': symbol,
     }
 
 def find_community_from_uri(uri: str) -> Optional[str]:
@@ -374,18 +376,6 @@ async def check_twitter_whitelist(twitter_name,creator):
         print(e)
         return False
 
-async def checker(session, uri,creator):
-        community_id = None
-        meta = await fetch_meta_with_retries(session, uri)
-        if meta:
-            community_url, community_id, _ = find_community_anywhere_with_src(meta)
-        if community_id:
-            print(community_id)
-            twitter_name = await get_creator_username(session, community_id)
-            print(twitter_name)
-            check = await check_twitter_whitelist(twitter_name,creator)
-            print(check)
-            return check
             
 
 
@@ -400,42 +390,42 @@ async def process_message(msg, session):
         parsed = parse_pump_create(data or b"")
         if not parsed:
             return
+
         mint = (parsed["mint"] or "").strip()
         uri = (parsed["uri"] or "").strip()
         creator = (parsed["creator"] or "").strip()
+        name = (parsed["name"] or "").strip()
+        symbol = (parsed["symbol"] or "").strip()
+
         if not mint:
             return
         
 
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        pubkey = settings_obj.buyer_pubkey
-        amount = settings_obj.sol_amount * 10**9
-        slippage = settings_obj.slippage_percent * 100
-        priorityFee = settings_obj.priority_fee_sol
+        community_id = None
+        meta = await fetch_meta_with_retries(session, uri)
+        if meta:
+            community_url, community_id, _ = find_community_anywhere_with_src(meta)
+        if community_id:
+            twitter_name = await get_creator_username(session, community_id)
 
-        create_invoice_task = generate_tx(pubkey, mint, amount, slippage, priorityFee)
-        checker_task = checker(session, uri, creator)
+        data = {
+            'source': 'pumpfun',
+            'mint': mint,
+            'user': user,
+            'name': name,
+            'symbol': symbol,
+            'twitter_name': twitter_name,
+        }
+
+        create_live_task = process_live(data)
+        create_create_task = process_create(data)
         
-        # Ждем завершения обеих задач
-        results = await asyncio.gather(
-            create_invoice_task, 
-            checker_task
+        await asyncio.gather(
+            create_live_task, 
+            create_create_task,
         )
         
-        # Распаковываем результаты
-        create_result, need_to_buy = results
         
-        # Проверяем, что create_invoice вернул результат
-        if create_result is None:
-            print(f"❌ Failed to create invoice for {mint}")
-            return
-            
-        encodedSignedTransactions, txSignatures = create_result
-        if need_to_buy:
-            await send_tx(encodedSignedTransactions, txSignatures)
-    except Exception as e:
-        print(e)
-        pass
 
 async def main_loop():
     """Основной цикл обработки"""

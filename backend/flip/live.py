@@ -65,41 +65,6 @@ async def get_user_dev_data(user_address):
         user_dev = await sync_to_async(UserDev.objects.get)(adress=user_address)
                 
         # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
-        recent_tokens = await sync_to_async(list)(
-            Token.objects.filter(
-                dev=user_dev,
-                ath__gt=0,
-                processed = True
-            ).order_by('-created_at')[:3]
-        )
-        
-        # Рассчитываем средний ATH
-        if recent_tokens:
-            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
-        else:
-            avg_ath = 0
-        # Рассчитываем средний total_trans по тем же последним токенам
-        if recent_tokens:
-            avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens)
-        else:
-            avg_total_trans = 0
-        
-        # Получаем последние 100 токенов для расчета процента миграций
-        recent_100_tokens = await sync_to_async(list)(
-            Token.objects.filter(
-                dev=user_dev,
-                processed = True
-            ).order_by('-created_at')[:100]
-        )
-        
-        # Рассчитываем процент мигрированных токенов
-        if recent_100_tokens:
-            migrated_count = sum(1 for token in recent_100_tokens if token.migrated)
-            migration_percentage = (migrated_count / len(recent_100_tokens)) * 100
-        else:
-            migration_percentage = 0
-        
-        # Получаем последние 3 токена разработчика (исключая текущий)
         recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 dev=user_dev,
@@ -109,11 +74,23 @@ async def get_user_dev_data(user_address):
             ).order_by('-created_at')[:3]
         )
         
-        # Формируем список последних токенов
+        # Рассчитываем средний ATH
+        if recent_dev_tokens:
+            avg_ath = sum(token.ath for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_ath = 0
+        # Рассчитываем средний total_trans по тем же последним токенам
+        if recent_dev_tokens:
+            avg_total_trans = sum(token.total_trans for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_total_trans = 0
+        
+        migration_percentage = 0
+
         recent_tokens_info = []
         for token in recent_dev_tokens:
             recent_tokens_info.append({
-                'name': token.address[:8] + '...',  # Сокращенное название
+                'name': token.address[:4] + '...' + token.address[-4:],  
                 'ath': token.ath,
                 'total_trans': token.total_trans
             })
@@ -121,14 +98,13 @@ async def get_user_dev_data(user_address):
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
-            'total_tokens': user_dev.total_tokens,
+            'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
             'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
     except Exception as e:
-        print(e)
         return{
             'ath': 0,
             'total_tokens': 1,
@@ -138,97 +114,60 @@ async def get_user_dev_data(user_address):
             'recent_tokens': []
         }
 
-async def get_twitter_data(twitter):
+async def get_twitter_data(name):
     """Получает данные UserDev из базы данных"""
     try:
-        # Проверяем, существует ли Twitter аккаунт
-        user_dev = await sync_to_async(Twitter.objects.get)(name=twitter)
-        
-        if user_dev.blacklist:
-            return None
-        
+        user_dev = await sync_to_async(Twitter.objects.get)(name=name)
+                
         # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
-        recent_tokens = await sync_to_async(list)(
+        recent_dev_tokens = await sync_to_async(list)(
             Token.objects.filter(
                 twitter=user_dev,
-                ath__gt=0,
-                processed=True
+                processed = True
+            ).exclude(
+                address=user_address  # Исключаем текущий токен
             ).order_by('-created_at')[:3]
         )
         
         # Рассчитываем средний ATH
-        avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens) if recent_tokens else 0
+        if recent_dev_tokens:
+            avg_ath = sum(token.ath for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_ath = 0
         # Рассчитываем средний total_trans по тем же последним токенам
-        avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens) if recent_tokens else 0
+        if recent_dev_tokens:
+            avg_total_trans = sum(token.total_trans for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_total_trans = 0
         
-        # Получаем последние 100 токенов для расчета процента миграций
-        recent_100_tokens = await sync_to_async(list)(
-            Token.objects.filter(
-                twitter=user_dev,
-                processed=True
-            ).order_by('-created_at')[:100]
-        )
-        
-        # Рассчитываем процент мигрированных токенов
-        migration_percentage = (sum(1 for token in recent_100_tokens if token.migrated) / len(recent_100_tokens) * 100) if recent_100_tokens else 0
-        
-        # Получаем последние 3 токена разработчика
-        recent_dev_tokens = await sync_to_async(list)(
-            Token.objects.filter(
-                twitter=user_dev,
-                processed=True
-            ).order_by('-created_at')[:3]
-        )
-        
-        # Формируем список последних токенов
-        recent_tokens_info = [{
-            'name': token.address[:8] + '...',
-            'ath': token.ath,
-            'total_trans': token.total_trans
-        } for token in recent_dev_tokens]
-        
-        # Обновляем и сохраняем данные Twitter
-        old_ath = user_dev.ath
-        user_dev.ath = int(avg_ath)
-        # Сохраняем средний total_trans у Twitter для фильтрации
-        user_dev.total_trans = int(avg_total_trans)
-        user_dev.total_tokens = await sync_to_async(Token.objects.filter(twitter=user_dev, processed=True).count)()
-        try:
-            await sync_to_async(user_dev.save)()
-            print(f"DEBUG: Успешно сохранен Twitter {twitter} с ATH {user_dev.ath}")
-        except Exception as e:
-            print(f"ERROR: Не удалось сохранить Twitter {twitter}: {str(e)}")
-                
+        migration_percentage = 0
+
+        recent_tokens_info = []
+        for token in recent_dev_tokens:
+            recent_tokens_info.append({
+                'name': token.address[:4] + '...' + token.address[-4:],  
+                'ath': token.ath,
+                'total_trans': token.total_trans
+            })
+            
         return {
-            'ath': int(avg_ath),
-            'total_trans': int(avg_total_trans),
-            'total_tokens': user_dev.total_tokens,
+            'ath': int(avg_ath),  # Средний ATH последних 5 токенов
+            'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
+            'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
-            'migrations': round(migration_percentage, 1),
-            'recent_tokens': recent_tokens_info,
+            'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
+            'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
-    except Twitter.DoesNotExist:
-        print(f"DEBUG: Twitter аккаунт {twitter} не найден в базе данных")
-        # Создаем новый Twitter аккаунт, если он не существует
-        try:
-            user_dev = Twitter(name=twitter)
-            await sync_to_async(user_dev.save)()
-            print(f"DEBUG: Создан новый Twitter аккаунт {twitter}")
-            return {
-                'ath': 0,
-                'total_tokens': 0,
-                'whitelist': False,
-                'blacklist': False,
-                'migrations': 0,
-                'recent_tokens': [],
-            }
-        except Exception as e:
-            print(f"ERROR: Не удалось создать Twitter аккаунт {twitter}: {str(e)}")
-            return None
     except Exception as e:
-        print(f"ERROR: Ошибка при обработке Twitter {twitter}: {str(e)}")
-        return None
+        return{
+            'ath': 0,
+            'total_tokens': 1,
+            'whitelist': False,
+            'blacklist': False,
+            'migrations': 0,
+            'recent_tokens': []
+        }
 
 async def check_twitter_whitelist(twitter_name,creator):
     try:
@@ -287,7 +226,6 @@ async def check_twitter_whitelist(twitter_name,creator):
 
 
 async def process_token_data(data):
-    """Обрабатывает данные токена и отправляет в расширение"""
     try:
         source = data.get('source', '')
         mint = data.get('mint', '')
@@ -299,17 +237,18 @@ async def process_token_data(data):
         print(symbol)
         if twitter == '':
             return
-        autobuy = await check_twitter_whitelist(twitter,user)
-        user_dev_data = await get_user_dev_data(user)
-        twitter_data = await get_twitter_data(twitter) or {
-            'ath': 0,
-            'total_tokens': 0,
-            'whitelist': False,
-            'blacklist': False,
-            'migrations': 0,
-            'recent_tokens': [],
-        }
-        print(f"DEBUG: Получены данные Twitter: {twitter_data}")
+        autobuy_task = check_twitter_whitelist(twitter,user)
+        user_dev_data_task = get_user_dev_data(user)
+        twitter_data_task = get_twitter_data(twitter)
+
+        results = await asyncio.gather(
+            autobuy_task, 
+            user_dev_data_task,
+            twitter_data_task,
+        )
+
+        autobuy, user_dev_data, twitter_data = results
+
         extension_data = {
             'mint': mint,
             'user': user,
@@ -346,30 +285,6 @@ async def process_token_data(data):
     except Exception as e:
         pass
 
-async def listen_to_websocket():
-    """Слушает основной веб-сокет и обрабатывает данные"""
-    while True:
-        try:
-            async with websockets.connect(
-                "ws://localhost:9393",
-                ping_interval=20,
-                ping_timeout=30,
-                close_timeout=5,
-                open_timeout=3,
-                max_size=None,
-            ) as websocket:
-                try:
-                    async for message in websocket:
-                        try:
-                            data = json.loads(message)
-                            await process_token_data(data)
-                        except Exception:
-                            pass
-                except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
-                    # Тихий выход — переподключимся в следующей итерации
-                    pass
-        except Exception:
-            await asyncio.sleep(1)
 
 async def start_extension_server():
     """Запускает веб-сокет сервер для расширения"""
@@ -384,11 +299,8 @@ async def start_extension_server():
     ):
         await asyncio.Future()
 
-async def main():
-    """Основная функция - запускает оба сервиса"""
+async def live_start():
     extension_server_task = asyncio.create_task(start_extension_server())
     websocket_listener_task = asyncio.create_task(listen_to_websocket())
-    await asyncio.gather(extension_server_task, websocket_listener_task)
+    await asyncio.gather(extension_server_task)
 
-if __name__ == "__main__":
-    asyncio.run(main()) 

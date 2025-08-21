@@ -1,5 +1,3 @@
-# pip install websockets aiohttp base58 colorama
-# (optional) pip install orjson uvloop
 
 import asyncio, re, base64, json
 import websockets, aiohttp
