@@ -70,7 +70,7 @@ async def get_user_dev_data(user_address):
                 dev=user_dev,
                 processed = True
             ).exclude(
-                address=user_address  # Исключаем текущий токен
+                address=mint  # Исключаем текущий токен
             ).order_by('-created_at')[:3]
         )
         
@@ -115,7 +115,7 @@ async def get_user_dev_data(user_address):
             'recent_tokens': []
         }
 
-async def get_twitter_data(name):
+async def get_twitter_data(name,mint):
     """Получает данные UserDev из базы данных"""
     try:
         user_dev = await sync_to_async(Twitter.objects.get)(name=name)
@@ -126,7 +126,7 @@ async def get_twitter_data(name):
                 twitter=user_dev,
                 processed = True
             ).exclude(
-                address=user_address  # Исключаем текущий токен
+                address=mint  # Исключаем текущий токен
             ).order_by('-created_at')[:3]
         )
         
@@ -240,8 +240,8 @@ async def process_live(data):
         if twitter == '':
             return
         autobuy_task = asyncio.create_task(check_twitter_whitelist(twitter, user))
-        user_dev_data_task = asyncio.create_task(get_user_dev_data(user))
-        twitter_data_task = asyncio.create_task(get_twitter_data(twitter))
+        user_dev_data_task = asyncio.create_task(get_user_dev_data(user,mint))
+        twitter_data_task = asyncio.create_task(get_twitter_data(twitter,mint))
         print(123)
         results = await asyncio.gather(
             autobuy_task,
