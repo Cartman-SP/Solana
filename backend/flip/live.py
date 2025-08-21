@@ -248,7 +248,7 @@ async def process_live(data):
             user_dev_data_task,
             twitter_data_task,
         )
-        print(321)
+        print(results)
         autobuy, user_dev_data, twitter_data = results
         print(456)
         extension_data = {
