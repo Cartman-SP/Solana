@@ -59,7 +59,7 @@ async def broadcast_to_extension(data):
     
     extension_clients.difference_update(disconnected_clients)
 
-async def get_user_dev_data(user_address):
+async def get_user_dev_data(user_address,mint):
     """Получает данные UserDev из базы данных"""
     try:
         user_dev = await sync_to_async(UserDev.objects.get)(adress=user_address)
