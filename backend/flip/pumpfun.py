@@ -363,7 +363,6 @@ async def process_message(msg, session):
             'symbol': symbol,
             'twitter_name': f"@{twitter_name}",
         }
-        print(123)
         create_live_task = asyncio.create_task(process_live(data))
         create_create_task = asyncio.create_task(process_create(data))
         
