@@ -236,7 +236,7 @@ async def process_live(data):
         symbol = data.get('symbol', '')
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
-        if twitter == '':
+        if not(twitter):
             return
 
         results = await asyncio.gather(
