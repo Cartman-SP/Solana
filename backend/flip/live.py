@@ -150,7 +150,7 @@ async def get_twitter_data(name,mint):
                 'ath': token.ath,
                 'total_trans': token.total_trans
             })
-            
+        print(123,312)    
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
@@ -238,7 +238,6 @@ async def process_live(data):
         twitter_followers = data.get('twitter_followers','')
         if twitter == '':
             return
-        print("123:",twitter,user)
         autobuy_task = asyncio.create_task(check_twitter_whitelist(twitter, user))
         user_dev_data_task = asyncio.create_task(get_user_dev_data(user, mint))
         twitter_data_task = asyncio.create_task(get_twitter_data(twitter, mint))
