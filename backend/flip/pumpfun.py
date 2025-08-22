@@ -353,8 +353,6 @@ async def process_message(msg, session):
         twitter_name = ""
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
-        if not(twitter_name):
-            return
         data = {
             'source': 'pumpfun',
             'mint': mint,
