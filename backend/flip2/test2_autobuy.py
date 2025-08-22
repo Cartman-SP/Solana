@@ -4,7 +4,7 @@ from solders.transaction import VersionedTransaction
 from solders.keypair import Keypair
 
 signerKeypairs = [
-    Keypair.from_base58_string("4EBYxsFNg37JCESmkTHTi1opSfz6JMuwULkpFz93vfwTkXbpw3EhGtBJzvGm58VbgiVvkhhW8c4V31PjesRcT4Qm"),
+    Keypair.from_base58_string("49ha1nF74ihQVXtM3JSVgDSuyrxCDQXrTscFZS7E1ZDNBppnaQZmrRgH5Jc6TzY8ividDGMuwy6Qrzx5MQfooft3"),
 ]
 
 response = requests.post(
@@ -14,11 +14,11 @@ response = requests.post(
         {
             "publicKey": str(signerKeypairs[0].pubkey()),
             "action": "buy",  # "buy", "sell", or "create"
-            "mint": "EoNZVHpKXEL1ru8j7LrtgL19SiRafwTZhCTopRLPpump", 
+            "mint": "7cMM3yohhgB9f5W6cMm9QxKdwZQDJyJWnNAhosZ7pump", 
             "denominatedInSol": "true",
-            "amount": 0.005,
+            "amount": 0.01,
             "slippage": 50,
-            "priorityFee": 0.00005, # priority fee on the first tx is used for jito tip
+            "priorityFee": 0.0005, # priority fee on the first tx is used for jito tip
             "pool": "pump"
         },
     ]
