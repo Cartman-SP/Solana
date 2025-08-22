@@ -238,14 +238,11 @@ async def process_live(data):
         twitter_followers = data.get('twitter_followers','')
         if twitter == '':
             return
-        autobuy_task = asyncio.create_task(check_twitter_whitelist(twitter, user))
-        user_dev_data_task = asyncio.create_task(get_user_dev_data(user, mint))
-        twitter_data_task = asyncio.create_task(get_twitter_data(twitter, mint))
 
         results = await asyncio.gather(
-            autobuy_task,
-            user_dev_data_task,
-            twitter_data_task,
+            check_twitter_whitelist(twitter, user),
+            get_user_dev_data(user, mint),
+            get_twitter_data(twitter, mint),
         )
 
         autobuy, user_dev_data, twitter_data = results
