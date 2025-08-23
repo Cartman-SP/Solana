@@ -301,8 +301,8 @@ async def check_twitter_whitelist(twitter_name,creator):
             except Exception as e:
                 print(e)
                 pass
-        if(twitter.ath<settings_obj.ath_from and twitter.total_trans < settings_obj.total_trans_from):
-            print("АТХ или тотал транс не подходят:",twitter.total_trans,twitter.ath)
+        if(twitter_obj.ath<settings_obj.ath_from and twitter_obj.total_trans < settings_obj.total_trans_from):
+            print("АТХ или тотал транс не подходят:",twitter_obj.total_trans,twitter_obj.ath)
             return False
             
         try:
