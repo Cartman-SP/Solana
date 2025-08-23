@@ -150,7 +150,9 @@ async def get_twitter_data(name,mint):
                 'ath': token.ath,
                 'total_trans': token.total_trans
             })
-        print(123,312)    
+        user_dev.ath = int(avg_ath)  
+        user_dev.total_tokens = int(avg_total_trans)
+        sync_to_async(user_dev.save)()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
