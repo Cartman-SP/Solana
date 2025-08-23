@@ -371,7 +371,7 @@ async def process_message(msg, session):
         slippage = int(float(settings_obj.slippage_percent) * 100)
         priorityFee = float(settings_obj.priority_fee_sol)
         median_trans = settings_obj.median
-        need_to_buy = checker(session, uri, creator,median_trans)
+        need_to_buy = await checker(session, uri, creator,median_trans)
 
                 
         # Проверяем, что create_invoice вернул результат
