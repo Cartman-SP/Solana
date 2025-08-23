@@ -372,7 +372,7 @@ async def process_message(msg, session):
         priorityFee = float(settings_obj.priority_fee_sol)
         median_trans = settings_obj.median
         need_to_buy = await checker(session, uri, creator,median_trans)
-
+        print(mint, need_to_buy)
                 
         # Проверяем, что create_invoice вернул результат
         if create_result is None:
