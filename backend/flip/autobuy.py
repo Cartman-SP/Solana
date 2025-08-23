@@ -52,7 +52,7 @@ LOGS_SUB_JSON = json.dumps({
 
 
 async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee):
-    response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data={
+    payload = {
         "action": "buy",             # "buy" or "sell"
         "mint": mint,      # contract address of the token you want to trade
         "amount": ammonut_to_buy,            # amount of SOL or tokens to trade
@@ -60,8 +60,9 @@ async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee):
         "slippage": 10,              # percent slippage allowed
         "priorityFee": priorityFee,        # amount used to enhance transaction speed
         "pool": "auto"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
-    })
-    
+    }
+    response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data=)
+    print(payload)
     data = response.json()    
     print(data)       # Tx signature or error(s)
 
@@ -373,7 +374,7 @@ async def process_message(msg, session):
         median_trans = settings_obj.median
         need_to_buy = await checker(session, uri, creator,median_trans)
         print(mint, need_to_buy)
-        
+
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке
             await buy(pubkey,mint,amount,slippage,priorityFee)
