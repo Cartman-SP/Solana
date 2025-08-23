@@ -373,13 +373,7 @@ async def process_message(msg, session):
         median_trans = settings_obj.median
         need_to_buy = await checker(session, uri, creator,median_trans)
         print(mint, need_to_buy)
-                
-        # Проверяем, что create_invoice вернул результат
-        if create_result is None:
-            print(f"❌ Failed to create invoice for {mint}")
-            return
-            
-        encodedSignedTransactions, txSignatures = create_result
+        
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке
             await buy(pubkey,mint,amount,slippage,priorityFee)
