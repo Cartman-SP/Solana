@@ -284,10 +284,13 @@ async def check_twitter_whitelist(twitter_name,creator):
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
             return False
-
-        twitter_obj = await sync_to_async(Twitter.objects.get)(
-                    name=f"@{twitter_name}",
-                )
+        try:
+            twitter_obj = await sync_to_async(Twitter.objects.get)(
+                        name=f"@{twitter_name}",
+                    )
+        except:
+            print("Твитера нет в бд")
+            return False
         if(settings_obj.whitelist_enabled and twitter_obj.whitelist):
             return True
         if(settings_obj.one_token_enabled):
@@ -308,6 +311,7 @@ async def check_twitter_whitelist(twitter_name,creator):
                 .order_by('-created_at')[:3]
             ))()
         except Exception as e:
+            print("Нет токенов у Твитера")
             return False
 
         if len(last_tokens) < 3:
