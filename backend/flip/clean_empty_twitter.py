@@ -15,9 +15,9 @@ import asyncio
 async def clean_empty_twitter_tokens():
     """Очищает токены с пустым Twitter именем '@'"""
     try:
-        # Находим все токены с Twitter именем "@"
+        # Находим все токены с Twitter именем "@" и загружаем связанные данные
         empty_twitter_tokens = await sync_to_async(list)(
-            Token.objects.filter(twitter__name="@")
+            Token.objects.filter(twitter__name="@").select_related('dev', 'twitter')
         )
         
         print(f"Найдено {len(empty_twitter_tokens)} токенов с Twitter именем '@'")
@@ -31,8 +31,8 @@ async def clean_empty_twitter_tokens():
         print("📋 Примеры найденных токенов (первые 10):")
         for i, token in enumerate(empty_twitter_tokens[:10]):
             try:
-                # Получаем данные синхронно для отображения
-                dev_address = token.dev.adress[:8] + "..." if token.dev.adress else "Unknown"
+                # Получаем данные безопасно
+                dev_address = token.dev.adress[:8] + "..." if hasattr(token, 'dev') and token.dev and token.dev.adress else "Unknown"
                 created_str = token.created_at.strftime('%Y-%m-%d %H:%M:%S') if token.created_at else "Unknown"
                 print(f"  • {token.address[:8]}... | Dev: {dev_address} | Created: {created_str}")
             except Exception as e:
