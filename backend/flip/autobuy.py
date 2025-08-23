@@ -322,6 +322,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         return True
     except Exception as e:
         print(e)
+        print("Ошибка")
         return False
 
 async def checker(session, uri,creator,median_trans):
