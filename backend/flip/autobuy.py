@@ -51,7 +51,7 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 
-async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee)
+async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee):
     response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data={
         "action": "buy",             # "buy" or "sell"
         "mint": mint,      # contract address of the token you want to trade
