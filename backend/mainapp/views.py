@@ -632,6 +632,7 @@ def update_auto_buy_settings(request):
         settings.whitelist_enabled = data.get('whitelist_enabled', settings.whitelist_enabled)
         settings.ath_from = data.get('ath_from', settings.ath_from)
         settings.total_trans_from = data.get('total_trans_from', getattr(settings, 'total_trans_from', 0))
+        settings.median = data.get('median', getattr(settings, 'median', 0))
         settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
         settings.sol_amount = data.get('sol_amount', settings.sol_amount)
         settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
@@ -670,6 +671,7 @@ def auto_buy_settings(request):
                 'whitelist_enabled': settings.whitelist_enabled,
                 'ath_from': settings.ath_from,
                 'total_trans_from': getattr(settings, 'total_trans_from', 0),
+                'median': getattr(settings, 'median', 0),
                 'buyer_pubkey': settings.buyer_pubkey,
                 'sol_amount': str(settings.sol_amount),
                 'slippage_percent': str(settings.slippage_percent),
@@ -694,6 +696,7 @@ def auto_buy_settings(request):
         settings.whitelist_enabled = data.get('whitelist_enabled', settings.whitelist_enabled)
         settings.ath_from = data.get('ath_from', settings.ath_from)
         settings.total_trans_from = data.get('total_trans_from', getattr(settings, 'total_trans_from', 0))
+        settings.median = data.get('median', getattr(settings, 'median', 0))
         settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
         settings.sol_amount = data.get('sol_amount', settings.sol_amount)
         settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)

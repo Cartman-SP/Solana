@@ -50,4 +50,4 @@ class Settings(models.Model):
     whitelist_enabled = models.BooleanField(default=False)
     ath_from = models.IntegerField(default=0)
     total_trans_from = models.IntegerField(default=0)
-
+    median = models.IntegerField(default=0)

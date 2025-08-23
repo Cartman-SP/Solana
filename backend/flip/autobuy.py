@@ -51,61 +51,19 @@ LOGS_SUB_JSON = json.dumps({
 })
 
 
-def generate_tx(pubkey, mint, amount, slippage, priorityFee): 
-    signerKeypairs = [
-        Keypair.from_base58_string(pubkey),
-    ]
-
-    response = requests.post(
-        "https://pumpportal.fun/api/trade-local",
-        headers={"Content-Type": "application/json"},
-        json=[
-            {
-                "publicKey": str(signerKeypairs[0].pubkey()),
-                "action": "buy", 
-                "mint": mint,
-                "denominatedInSol": "false",
-                "amount": amount,
-                "slippage": slippage,
-                "priorityFee": priorityFee,
-                "pool": "pump"
-            },
-        ]
-    )
-
-    if response.status_code != 200: 
-        print("Failed to generate transactions.")
-        print(response.reason)
-    else:
-        encodedTransactions = response.json()
-        encodedSignedTransactions = []
-        txSignatures = []
-
-        for index, encodedTransaction in enumerate(encodedTransactions):
-            signedTx = VersionedTransaction(VersionedTransaction.from_bytes(base58.b58decode(encodedTransaction)).message, [signerKeypairs[index]])
-            encodedSignedTransactions.append(base58.b58encode(bytes(signedTx)).decode())
-            txSignatures.append(str(signedTx.signatures[0]))
-
-        return encodedSignedTransactions, txSignatures
-
-
-def send_tx(encodedSignedTransactions, txSignatures):
-    jito_response = requests.post(
-        "https://wispy-little-river.solana-mainnet.quiknode.pro/134b4b837e97bb3711c20296010e32eff69ad1af/",
-        headers={"Content-Type": "application/json"},
-        json={
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "sendBundle",
-            "params": [
-                encodedSignedTransactions
-            ]
-        }
-    )
-
-    for i, signature in enumerate(txSignatures):
-        print(f'Transaction {i}: https://solscan.io/tx/{signature}')
-
+async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee)
+    response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data={
+        "action": "buy",             # "buy" or "sell"
+        "mint": mint,      # contract address of the token you want to trade
+        "amount": ammonut_to_buy,            # amount of SOL or tokens to trade
+        "denominatedInSol": "true", # "true" if amount is amount of SOL, "false" if amount is number of tokens
+        "slippage": 10,              # percent slippage allowed
+        "priorityFee": priorityFee,        # amount used to enhance transaction speed
+        "pool": "auto"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
+    })
+    
+    data = response.json()    
+    print(data)       # Tx signature or error(s)
 
 
                    
@@ -320,7 +278,7 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
-async def check_twitter_whitelist(twitter_name,creator):
+async def check_twitter_whitelist(twitter_name,creator,median_trans):
     try:
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
@@ -366,7 +324,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
 
         for token in last_tokens:
-            if token.total_trans < 100:
+            if token.total_trans < median_trans:
                 return False
 
         return True
@@ -374,7 +332,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         print(e)
         return False
 
-async def checker(session, uri,creator):
+async def checker(session, uri,creator,median_trans):
         community_id = None
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
@@ -383,7 +341,7 @@ async def checker(session, uri,creator):
             print(community_id)
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
-            check = await check_twitter_whitelist(twitter_name,creator)
+            check = await check_twitter_whitelist(twitter_name,creator,median_trans)
             print(check)
             return check
             
@@ -412,15 +370,10 @@ async def process_message(msg, session):
         amount = int(float(settings_obj.sol_amount) * 10**9)
         slippage = int(float(settings_obj.slippage_percent) * 100)
         priorityFee = float(settings_obj.priority_fee_sol)
+        median_trans = settings_obj.median
+        need_to_buy = checker(session, uri, creator,median_trans)
 
-        results = await asyncio.gather(
-            generate_tx(pubkey, mint, amount, slippage, priorityFee),
-            checker(session, uri, creator)
-        )
-        
-        # Распаковываем результаты
-        create_result, need_to_buy = results
-        
+                
         # Проверяем, что create_invoice вернул результат
         if create_result is None:
             print(f"❌ Failed to create invoice for {mint}")
@@ -429,7 +382,7 @@ async def process_message(msg, session):
         encodedSignedTransactions, txSignatures = create_result
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке
-            await asyncio.to_thread(send_tx, encodedSignedTransactions, txSignatures)
+            await buy(pubkey,mint,amount,slippage,priorityFee)
     except Exception as e:
         print(e)
         pass

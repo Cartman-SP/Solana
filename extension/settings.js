@@ -94,6 +94,9 @@ class SettingsManager {
                     if (document.getElementById('auto-buy-total-trans-from')) {
                         document.getElementById('auto-buy-total-trans-from').value = s.total_trans_from || 0;
                     }
+                    if (document.getElementById('auto-buy-median')) {
+                        document.getElementById('auto-buy-median').value = s.median || 0;
+                    }
                     document.getElementById('auto-buy-buyer-pubkey').value = s.buyer_pubkey;
                     document.getElementById('auto-buy-sol-amount').value = s.sol_amount;
                     document.getElementById('auto-buy-slippage').value = s.slippage_percent;
@@ -145,6 +148,7 @@ class SettingsManager {
             whitelist_enabled: document.getElementById('auto-buy-whitelist').checked,
             ath_from: parseInt(document.getElementById('auto-buy-ath-from').value) || 0,
             total_trans_from: parseInt((document.getElementById('auto-buy-total-trans-from') || { value: 0 }).value) || 0,
+            median: parseInt((document.getElementById('auto-buy-median') || { value: 0 }).value) || 0,
             buyer_pubkey: document.getElementById('auto-buy-buyer-pubkey').value,
             sol_amount: document.getElementById('auto-buy-sol-amount').value,
             slippage_percent: document.getElementById('auto-buy-slippage').value,
