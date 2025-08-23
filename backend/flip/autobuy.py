@@ -329,7 +329,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         print("Ошибка")
         return False
 
-async def checker(session, uri,creator,median_trans):
+async def checker(session, uri,creator):
         community_id = None
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
@@ -337,7 +337,7 @@ async def checker(session, uri,creator,median_trans):
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
-            check = await check_twitter_whitelist(twitter_name,creator,median_trans)
+            check = await check_twitter_whitelist(twitter_name,creator)
             print(check)
             return check
             
