@@ -61,7 +61,7 @@ async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee):
         "priorityFee": priorityFee,        # amount used to enhance transaction speed
         "pool": "auto"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
     }
-    response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data=)
+    response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data=payload)
     print(payload)
     data = response.json()    
     print(data)       # Tx signature or error(s)
