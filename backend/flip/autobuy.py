@@ -368,8 +368,8 @@ async def process_message(msg, session):
 
         settings_obj = await sync_to_async(Settings.objects.first)()
         pubkey = settings_obj.buyer_pubkey
-        amount = int(float(settings_obj.sol_amount))
-        slippage = int(float(settings_obj.slippage_percent) * 100)
+        amount = float(settings_obj.sol_amount)
+        slippage = float(settings_obj.slippage_percent)
         priorityFee = float(settings_obj.priority_fee_sol)
         median_trans = settings_obj.median
         need_to_buy = await checker(session, uri, creator,median_trans)
