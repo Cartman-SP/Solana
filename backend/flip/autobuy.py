@@ -295,7 +295,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return True
         if(settings_obj.one_token_enabled):
             try:
-                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__lt=2)
+                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
                 print("Больше 1 токена")
                 return False
             except Exception as e:

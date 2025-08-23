@@ -177,20 +177,25 @@ async def check_twitter_whitelist(twitter_name,creator):
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
             return False
-
-        twitter_obj = await sync_to_async(Twitter.objects.get)(
-                    name=twitter_name,
-                )
+        try:
+            twitter_obj = await sync_to_async(Twitter.objects.get)(
+                        name=f"@{twitter_name}",
+                    )
+        except:
+            print("Твитера нет в бд")
+            return False
         if(settings_obj.whitelist_enabled and twitter_obj.whitelist):
             return True
         if(settings_obj.one_token_enabled):
             try:
-                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__lt=2)
+                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
+                print("Больше 1 токена")
                 return False
             except Exception as e:
                 print(e)
                 pass
-        if(twitter.ath<settings_obj.ath_from and twitter.total_trans < settings_obj.total_trans_from):
+        if(twitter_obj.ath<settings_obj.ath_from and twitter_obj.total_trans < settings_obj.total_trans_from):
+            print("АТХ или тотал транс не подходят:",twitter_obj.total_trans,twitter_obj.ath)
             return False
             
         try:
@@ -199,19 +204,22 @@ async def check_twitter_whitelist(twitter_name,creator):
                 .order_by('-created_at')[:3]
             ))()
         except Exception as e:
-            print(e)
+            print("Нет токенов у Твитера")
             return False
 
         if len(last_tokens) < 3:
+            print("Меньше 3 токенов")
             return False
 
         for token in last_tokens:
             if token.total_trans < settings_obj.median:
+                print("Один из токенов не подходит по тотал транс",token.address)
                 return False
 
         return True
     except Exception as e:
         print(e)
+        print("Ошибка")
         return False
 
 
