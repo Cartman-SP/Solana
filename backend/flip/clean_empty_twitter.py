@@ -39,7 +39,9 @@ async def clean_empty_twitter_tokens():
         for token in empty_twitter_tokens:
             try:
                 token.twitter = None
-                await sync_to_async(token.save)()
+                # Правильное использование sync_to_async
+                save_token = sync_to_async(token.save)
+                await save_token()
                 updated_count += 1
                 print(f"✅ Очищен токен: {token.address[:8]}...")
             except Exception as e:
@@ -78,7 +80,8 @@ async def cleanup_empty_twitter_objects():
             
             if tokens_count == 0:
                 # Если токенов нет, удаляем Twitter объект
-                await sync_to_async(twitter_obj.delete)()
+                delete_twitter = sync_to_async(twitter_obj.delete)
+                await delete_twitter()
                 deleted_count += 1
                 print(f"🗑️ Удален неиспользуемый Twitter объект: {twitter_obj.name}")
             else:
