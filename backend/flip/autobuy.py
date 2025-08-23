@@ -366,8 +366,7 @@ async def process_message(msg, session):
         amount = float(settings_obj.sol_amount)
         slippage = float(settings_obj.slippage_percent)
         priorityFee = float(settings_obj.priority_fee_sol)
-        median_trans = settings_obj.median
-        need_to_buy = await checker(session, uri, creator,median_trans)
+        need_to_buy = await checker(session, uri, creator)
 
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке
