@@ -293,11 +293,13 @@ async def check_twitter_whitelist(twitter_name,creator):
         if(settings_obj.one_token_enabled):
             try:
                 await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__lt=2)
+                print("Больше 1 токена")
                 return False
             except Exception as e:
                 print(e)
                 pass
         if(twitter.ath<settings_obj.ath_from and twitter.total_trans < settings_obj.total_trans_from):
+            print("АТХ или тотал транс не подходят:",twitter.total_trans,twitter.ath)
             return False
             
         try:
@@ -306,14 +308,15 @@ async def check_twitter_whitelist(twitter_name,creator):
                 .order_by('-created_at')[:3]
             ))()
         except Exception as e:
-            print(e)
             return False
 
         if len(last_tokens) < 3:
+            print("Меньше 3 токенов")
             return False
 
         for token in last_tokens:
             if token.total_trans < settings_obj.median:
+                print("Один из токенов не подходит по тотал транс",token.address)
                 return False
 
         return True
