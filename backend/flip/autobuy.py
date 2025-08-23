@@ -57,9 +57,9 @@ async def buy(api_private,mint,ammonut_to_buy,slippage,priorityFee):
         "mint": mint,      # contract address of the token you want to trade
         "amount": ammonut_to_buy,            # amount of SOL or tokens to trade
         "denominatedInSol": "true", # "true" if amount is amount of SOL, "false" if amount is number of tokens
-        "slippage": 10,              # percent slippage allowed
+        "slippage": slippage,              # percent slippage allowed
         "priorityFee": priorityFee,        # amount used to enhance transaction speed
-        "pool": "auto"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
+        "pool": "pump"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
     }
     response = requests.post(url=f"https://pumpportal.fun/api/trade?api-key={api_private}", data=payload)
     print(payload)
@@ -368,7 +368,7 @@ async def process_message(msg, session):
 
         settings_obj = await sync_to_async(Settings.objects.first)()
         pubkey = settings_obj.buyer_pubkey
-        amount = int(float(settings_obj.sol_amount) * 10**9)
+        amount = int(float(settings_obj.sol_amount))
         slippage = int(float(settings_obj.slippage_percent) * 100)
         priorityFee = float(settings_obj.priority_fee_sol)
         median_trans = settings_obj.median
