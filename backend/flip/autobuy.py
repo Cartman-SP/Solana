@@ -327,7 +327,6 @@ async def checker(session, uri,creator,median_trans):
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
         if community_id:
-            print(community_id)
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
             check = await check_twitter_whitelist(twitter_name,creator,median_trans)
@@ -361,7 +360,6 @@ async def process_message(msg, session):
         priorityFee = float(settings_obj.priority_fee_sol)
         median_trans = settings_obj.median
         need_to_buy = await checker(session, uri, creator,median_trans)
-        print(mint, need_to_buy)
 
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке
