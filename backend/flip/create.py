@@ -26,12 +26,10 @@ async def process_create(data):
         twitter_name = data.get('twitter_name','')
         print(symbol)
         token_created = False
-        
-        # Инициализируем twitter как None по умолчанию
-        twitter = None
-        if (twitter_name == "@"):
+        if not(twitter_name) or twitter_name == "@":
             return
-        if(twitter_name or twitter_name != "@"):
+
+        if(twitter_name):
             twitter, created = await sync_to_async(Twitter.objects.get_or_create)(
                 name=twitter_name,
             )
