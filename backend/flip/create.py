@@ -71,7 +71,7 @@ async def process_create(data):
                 await sync_to_async(twitter.save)()
             await sync_to_async(user_dev.save)()
     except Exception as e:
-        print(e)
+        print("create",e)
         pass
 
 
