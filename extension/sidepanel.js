@@ -164,11 +164,11 @@ class TokenMonitor {
         }
         
         // Если autobuy=true — открываем новую вкладку (однократно на mint)
-        if (data.autobuy === true && data.mint && !this.autobuyOpenedMints.has(data.mint)) {
-            this.autobuyOpenedMints.add(data.mint);
-            this.openAutobuyTab(data.mint);
-        }
-        
+        //if (data.autobuy === true && data.mint && !this.autobuyOpenedMints.has(data.mint)) {
+        //    this.autobuyOpenedMints.add(data.mint);
+        //    this.openAutobuyTab(data.mint);
+        //}
+        //
         // Токены всегда добавляются в конец
         const tokenWithData = {
             ...data,
