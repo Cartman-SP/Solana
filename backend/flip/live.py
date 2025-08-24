@@ -181,7 +181,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             return False
         try:
             twitter_obj = await sync_to_async(Twitter.objects.get)(
-                        name=f"@{twitter_name}",
+                        name=twitter_name",
                     )
         except:
             print("Твитера нет в бд")
