@@ -353,13 +353,15 @@ async def process_message(msg, session):
         twitter_name = ""
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
+        if twitter_name:
+            twitter_name=f"@{twitter_name}"
         data = {
             'source': 'pumpfun',
             'mint': mint,
             'user': creator,
             'name': name,
             'symbol': symbol,
-            'twitter_name': f"@{twitter_name}",
+            'twitter_name': twitter_name,
         }
         create_live_task = asyncio.create_task(process_live(data))
         create_create_task = asyncio.create_task(process_create(data))

@@ -28,12 +28,12 @@ def clean_empty_twitter_tokens_sync():
         print("=" * 80)
         
         # Получаем количество токенов с этими Twitter
-        tokens_count = Token.objects.filter(twitter__name="@").count()
+        tokens_count = Token.objects.filter(twitter__name="@None").count()
         print(f"📈 Токенов для очистки: {tokens_count}")
         
         # Показываем примеры токенов
         example_tokens = Token.objects.filter(
-            twitter__name="@"
+            twitter__name="@None"
         ).select_related('dev', 'twitter')[:5]
         
         print("📋 Примеры найденных токенов:")
@@ -49,14 +49,14 @@ def clean_empty_twitter_tokens_sync():
         print("🚀 Начинаю массовое обновление...")
         
         # Массовое обновление через Django ORM
-        updated_count = Token.objects.filter(twitter__name="@").update(twitter=None)
+        updated_count = Token.objects.filter(twitter__name="@None").update(twitter=None)
         print(f"✅ Массово обновлено токенов: {updated_count}")
         
         # Удаляем неиспользуемые Twitter объекты
         print("\n🗑️ Очистка неиспользуемых Twitter объектов...")
         
         # Находим Twitter объекты, которые больше не используются
-        unused_twitters = Twitter.objects.filter(name="@")
+        unused_twitters = Twitter.objects.filter(name="@None")
         deleted_count = 0
         
         for twitter_obj in unused_twitters:
