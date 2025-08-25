@@ -333,7 +333,7 @@ async def process_message(msg, session):
         # Записываем все логи в файл
         try:
             with open("new_logs.txt", "a", encoding="utf-8") as f:
-                f.write(f"{datetime.datetime.now().isoformat()} - Logs: {json.dumps(logs, ensure_ascii=False)}\n")
+                f.write(f"{datetime.now().isoformat()} - Logs: {json.dumps(logs, ensure_ascii=False)}\n")
         except Exception as e:
             print(f"Ошибка записи логов в файл: {e}")
         
