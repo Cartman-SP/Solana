@@ -277,17 +277,23 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     return match.group(1) if match else None
 
 async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
-    """Загружает метаданные с URI"""
+    """Загружает метаданные с URI с 10 повторными попытками"""
     if not uri:
         return None
         
-    try:
-        # Пробуем только один раз с коротким таймаутом
-        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
-            data = await r.json()
-            return data
-    except Exception:
-        return None
+    for attempt in range(10):
+        try:
+            # Пробуем с коротким таймаутом
+            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                data = await r.json()
+                return data
+        except Exception:
+            # Если это не последняя попытка, ждем 100мс перед следующей
+            if attempt < 9:
+                await asyncio.sleep(0.1)
+            continue
+    
+    return None
 
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
     """Ищет community ID в метаданных"""
