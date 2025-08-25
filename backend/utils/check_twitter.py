@@ -17,18 +17,8 @@ from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
 import base58
 import time
-import uvloop
 import contextlib
 from base58 import b58encode, b58decode
-from live import *
-from create import *
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-django.setup()
-
-from mainapp.models import UserDev, Token, Twitter, Settings
-from asgiref.sync import sync_to_async
-
 # Конфигурация
 HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
 WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
@@ -348,19 +338,12 @@ async def process_message(msg, session):
         
 
         community_id = None
-        print("\nsymbol:",symbol)
         meta = await fetch_meta_with_retries(session, uri)
-        print("meta:",meta)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
-            
-
         twitter_name = ""
         if community_id:
-            print("community_id:",community_id)
             twitter_name = await get_creator_username(session, community_id)
-            print("community_id:",twitter_name)
-
         if twitter_name:
             twitter_name=f"@{twitter_name}"
         data = {
@@ -383,49 +366,25 @@ async def process_message(msg, session):
         pass
         
 
-async def main_loop():
-    """Основной цикл обработки"""
+
+
+async def main():
+    uri = "https://ipfs.io/ipfs/bafkreifjtdj63yxjzws5kl4bbww4rszampdjc3f5mncl6s5l6ule3p42za"
     session = aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
         headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
         timeout=aiohttp.ClientTimeout(total=1)
     )
-
-    try:
-        while True:
-            try:
-                async with websockets.connect(
-                    WS_URL,
-                    ping_interval=30,
-                    max_size=2**20,
-                    compression=None
-                ) as ws:
-                    await ws.send(LOGS_SUB_JSON)
-                    await ws.recv()
-                    async for raw in ws:
-                        try:
-                            msg = json.loads(raw)
-                            if msg.get("method") == "logsNotification":
-                                await process_message(msg, session)
-                        except Exception as e:
-                            print(e)
-                            continue
-            except Exception as e:
-                print(e)
-                await asyncio.sleep(0.1)
-    finally:
-        await session.close()
+    community_id = None
+    meta = await fetch_meta_with_retries(session, uri)
+    if meta:
+        community_url, community_id, _ = find_community_anywhere_with_src(meta)
+    twitter_name = ""
+    if community_id:
+        twitter_name = await get_creator_username(session, community_id)
+    if twitter_name:
+        twitter_name=f"@{twitter_name}"
+    print(twitter_name)
 
 
-async def runner():
-    """Запускает сервер для расширения и основной цикл параллельно"""
-    server_task = asyncio.create_task(start_extension_server())
-    try:
-        await main_loop()
-    finally:
-        server_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await server_task
-
-if __name__ == "__main__":
-    asyncio.run(runner())
+asyncio.run(main())
