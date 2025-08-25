@@ -226,6 +226,53 @@ async def get_token_transactions_async(token_address: str, session: aiohttp.Clie
     return all_transactions
 
 
+
+def _sum_all_fees_helius(tx: dict) -> int:
+    """
+    Возвращает сумму *всех* торговых комиссий по сделке в лампортах:
+      - базовая fee
+      - приоритетная (priorityFee или из CU*price)
+      - все нативные переводы из кошелька feePayer (чаевые/сборы программ)
+    """
+    # 1) базовый газ
+    try:
+        base_fee = int(tx.get("fee") or 0)
+    except Exception:
+        base_fee = 0
+
+    # 2) приоритетный газ (если Helius отдал отдельным полем — берём, иначе считаем)
+    priority_fee = 0
+    try:
+        priority_fee = int(tx.get("priorityFee") or 0)
+    except Exception:
+        priority_fee = 0
+
+    if priority_fee == 0:
+        try:
+            cu = int(tx.get("computeUnitsConsumed") or 0)
+            price_micro = int(tx.get("computeUnitsPriceMicroLamports") or 0)
+            # price в *микро* лампортах за CU -> умножаем и делим на 1e6
+            priority_fee = (cu * price_micro) // 1_000_000
+        except Exception:
+            priority_fee = 0
+
+    # 3) нативные переводы (чаевые/программные сборы)
+    fee_payer = tx.get("feePayer")
+    extra_native = 0
+    try:
+        for nt in (tx.get("nativeTransfers") or []):
+            if nt.get("fromUserAccount") == fee_payer:
+                # В Helius это уже лампорты
+                amt = int(nt.get("amount") or 0)
+                extra_native += max(amt, 0)
+    except Exception:
+        pass
+
+    # Итого: базовый + приоритетный + все нативные списания из feePayer
+    # (double-count не возникает: base/priority не отражаются как nativeTransfers)
+    return int(base_fee + priority_fee + extra_native)
+
+
 async def _fetch_helius_swaps_page(
     session: aiohttp.ClientSession,
     address: str,
@@ -250,33 +297,11 @@ async def _fetch_helius_swaps_page(
     return data.get("items", []) or []
 
 
-def _extract_amount(val) -> float:
-    """Универсально достаёт число из amount/lamports/rawTokenAmount."""
-    if val is None:
-        return 0.0
-    if isinstance(val, (int, float)):
-        return float(val)
-    if isinstance(val, str):
-        try:
-            return float(val)
-        except:
-            return 0.0
-    if isinstance(val, dict):
-        # rawTokenAmount формат
-        if "tokenAmount" in val:
-            try:
-                return float(val.get("tokenAmount", 0))
-            except:
-                return 0.0
-        # вариант для lamports/value
-        for k in ("amount", "value", "lamports"):
-            if k in val:
-                return _extract_amount(val[k])
-    return 0.0
-
-
 def _extract_helius_swap_change_for_token(tx: dict, token_mint: str) -> float:
-    """Возвращает изменение количества токена по swap-событию для заданного mint."""
+    """Возвращает изменение количества токена по swap-событию для заданного mint.
+
+    Положительное значение — получено, отрицательное — отдано.
+    """
     try:
         swap = (tx.get("events") or {}).get("swap") or {}
 
@@ -287,11 +312,15 @@ def _extract_helius_swap_change_for_token(tx: dict, token_mint: str) -> float:
             for item in arr:
                 if item.get("mint") == token_mint:
                     rta = (item.get("rawTokenAmount") or {})
-                    amt_val = _extract_amount(rta.get("tokenAmount"))
+                    amt_str = str(rta.get("tokenAmount", "0"))
                     try:
                         decimals = int(rta.get("decimals", 0))
                     except Exception:
                         decimals = 0
+                    try:
+                        amt_val = float(amt_str)
+                    except Exception:
+                        amt_val = 0.0
                     if decimals > 0:
                         total += amt_val / (10 ** decimals)
                     else:
@@ -300,9 +329,12 @@ def _extract_helius_swap_change_for_token(tx: dict, token_mint: str) -> float:
 
         token_inputs = sum_token_amount(swap.get("tokenInputs"))
         token_outputs = sum_token_amount(swap.get("tokenOutputs"))
-        return float(token_outputs - token_inputs)
+
+        change = token_outputs - token_inputs
+        return float(change) if change != 0 else 0.0
     except Exception:
         return 0.0
+
 
 async def get_token_transactions_helius_async(
     token_address: str,
@@ -402,20 +434,29 @@ async def get_ath_values_and_total_count_helius(
 async def get_values_total_and_fees_helius(
     token_address: str,
     session: aiohttp.ClientSession,
-) -> Tuple[List[float], int, Dict[str, float]]:
-    """Возвращает (values, total_trans, fees_dict) по Helius (after, max 5 страниц).
+) -> Tuple[List[float], int, float]:
+    """
+    Возвращает (values, total_trans, total_fees_lamports) по Helius (after, max 5 страниц).
 
     - values: изменения количества токена по SWAP для расчёта ATH
-    - total_trans: общее число транзакций
-    - fees_dict: {"network_fee": ..., "priority_fee": ..., "service_fee": ..., "grand_total": ...}
+    - total_trans: общее число транзакций по правилам остановки (<100 или 5 страниц)
+    - total_fees_lamports: сумма всех комиссий (база + приоритет + нативные 'tips/fees')
     """
     values: List[float] = []
     total_count = 0
-    fees = {"network_fee": 0.0, "priority_fee": 0.0, "service_fee": 0.0}
+    total_fees = 0  # суммируем в лампортах (int)
     after_sig: Optional[str] = None
 
     for _ in range(5):
-        page = await _fetch_helius_swaps_page(session, token_address, after_sig)
+        try:
+            page = await _fetch_helius_swaps_page(session, token_address, after_sig)
+        except APIError as e:
+            print(f"Helius API ошибка для {token_address}: {e}")
+            raise
+        except Exception as e:
+            print(f"Неожиданная ошибка Helius для {token_address}: {e}")
+            break
+
         if not page:
             break
 
@@ -423,41 +464,32 @@ async def get_values_total_and_fees_helius(
         for tx in page:
             last_sig = tx.get("signature") or last_sig
 
-            # токены
+            # 1) изменения токена (как было)
             change = _extract_helius_swap_change_for_token(tx, token_address)
             if change != 0.0:
                 values.append(change)
 
-            # network fee
-            fees["network_fee"] += _extract_amount(tx.get("fee"))
+            # 2) суммируем *все* комиссии по сделке
+            try:
+                total_fees += _sum_all_fees_helius(tx)
+            except Exception:
+                # не ломаем поток из-за единичной некорректной записи
+                pass
 
-            # priority/service fees
-            for nt in tx.get("nativeTransfers", []) or []:
-                to_acc = nt.get("toUserAccount", "")
-                amount = _extract_amount(nt.get("amount"))
-                if to_acc == "ComputeBudget111111111111111111111111111111":
-                    fees["priority_fee"] += amount
-                elif (
-                    to_acc.startswith("JUP")
-                    or to_acc.startswith("jitodontfront")
-                    or to_acc.startswith("Axiom")
-                    or to_acc.startswith("Bloom")
-                ):
-                    fees["service_fee"] += amount
-
-        total_count += len(page)
+        page_len = len(page)
+        total_count += page_len
         after_sig = last_sig
-        if len(page) < 100:
+
+        if page_len < 100:
             break
 
+    # По твоему правилу «если 5 полных страниц» — вернуть 600 в total_trans
     if total_count >= 500:
-        total_count = 600
+        return values, 600, float(total_fees)
 
-    fees["grand_total"] = (
-        fees["network_fee"] + fees["priority_fee"] + fees["service_fee"]
-    )
-    return values, total_count, fees
-        
+    return values, total_count, float(total_fees)
+
+    
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
     """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
