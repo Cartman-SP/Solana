@@ -26,7 +26,7 @@ class Twitter(models.Model):
     total_tokens = models.IntegerField(default=0)
     ath = models.IntegerField(default=0)
     total_trans = models.IntegerField(default=0)
-
+    total_fees = models.FloatField(default=0)
     def __str__(self):
         return self.name
 
@@ -51,4 +51,5 @@ class Settings(models.Model):
     whitelist_enabled = models.BooleanField(default=False)
     ath_from = models.IntegerField(default=0)
     total_trans_from = models.IntegerField(default=0)
+    total_fees_from = models.FloatField(default=0)
     median = models.IntegerField(default=0)

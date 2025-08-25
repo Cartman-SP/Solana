@@ -85,6 +85,12 @@ async def get_user_dev_data(user_address,mint):
         else:
             avg_total_trans = 0
         
+        # Рассчитываем средний total_fees по тем же последним токенам
+        if recent_dev_tokens:
+            avg_total_fees = sum(token.total_fees for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_total_fees = 0
+        
         migration_percentage = 0
 
         recent_tokens_info = []
@@ -92,12 +98,14 @@ async def get_user_dev_data(user_address,mint):
             recent_tokens_info.append({
                 'name': token.address[:4] + '...' + token.address[-4:],  
                 'ath': token.ath,
-                'total_trans': token.total_trans
+                'total_trans': token.total_trans,
+                'total_fees': token.total_fees
             })
             
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
+            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов
             'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
@@ -141,6 +149,12 @@ async def get_twitter_data(name,mint):
         else:
             avg_total_trans = 0
         
+        # Рассчитываем средний total_fees по тем же последним токенам
+        if recent_dev_tokens:
+            avg_total_fees = sum(token.total_fees for token in recent_dev_tokens) / len(recent_dev_tokens)
+        else:
+            avg_total_fees = 0
+        
         migration_percentage = 0
 
         recent_tokens_info = []
@@ -148,14 +162,17 @@ async def get_twitter_data(name,mint):
             recent_tokens_info.append({
                 'name': token.address[:4] + '...' + token.address[-4:],  
                 'ath': token.ath,
-                'total_trans': token.total_trans
+                'total_trans': token.total_trans,
+                'total_fees': token.total_fees
             })
         user_dev.ath = int(avg_ath)  
         user_dev.total_trans = int(avg_total_trans)
+        user_dev.total_fees = avg_total_fees
         sync_to_async(user_dev.save)()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
+            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов
             'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
@@ -196,8 +213,8 @@ async def check_twitter_whitelist(twitter_name,creator):
             except Exception as e:
                 print(e)
                 pass
-        if(twitter_obj.ath<settings_obj.ath_from and twitter_obj.total_trans < settings_obj.total_trans_from):
-            print("АТХ или тотал транс не подходят:",twitter_obj.total_trans,twitter_obj.ath)
+        if(twitter_obj.ath<settings_obj.ath_from and twitter_obj.total_trans < settings_obj.total_trans_from and twitter_obj.total_fees < settings_obj.total_fees_from):
+            print("АТХ, тотал транс или тотал фис не подходят:",twitter_obj.total_trans,twitter_obj.ath,twitter_obj.total_fees)
             return False
             
         try:
@@ -258,6 +275,7 @@ async def process_live(data):
             'user_total_tokens': user_dev_data['total_tokens'],
             'user_ath': user_dev_data['ath'],
             'user_total_trans': user_dev_data.get('total_trans', 0),
+            'user_total_fees': user_dev_data.get('total_fees', 0),
             'user_migrations': user_dev_data['migrations'],
             'user_recent_tokens': user_dev_data['recent_tokens'],
             'user_whitelisted': user_dev_data['whitelist'],
@@ -265,6 +283,7 @@ async def process_live(data):
             'twitter_total_tokens': twitter_data['total_tokens'],
             'twitter_ath': twitter_data['ath'],
             'twitter_total_trans': twitter_data.get('total_trans', 0),
+            'twitter_total_fees': twitter_data.get('total_fees', 0),
             'twitter_migrations': twitter_data['migrations'],
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],

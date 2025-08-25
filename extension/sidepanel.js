@@ -473,6 +473,7 @@ class TokenMonitor {
         // Заполняем данные пользователя
         tokenElement.querySelector('.user-ath').textContent = this.formatNumber(token.user_ath);
         tokenElement.querySelector('.user-total-trans').textContent = this.formatNumber(token.user_total_trans);
+        tokenElement.querySelector('.user-total-fees').textContent = this.formatNumber(token.user_total_fees);
         tokenElement.querySelector('.user-tokens').textContent = this.formatNumber(token.user_total_tokens);
         tokenElement.querySelector('.user-migrations').textContent = `${this.formatNumber(token.user_migrations)}%`;
         
@@ -487,6 +488,7 @@ class TokenMonitor {
         // Заполняем данные Twitter
         tokenElement.querySelector('.twitter-ath').textContent = this.formatNumber(token.twitter_ath);
         tokenElement.querySelector('.twitter-total-trans').textContent = this.formatNumber(token.twitter_total_trans);
+        tokenElement.querySelector('.twitter-total-fees').textContent = this.formatNumber(token.twitter_total_fees);
         tokenElement.querySelector('.twitter-tokens').textContent = this.formatNumber(token.twitter_total_tokens);
         tokenElement.querySelector('.twitter-migrations').textContent = `${this.formatNumber(token.twitter_migrations)}%`;
         
