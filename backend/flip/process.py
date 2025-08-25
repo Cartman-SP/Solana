@@ -516,40 +516,35 @@ async def get_tokens_for_processing():
     return tokens
 
 
+def get_token_fees(token_mint: str):
+    SOL_MINT = "So11111111111111111111111111111111111111112"
+    
+    # Получаем pairAddress из Jupiter
+    jupiter_url = f"https://quote-api.jup.ag/v6/quote?inputMint={SOL_MINT}&outputMint={token_mint}&amount=1000000"
+    jupiter_response = requests.get(jupiter_url)
+    jupiter_data = jupiter_response.json()
+    pair_address = jupiter_data['routePlan'][0]['swapInfo']['ammKey']
+    
+    # Получаем информацию из Axiom
+    axiom_url = "https://api10.axiom.trade/token-info"
+    params = {"pairAddress": pair_address}
+    headers = {
+        "authority": "api10.axiom.trade",
+        "accept": "application/json, text/plain, */*",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "cookie": "auth-refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoVG9rZW5JZCI6ImUzMGYzMTA0LTVhMTQtNDBmMS04ZmZhLTg2YzYwZjg5N2NhMSIsImlhdCI6MTc1MzYyODQ5Nn0.Z94GO02XpIOwkqdatPlT7z9SSoIcVYYoQWQugabzVas; auth-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoZW50aWNhdGVkVXNlcklkIjoiNTlkZThjZWItNjdhZi00MTNjLTk1YWYtNjQxNWNmOWJkYzU4IiwiaWF0IjoxNzU2MTU3NzY4LCJleHAiOjE3NTYxNTg3Mjh9.zr_girqpZJFAPYLnifQwg-tOGD8a83Tgb_pJ4WJfRkQ",
+
+    }
+    
+    axiom_response = requests.get(axiom_url, params=params, headers=headers)
+    return axiom_response.json()['totalPairFeesPaid']
+
 async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
-        # Если у токена есть привязка к Twitter — используем Helius и собираем total_fees
+        fees = 0
         if token.twitter_id is not None:
-            # Проверяем миграцию как и раньше
-            is_migrated = await check_migration_async(token.address, session)
-            if is_migrated:
-                ath_result, total_trans = 60000, 1000
-                total_fees = 5.0
-            else:
-                values_for_ath, total_trans, total_fees = await get_values_total_and_fees_helius(token.address, session)
-
-                # Расчет ATH из values_for_ath
-                initial_balance = 0
-                current_balance = initial_balance
-                max_balance = initial_balance
-                for value in reversed(values_for_ath):
-                    current_balance += value
-                    if current_balance > max_balance:
-                        max_balance = current_balance
-                ath_result = int(max_balance)
-                ath_cache[token.address] = ath_result
-
-            # Записываем все поля, включая total_fees
-            await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
-            await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
-            await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
-            await sync_to_async(lambda: setattr(token, 'total_fees', float(total_fees)))()
-            await sync_to_async(lambda: setattr(token, 'processed', True))()
-            await sync_to_async(token.save)()
-            print(f"[HELIUS] Обработан {token.address}: ATH={token.ath}, migrated={token.migrated}, total_trans={token.total_trans}, total_fees={token.total_fees}")
-            return
-
+            fees = get_token_fees(token.address)
         # Иначе — старый путь (Solscan)
         ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
         
@@ -558,7 +553,9 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
         await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
         await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
         await sync_to_async(lambda: setattr(token, 'processed', True))()
+        await sync_to_async(lambda: setattr(token, 'total_fees', fees))()
 
+            
         # Сохраняем изменения
         await sync_to_async(token.save)()
         
