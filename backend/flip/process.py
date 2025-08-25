@@ -242,23 +242,13 @@ async def _fetch_helius_swaps_page(
         "User-Agent": "SolanaFlipper/1.0",
     }
 
-    try:
-        data = await make_api_request(session, url, headers)
-        
-        # Записываем данные в файл
-        try:
-            with open('process_datas.txt', 'a', encoding='utf-8') as f:
-                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {json.dumps(data, ensure_ascii=False)}\n")
-        except Exception as e:
-            print(f"Ошибка записи в файл: {e}")
-            
-        if isinstance(data, list):
-            return data
-        # На случай обёртки-объекта
-        return data.get("items", []) or []
-    except Exception as e:
-        print(f"Ошибка при запросе к Helius API: {e}")
-        return []
+    data = await make_api_request(session, url, headers)
+    print(data)
+    # Helius возвращает массив транзакций
+    if isinstance(data, list):
+        return data
+    # На случай обёртки-объекта
+    return data.get("items", []) or []
 
 
 def _extract_helius_swap_change_for_token(tx: dict, token_mint: str) -> float:
