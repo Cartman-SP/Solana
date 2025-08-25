@@ -165,9 +165,10 @@ async def get_twitter_data(name,mint):
                 'total_trans': token.total_trans,
                 'total_fees': round(token.total_fees, 6)  # Оставляем как float с 6 знаками после запятой
             })
-        user_dev.ath = int(avg_ath)  
-        user_dev.total_trans = int(avg_total_trans)
-        user_dev.total_fees = avg_total_fees  # Сохраняем как float
+        await sync_to_async(lambda: setattr(user_dev, 'ath', int(avg_ath)))()
+        await sync_to_async(lambda: setattr(user_dev, 'total_trans', int(avg_total_trans)))()
+        await sync_to_async(lambda: setattr(user_dev, 'total_fees', avg_total_fees))()
+
         sync_to_async(user_dev.save)()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
