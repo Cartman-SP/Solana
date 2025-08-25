@@ -329,6 +329,14 @@ async def process_message(msg, session):
     """Обработка входящего сообщения"""
     try:
         logs = msg.get("params", {}).get("result", {}).get("value", {}).get("logs", [])
+        
+        # Записываем все логи в файл
+        try:
+            with open("new_logs.txt", "a", encoding="utf-8") as f:
+                f.write(f"{datetime.datetime.now().isoformat()} - Logs: {json.dumps(logs, ensure_ascii=False)}\n")
+        except Exception as e:
+            print(f"Ошибка записи логов в файл: {e}")
+        
         if not any(INSTRUCTION_MINT_RE.search(log) for log in logs):
             return
         data = collect_progdata_bytes_after_create(logs)
