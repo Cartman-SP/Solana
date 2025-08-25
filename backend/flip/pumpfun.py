@@ -277,10 +277,8 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     return match.group(1) if match else None
 
 async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
-    """Загружает метаданные с URI с 10 повторными попытками"""
     if not uri:
         return None
-        
     for attempt in range(10):
         try:
             # Пробуем с коротким таймаутом
@@ -288,7 +286,6 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
                 data = await r.json()
                 return data
         except Exception:
-            # Если это не последняя попытка, ждем 100мс перед следующей
             if attempt < 9:
                 await asyncio.sleep(0.1)
             continue
