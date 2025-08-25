@@ -406,14 +406,8 @@ async def get_values_total_and_fees_helius(
     """Возвращает (values, total_trans, fees_dict) по Helius (after, max 5 страниц).
 
     - values: изменения количества токена по SWAP для расчёта ATH
-    - total_trans: общее число транзакций по правилам остановки (<100 или 5 страниц)
-    - fees_dict: словарь с разбивкой по комиссиям:
-        {
-            "network_fee": ...,
-            "priority_fee": ...,
-            "service_fee": ...,
-            "grand_total": ...
-        }
+    - total_trans: общее число транзакций
+    - fees_dict: {"network_fee": ..., "priority_fee": ..., "service_fee": ..., "grand_total": ...}
     """
     values: List[float] = []
     total_count = 0
@@ -429,13 +423,13 @@ async def get_values_total_and_fees_helius(
         for tx in page:
             last_sig = tx.get("signature") or last_sig
 
-            # изменения по токену
+            # токены
             change = _extract_helius_swap_change_for_token(tx, token_address)
             if change != 0.0:
                 values.append(change)
 
             # network fee
-            fees["network_fee"] += _extract_amount(tx.get("fee", 0))
+            fees["network_fee"] += _extract_amount(tx.get("fee"))
 
             # priority/service fees
             for nt in tx.get("nativeTransfers", []) or []:
@@ -463,7 +457,7 @@ async def get_values_total_and_fees_helius(
         fees["network_fee"] + fees["priority_fee"] + fees["service_fee"]
     )
     return values, total_count, fees
-    
+        
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
     """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
