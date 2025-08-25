@@ -19,6 +19,7 @@ from mainapp.models import UserDev, Token
 from asgiref.sync import sync_to_async
 
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3NTM1NzAxNzU2MjEsImVtYWlsIjoiZGFuaWlsLnNoaXJraW4wMDVAZ21haWwuY29tIiwiYWN0aW9uIjoidG9rZW4tYXBpIiwiYXBpVmVyc2lvbiI6InYyIiwiaWF0IjoxNzUzNTcwMTc1fQ.W2-ic8rt8wQZptdygjc6F3Z5N8CJv1UrCkfqzdwq2vw"
+HELIUS_API_KEY = os.getenv("HELIUS_API_KEY", "")
 
 # Кэши для оптимизации
 migration_cache: Dict[str, bool] = {}
@@ -225,6 +226,211 @@ async def get_token_transactions_async(token_address: str, session: aiohttp.Clie
     return all_transactions
 
 
+async def _fetch_helius_swaps_page(
+    session: aiohttp.ClientSession,
+    address: str,
+    after_signature: Optional[str] = None,
+) -> List[dict]:
+    """Запрашивает одну страницу (до 100) SWAP транзакций у Helius c пагинацией через after."""
+    if not HELIUS_API_KEY:
+        raise APIError("HELIUS_API_KEY не задан")
+
+    base = f"https://api.helius.xyz/v0/addresses/{address}/transactions?api-key={HELIUS_API_KEY}&type=SWAP&limit=100"
+    url = base if not after_signature else f"{base}&after={after_signature}"
+
+    headers = {
+        "User-Agent": "SolanaFlipper/1.0",
+    }
+
+    data = await make_api_request(session, url, headers)
+    # Helius возвращает массив транзакций
+    if isinstance(data, list):
+        return data
+    # На случай обёртки-объекта
+    return data.get("items", []) or []
+
+
+def _extract_helius_swap_change_for_token(tx: dict, token_mint: str) -> float:
+    """Возвращает изменение количества токена по swap-событию для заданного mint.
+
+    Положительное значение — получено, отрицательное — отдано.
+    """
+    try:
+        swap = (tx.get("events") or {}).get("swap") or {}
+
+        def sum_token_amount(arr: Optional[List[dict]]) -> float:
+            if not arr:
+                return 0.0
+            total = 0.0
+            for item in arr:
+                if item.get("mint") == token_mint:
+                    rta = (item.get("rawTokenAmount") or {})
+                    amt_str = str(rta.get("tokenAmount", "0"))
+                    try:
+                        decimals = int(rta.get("decimals", 0))
+                    except Exception:
+                        decimals = 0
+                    try:
+                        amt_val = float(amt_str)
+                    except Exception:
+                        amt_val = 0.0
+                    if decimals > 0:
+                        total += amt_val / (10 ** decimals)
+                    else:
+                        total += amt_val
+            return total
+
+        token_inputs = sum_token_amount(swap.get("tokenInputs"))
+        token_outputs = sum_token_amount(swap.get("tokenOutputs"))
+
+        change = token_outputs - token_inputs
+        return float(change) if change != 0 else 0.0
+    except Exception:
+        return 0.0
+
+
+async def get_token_transactions_helius_async(
+    token_address: str,
+    session: aiohttp.ClientSession,
+) -> List[float]:
+    """Аналог get_token_transactions_async, но через Helius с пагинацией after.
+
+    - Запрашиваем максимум 5 страниц по 100.
+    - Останавливаемся, если пришло <100 записей.
+    - Фильтр type=SWAP.
+    - Возвращаем список изменений количества токена по сделкам swap.
+    """
+    all_values: List[float] = []
+    after_sig: Optional[str] = None
+
+    for _ in range(5):
+        try:
+            page = await _fetch_helius_swaps_page(session, token_address, after_sig)
+        except APIError as e:
+            print(f"Helius API ошибка для {token_address}: {e}")
+            raise
+        except Exception as e:
+            print(f"Неожиданная ошибка Helius для {token_address}: {e}")
+            break
+
+        if not page:
+            break
+
+        # Извлекаем изменения по токену
+        page_count = 0
+        last_sig = None
+        for tx in page:
+            last_sig = tx.get("signature") or last_sig
+            change = _extract_helius_swap_change_for_token(tx, token_address)
+            if change != 0.0:
+                all_values.append(change)
+            page_count += 1
+
+        # Готовим after для следующей страницы
+        after_sig = last_sig
+
+        # Если меньше 100, дальше не идём
+        if page_count < 100:
+            break
+
+    return all_values
+
+
+async def get_ath_values_and_total_count_helius(
+    token_address: str,
+    session: aiohttp.ClientSession,
+) -> Tuple[List[float], int]:
+    """Возвращает (values, total_trans) по Helius логике пагинации after на 5 страниц.
+
+    Правила total_trans:
+    - Суммируем фактическое количество элементов по страницам, останавливаясь при <100.
+    - Если пройдено 5 полных страниц по 100, вернуть 600.
+    """
+    values: List[float] = []
+    total_count = 0
+    after_sig: Optional[str] = None
+
+    for page_index in range(1, 6):
+        try:
+            page = await _fetch_helius_swaps_page(session, token_address, after_sig)
+        except APIError as e:
+            print(f"Helius API ошибка для {token_address}: {e}")
+            raise
+        except Exception as e:
+            print(f"Неожиданная ошибка Helius для {token_address}: {e}")
+            break
+
+        if not page:
+            break
+
+        last_sig = None
+        for tx in page:
+            last_sig = tx.get("signature") or last_sig
+            change = _extract_helius_swap_change_for_token(tx, token_address)
+            if change != 0.0:
+                values.append(change)
+
+        page_len = len(page)
+        total_count += page_len
+        after_sig = last_sig
+
+        if page_len < 100:
+            break
+
+    # Если ровно 5 страниц по 100 — вернуть 600
+    if total_count >= 500:
+        # Проверили 5 страниц и все по 100
+        return values, 600
+
+    return values, total_count
+
+async def get_values_total_and_fees_helius(
+    token_address: str,
+    session: aiohttp.ClientSession,
+) -> Tuple[List[float], int, float]:
+    """Возвращает (values, total_trans, total_fees) по Helius (after, max 5 страниц).
+
+    - values: изменения количества токена по SWAP для расчёта ATH
+    - total_trans: общее число транзакций по правилам остановки (<100 или 5 страниц)
+    - total_fees: сумма tx.fee по всем просмотренным транзакциям
+    """
+    values: List[float] = []
+    total_count = 0
+    total_fees = 0.0
+    after_sig: Optional[str] = None
+
+    for _ in range(5):
+        page = await _fetch_helius_swaps_page(session, token_address, after_sig)
+        if not page:
+            break
+
+        last_sig = None
+        for tx in page:
+            last_sig = tx.get("signature") or last_sig
+            # суммы по токену
+            change = _extract_helius_swap_change_for_token(tx, token_address)
+            if change != 0.0:
+                values.append(change)
+            # суммируем комиссии
+            try:
+                fee_val = float(tx.get("fee", 0) or 0)
+            except Exception:
+                fee_val = 0.0
+            total_fees += fee_val
+
+        page_len = len(page)
+        total_count += page_len
+        after_sig = last_sig
+
+        if page_len < 100:
+            break
+
+    if total_count >= 500:
+        # по правилам возврата total_trans — 600
+        return values, 600, total_fees
+
+    return values, total_count, total_fees
+
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
     """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
@@ -313,7 +519,38 @@ async def get_tokens_for_processing():
 async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
-        # Получаем ATH, статус миграции и total_trans
+        # Если у токена есть привязка к Twitter — используем Helius и собираем total_fees
+        if token.twitter_id is not None:
+            # Проверяем миграцию как и раньше
+            is_migrated = await check_migration_async(token.address, session)
+            if is_migrated:
+                ath_result, total_trans = 60000, 1000
+                total_fees = 5.0
+            else:
+                values_for_ath, total_trans, total_fees = await get_values_total_and_fees_helius(token.address, session)
+
+                # Расчет ATH из values_for_ath
+                initial_balance = 0
+                current_balance = initial_balance
+                max_balance = initial_balance
+                for value in reversed(values_for_ath):
+                    current_balance += value
+                    if current_balance > max_balance:
+                        max_balance = current_balance
+                ath_result = int(max_balance)
+                ath_cache[token.address] = ath_result
+
+            # Записываем все поля, включая total_fees
+            await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
+            await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
+            await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
+            await sync_to_async(lambda: setattr(token, 'total_fees', float(total_fees)))()
+            await sync_to_async(lambda: setattr(token, 'processed', True))()
+            await sync_to_async(token.save)()
+            print(f"[HELIUS] Обработан {token.address}: ATH={token.ath}, migrated={token.migrated}, total_trans={token.total_trans}, total_fees={token.total_fees}")
+            return
+
+        # Иначе — старый путь (Solscan)
         ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
         
         # Обновляем токен только если не было ошибок API

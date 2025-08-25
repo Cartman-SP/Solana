@@ -39,6 +39,7 @@ class Token(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     processed = models.BooleanField(default=False)
     total_trans = models.IntegerField(default=0)
+    total_fees = models.FloatField(default=0)
 
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
