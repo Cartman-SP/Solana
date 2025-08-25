@@ -216,7 +216,11 @@ body {
 .recent-token-ath {
     color: #ff6b35;
     font-weight: 600;
-    font-size: 10px;
+}
+
+.recent-token-fees {
+    color: #9c27b0;
+    font-weight: 600;
 }
 
 /* Компактные стили для токен-карточек */
@@ -606,6 +610,11 @@ body {
 
 .recent-token-ath {
     color: #ff6b35;
+    font-weight: 600;
+}
+
+.recent-token-fees {
+    color: #9c27b0;
     font-weight: 600;
 }
 

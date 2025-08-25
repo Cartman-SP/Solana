@@ -551,6 +551,7 @@ class TokenMonitor {
                     <span class="recent-token-name">${token.name}</span>
                     <span class="recent-token-ath">ATH: ${this.formatNumber(token.ath)}</span>
                     <span class="recent-token-trans">TT: ${this.formatNumber(token.total_trans)}</span>
+                    <span class="recent-token-fees">TF: ${this.formatNumber(token.total_fees)}</span>
                 `;
                 container.appendChild(tokenItem);
             });
@@ -587,6 +588,18 @@ class TokenMonitor {
         const num = parseFloat(value);
         if (isNaN(num)) {
             return 'N/A';
+        }
+        
+        // Для total_fees (которые могут быть очень маленькими числами) используем больше знаков после запятой
+        if (num < 1 && num > 0) {
+            // Если число очень маленькое, показываем больше знаков
+            if (num < 0.000001) {
+                return num.toFixed(9);
+            } else if (num < 0.001) {
+                return num.toFixed(6);
+            } else {
+                return num.toFixed(4);
+            }
         }
         
         if (num >= 1000000) {

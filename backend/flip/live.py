@@ -99,16 +99,16 @@ async def get_user_dev_data(user_address,mint):
                 'name': token.address[:4] + '...' + token.address[-4:],  
                 'ath': token.ath,
                 'total_trans': token.total_trans,
-                'total_fees': token.total_fees
+                'total_fees': round(token.total_fees, 6)  # Оставляем как float с 6 знаками после запятой
             })
             
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
-            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов
+            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов (float)
             'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
-            'blacklist': user_dev.blacklist,
+            'blacklist': user_dev.blacklisted,
             'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
@@ -163,16 +163,16 @@ async def get_twitter_data(name,mint):
                 'name': token.address[:4] + '...' + token.address[-4:],  
                 'ath': token.ath,
                 'total_trans': token.total_trans,
-                'total_fees': token.total_fees
+                'total_fees': round(token.total_fees, 6)  # Оставляем как float с 6 знаками после запятой
             })
         user_dev.ath = int(avg_ath)  
         user_dev.total_trans = int(avg_total_trans)
-        user_dev.total_fees = avg_total_fees
+        user_dev.total_fees = avg_total_fees  # Сохраняем как float
         sync_to_async(user_dev.save)()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
-            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов
+            'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов (float)
             'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
             'blacklist': user_dev.blacklist,
@@ -296,7 +296,8 @@ async def process_live(data):
             json.dump(extension_data, f)
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
-        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | User: {extension_data['user'][:8]}...")
+        recent_tokens_fees_str = " | ".join([f"{token['name']}: {token['total_fees']:.6f}" for token in user_dev_data['recent_tokens']])
+        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Total Fees: {extension_data['user_total_fees']:.6f} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | Recent Fees: {recent_tokens_fees_str} | User: {extension_data['user'][:8]}...")
         
     except Exception as e:
         pass
