@@ -384,34 +384,6 @@ async def get_ath_values_and_total_count_helius(
 
     return values, total_count
 
-def _calculate_priority_fee(tx: dict) -> int:
-    """Вычисляет приоритетную комиссию из nativeTransfers транзакции"""
-    try:
-        native_transfers = tx.get("nativeTransfers", [])
-        if not native_transfers:
-            return 0
-        
-        total_sent = 0
-        total_received = 0
-        fee_payer = tx.get("feePayer", "")
-        
-        for transfer in native_transfers:
-            from_account = transfer.get("fromUserAccount", "")
-            to_account = transfer.get("toUserAccount", "")
-            amount = transfer.get("amount", 0)
-            
-            if from_account == fee_payer:
-                total_sent += amount
-            if to_account == fee_payer:
-                total_received += amount
-        
-        # Приоритетная комиссия = разница между отправленным и полученным
-        priority_fee = total_sent - total_received
-        return max(0, priority_fee)  # Не может быть отрицательной
-        
-    except Exception:
-        return 0
-
 async def get_values_total_and_fees_helius(
     token_address: str,
     session: aiohttp.ClientSession,
@@ -420,7 +392,7 @@ async def get_values_total_and_fees_helius(
 
     - values: изменения количества токена по SWAP для расчёта ATH
     - total_trans: общее число транзакций по правилам остановки (<100 или 5 страниц)
-    - total_fees: сумма (базовых + приоритетных комиссий) по всем просмотренным транзакциям
+    - total_fees: сумма tx.fee по всем просмотренным транзакциям
     """
     values: List[float] = []
     total_count = 0
@@ -435,26 +407,16 @@ async def get_values_total_and_fees_helius(
         last_sig = None
         for tx in page:
             last_sig = tx.get("signature") or last_sig
-            
-            # Суммы по токену
+            # суммы по токену
             change = _extract_helius_swap_change_for_token(tx, token_address)
             if change != 0.0:
                 values.append(change)
-            
-            # Суммируем комиссии (базовые + приоритетные)
+            # суммируем комиссии
             try:
-                # Базовая комиссия
-                base_fee = float(tx.get("fee", 0) or 0)
-                
-                # Приоритетная комиссия
-                priority_fee = _calculate_priority_fee(tx)
-                
-                # Общая комиссия
-                total_tx_fee = base_fee + priority_fee
-                total_fees += total_tx_fee
-                
+                fee_val = float(tx.get("fee", 0) or 0)
             except Exception:
-                continue
+                fee_val = 0.0
+            total_fees += fee_val
 
         page_len = len(page)
         total_count += page_len
@@ -465,11 +427,10 @@ async def get_values_total_and_fees_helius(
 
     if total_count >= 500:
         # по правилам возврата total_trans — 600
-        return values, 600, total_fees
+        return values, 600, total_fees/1e9
 
-    return values, total_count, total_fees
+    return values, total_count, total_fees/1e9
 
-    
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
     """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
