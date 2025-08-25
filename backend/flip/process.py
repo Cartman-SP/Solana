@@ -245,12 +245,6 @@ async def _fetch_helius_swaps_page(
     data = await make_api_request(session, url, headers)
     print(data)
     
-    # Записываем данные в файл
-    try:
-        with open('process_datas.txt', 'a', encoding='utf-8') as f:
-            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {json.dumps(data, ensure_ascii=False)}\n")
-    except Exception as e:
-        print(f"Ошибка записи в файл: {e}")
     
     # Helius возвращает массив транзакций
     if isinstance(data, list):
@@ -461,7 +455,7 @@ async def get_values_total_and_fees_helius(
         fees["network_fee"] + fees["priority_fee"] + fees["service_fee"]
     )
     return values, total_count, fees
-    
+
 async def calculate_ath_async(token_address: str, session: aiohttp.ClientSession) -> int:
     """Рассчитывает ATH для токена по транзакциям 1-2 страниц."""
     if token_address in ath_cache:
