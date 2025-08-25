@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db.models import Q
 from typing import Dict, List, Optional, Tuple
 import time
+import requests
 
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
