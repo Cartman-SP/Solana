@@ -244,6 +244,14 @@ async def _fetch_helius_swaps_page(
 
     data = await make_api_request(session, url, headers)
     print(data)
+    
+    # Записываем данные в файл
+    try:
+        with open('process_datas.txt', 'a', encoding='utf-8') as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {json.dumps(data, ensure_ascii=False)}\n")
+    except Exception as e:
+        print(f"Ошибка записи в файл: {e}")
+    
     # Helius возвращает массив транзакций
     if isinstance(data, list):
         return data
