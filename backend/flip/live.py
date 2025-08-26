@@ -204,7 +204,7 @@ async def send_telegram_message(token_address, dev_address, twitter_name, user_a
 
 📍 **Адрес токена:** `{token_address}`
 👨‍💻 **Адрес разработчика:** `{dev_address}`
-🐦 **Twitter:** @{twitter_name}
+🐦 **Twitter:** {twitter_name}
 
 📊 **Метрики разработчика:**
 • ATH: **{user_ath:,}** SOL
@@ -342,9 +342,9 @@ async def process_live(data):
                 token_address=mint,
                 dev_address=user,
                 twitter_name=twitter,
-                user_ath=user_dev_data['ath'],
-                user_total_trans=user_dev_data.get('total_trans', 0),
-                user_total_fees=user_dev_data.get('total_fees', 0)
+                user_ath=twitter_data['ath'],
+                user_total_trans=twitter_data.get('total_trans', 0),
+                user_total_fees=twitter_data.get('total_fees', 0)
             )
         
         await broadcast_to_extension(extension_data)
