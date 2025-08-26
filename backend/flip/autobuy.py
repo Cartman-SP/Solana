@@ -285,7 +285,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
             return False
-        twitter_obj = await sync_to_async(Twitter.objects.get)(name=twitter_name,)
+        twitter_obj = await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",)
         total_tokens = 1
         try:
             dev = await sync_to_async(UserDev.objects.get)(adress=creator)
