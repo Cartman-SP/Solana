@@ -50,17 +50,21 @@ async def process_create(data):
                         'dev': user_dev,
                         'twitter': twitter,
                         'ath': 0,
-                        'migrated': False
+                        'migrated': False,
+                        'total_trans': 0,
+                        'total_fees': 0.0,
                     }
                 )
         else:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                     address=mint,
-                    bonding_curve = bonding_curve,
                     defaults={
                         'dev': user_dev,
                         'ath': 0,
-                        'migrated': False
+                        'migrated': False,
+                        'total_trans': 0,
+                        'total_fees': 0.0,
+                        'bonding_curve': bonding_curve or "",
                     }
                 )
 
