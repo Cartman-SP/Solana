@@ -194,6 +194,7 @@ async def get_twitter_data(name,mint):
 
 async def check_twitter_whitelist(twitter_name,creator):
     try:
+        print(twitter_name)
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
             return False
