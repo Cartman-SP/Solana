@@ -53,6 +53,7 @@ async def process_create(data):
                         'migrated': False,
                         'total_trans': 0,
                         'total_fees': 0.0,
+                        'bonding_curve': bonding_curve or "",
                     }
                 )
         else:
