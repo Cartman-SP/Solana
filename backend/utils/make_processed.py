@@ -16,7 +16,7 @@ def update_old_tokens():
     
     # Используем Django timezone вместо datetime.now()
     now = timezone.now()
-    two_hours_ago = now - timedelta(hours=2)
+    two_hours_ago = now - timedelta(minutes=30)
     
     print(f"Текущее время (Django): {now}")
     print(f"Время 2 часа назад: {two_hours_ago}")
