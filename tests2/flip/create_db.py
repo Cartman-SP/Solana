@@ -70,7 +70,9 @@ def create_token_sync(address, user_dev):
             address=address,
             dev=user_dev,
             scam=False,
-            ath=0
+            ath=0,
+            total_trans=0,
+            total_fees=0.0
         )
         
         print(f"Создан новый токен: {address}")

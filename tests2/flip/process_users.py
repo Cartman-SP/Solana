@@ -157,7 +157,9 @@ async def bulk_create_tokens(tokens_data: List[Tuple[str, int, bool]], user_dev)
                 address=token_address,
                 dev=user_dev,
                 ath=ath_value,
-                migrated=migrated
+                migrated=migrated,
+                total_trans=0,
+                total_fees=0.0
             ))
     
     # Выполняем bulk операции

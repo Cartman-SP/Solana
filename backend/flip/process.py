@@ -322,22 +322,34 @@ def get_token_fees(pair_address: str):
                 "authority": "api10.axiom.trade",
                 "accept": "application/json, text/plain, */*",
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "cookie": "auth-refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoVG9rZW5JZCI6ImUzMGYzMTA0LTVhMTQtNDBmMS04ZmZhLTg2YzYwZjg5N2NhMSIsImlhdCI6MTc1MzYyODQ5Nn0.Z94GO02XpIOwkqdatPlT7z9SSoIcVYYoQWQugabzVas; auth-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoZW50aWNhdGVkVXNlcklkIjoiNTlkZThjZWItNjdhZi00MTNjLTk1YWYtNjQxNWNmOWJkYzU4IiwiaWF0IjoxNzU2MTU3NzY4LCJleHAiOjE3NTYxNTg3Mjh9.zr_girqpZJFAPYLnifQwg-tOGD8a83Tgb_pJ4WJfRkQ",
+                "cookie": "auth-otp-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdHBJZCI6IjEwOTQ1MDJiLWVkNmEtNDg4Zi1iZTJmLTEyY2VjOWZkNTNlMyIsImlhdCI6MTc1NjIzMTY3MCwiZXhwIjoxNzU2MjMyMjcwfQ.4dxS2HexbIK--Rrgg5M_y03lhT8fJG6jCtnPE1c2wqs; auth-email-registration-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbFRvUmVnaXN0ZXIiOiJheGlvbXRyYWRlckBpbmJveC5ldSIsImlhdCI6MTc1NjIzMTY4MSwiZXhwIjoxNzU2MjM1MjgxfQ._hcbOTWev-l2UsQ9qJ01AJGlqIAAm6dscLo9wqAMkvM; auth-refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoVG9rZW5JZCI6ImUxM2YzNWEyLTk4OWEtNDFkOS1iZTU3LTE3NDVkNGIxMzExMiIsImlhdCI6MTc1NjIzMTY4OX0.sRmYZCQs7b97OOm4e7T6ZQ9Xo0kQlFYGln-dMbEJ4aU; auth-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoZW50aWNhdGVkVXNlcklkIjoiODIyOWUxZjgtNDg3Mi00NGVlLTk0MjYtNDJlOWVjOWI3ZjczIiwiaWF0IjoxNzU2MjMxNjg5LCJleHAiOjE3NTYyMzI2NDl9.AUUa1cUgLDhDGPZd5279adGvN49suNFXyWu1b2uizAo",
             }
             
             axiom_response = requests.get(axiom_url, params=params, headers=headers)
             axiom_response.raise_for_status()
             
-            return axiom_response.json()['totalPairFeesPaid']
-    except:
-        return 0
+            fees = axiom_response.json().get('totalPairFeesPaid')
+            # Проверяем, что fees не None и является числом
+            if fees is not None and isinstance(fees, (int, float)):
+                return float(fees)
+            else:
+                return 0.0
+        else:
+            return 0.0
+    except Exception as e:
+        print(f"Ошибка при получении fees для {pair_address}: {e}")
+        return 0.0
 
 async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
-        fees = 0
-        if token.twitter_id:
+        fees = 0.0
+        if token.twitter_id and token.bonding_curve:
             fees = await sync_to_async(get_token_fees)(token.bonding_curve)
+            # Дополнительная проверка, что fees не None
+            if fees is None:
+                fees = 0.0
+        
         ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
         
         # Обновляем токен только если не было ошибок API
@@ -345,12 +357,12 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
         await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
         await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
         await sync_to_async(lambda: setattr(token, 'processed', True))()
-        await sync_to_async(lambda: setattr(token, 'total_fees', fees))()
+        await sync_to_async(lambda: setattr(token, 'total_fees', float(fees)))()
 
         # Сохраняем изменения
         await sync_to_async(token.save)()
         
-        print(f"Обработан токен {token.address}: ATH = {token.ath}, migrated = {token.migrated}, total_trans = {token.total_trans}")
+        print(f"Обработан токен {token.address}: ATH = {token.ath}, migrated = {token.migrated}, total_trans = {token.total_trans}, total_fees = {fees}")
         
     except APIError as e:
         print(f"API ошибка при обработке токена {token.address}: {e}")
