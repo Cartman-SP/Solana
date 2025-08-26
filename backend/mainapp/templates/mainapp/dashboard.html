@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проект — Live Дашборд</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 16px 48px; }
+        .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
+        .brand { font-size: 22px; color:#93c5fd; }
+        .live { display:flex; align-items:center; gap:8px; background:#1f2937; border:1px solid #334155; color:#cbd5e1; padding:6px 10px; border-radius:999px; font-size:12px; }
+        .dot { width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 12px rgba(16,185,129,.7); }
+        .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; }
+        .card { background:#111827; border:1px solid #1f2937; border-radius:16px; padding:20px; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+        .kpi { font-size: 13px; color:#94a3b8; margin-bottom:6px; }
+        .val { font-size: 34px; font-weight: 700; color:#f8fafc; }
+        .row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .list { margin-top: 18px; }
+        .item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px dashed #273043; }
+        .item:last-child { border-bottom: 0; }
+        .addr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:#e5e7eb; }
+        .meta { color:#94a3b8; font-size:12px; }
+        .footer { margin-top: 22px; color:#64748b; font-size:12px; }
+        @media (max-width: 960px){ .grid{ grid-template-columns: repeat(2, 1fr);} }
+        @media (max-width: 640px){ .grid{ grid-template-columns: 1fr;} .val{ font-size:28px;} }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <div class="brand">Проект — Live Дашборд</div>
+            <div class="live"><span class="dot"></span>Обновление в реальном времени</div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="kpi">Всего токенов</div>
+                <div id="kpi-tokens" class="val">—</div>
+            </div>
+            <div class="card">
+                <div class="kpi">Всего разработчиков (UserDev)</div>
+                <div id="kpi-users" class="val">—</div>
+            </div>
+            <div class="card">
+                <div class="kpi">Всего админов (AdminDev)</div>
+                <div id="kpi-admins" class="val">—</div>
+            </div>
+            <div class="card">
+                <div class="kpi">В блеклисте (Админы / Юзеры)</div>
+                <div class="val"><span id="kpi-admins-black">—</span> / <span id="kpi-users-black">—</span></div>
+            </div>
+            <div class="card">
+                <div class="kpi">В вайтлисте (Админы / Юзеры)</div>
+                <div class="val"><span id="kpi-admins-white">—</span> / <span id="kpi-users-white">—</span></div>
+            </div>
+            <div class="card">
+                <div class="kpi">Суммарно транзакций / комиссий</div>
+                <div class="val"><span id="kpi-trans">—</span> / <span id="kpi-fees">—</span></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+            <div class="row" style="margin-bottom:10px;">
+                <div class="kpi">Последние 10 токенов</div>
+                <div class="meta" id="settings-flags">Настройки: —</div>
+            </div>
+            <div class="list" id="latest"></div>
+            <div class="footer">Данные обновляются периодически. Нажмите F5 для жёсткого обновления.</div>
+        </div>
+    </div>
+
+    <script>
+        const endpoint = '/api/dashboard_stats/';
+        let retryDelay = 2000;
+
+        const el = id => document.getElementById(id);
+        const fmtInt = n => (typeof n === 'number' ? n.toLocaleString('ru-RU') : '—');
+        const fmtFee = n => (typeof n === 'number' ? n.toLocaleString('ru-RU', {maximumFractionDigits: 6}) : '—');
+
+        function renderList(items){
+            const wrap = el('latest');
+            wrap.innerHTML = '';
+            if (!Array.isArray(items) || !items.length){
+                wrap.innerHTML = '<div class="meta">Нет данных</div>';
+                return;
+            }
+            for (const it of items){
+                const d = new Date(it.created_at || Date.now());
+                const row = document.createElement('div');
+                row.className = 'item';
+                row.innerHTML = `
+                    <div>
+                        <div class="addr">${it.address}</div>
+                        <div class="meta">dev: ${it.dev_adress || '—'} · twitter: ${it.twitter || '—'}</div>
+                    </div>
+                    <div class="meta">${d.toLocaleString('ru-RU')} · tx: ${fmtInt(it.total_trans)} · fee: ${fmtFee(it.total_fees)}</div>
+                `;
+                wrap.appendChild(row);
+            }
+        }
+
+        function renderSettings(s){
+            if (!s){ el('settings-flags').textContent = 'Настройки: —'; return; }
+            const parts = [
+                `start=${s.start ? 'on' : 'off'}`,
+                `one_token=${s.one_token_enabled ? 'on' : 'off'}`,
+                `whitelist=${s.whitelist_enabled ? 'on' : 'off'}`,
+                `ath_from=${s.ath_from}`,
+                `median=${s.median}`,
+            ];
+            el('settings-flags').textContent = 'Настройки: ' + parts.join(' · ');
+        }
+
+        async function fetchStats(){
+            try{
+                const res = await fetch(endpoint, { cache: 'no-store' });
+                if(!res.ok) throw new Error('Network');
+                const data = await res.json();
+                if (data.success){
+                    const s = data.stats || {};
+                    el('kpi-tokens').textContent = fmtInt(s.total_tokens);
+                    el('kpi-users').textContent = fmtInt(s.total_user_devs);
+                    el('kpi-admins').textContent = fmtInt(s.total_admins);
+                    el('kpi-admins-black').textContent = fmtInt(s.admins_blacklist);
+                    el('kpi-users-black').textContent = fmtInt(s.users_blacklist);
+                    el('kpi-admins-white').textContent = fmtInt(s.admins_whitelist);
+                    el('kpi-users-white').textContent = fmtInt(s.users_whitelist);
+                    el('kpi-trans').textContent = fmtInt(s.total_trans_sum);
+                    el('kpi-fees').textContent = fmtFee(s.total_fees_sum);
+                    renderList(data.latest_tokens);
+                    renderSettings(data.settings);
+                    retryDelay = 2000;
+                }
+            }catch(e){
+                retryDelay = Math.min(retryDelay * 1.5, 15000);
+            }
+        }
+
+        function loop(){
+            fetchStats().finally(() => setTimeout(loop, retryDelay));
+        }
+
+        loop();
+    </script>
+</body>
+</html>

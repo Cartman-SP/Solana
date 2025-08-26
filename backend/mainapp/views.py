@@ -439,6 +439,81 @@ def token_count(request):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+def dashboard_page(request):
+    """Страница live-дашборда проекта"""
+    return render(request, 'mainapp/dashboard.html')
+
+@require_GET
+def dashboard_stats(request):
+    """Возвращает сводные live-метрики по проекту"""
+    try:
+        from django.db.models import Sum
+        total_tokens = Token.objects.count()
+        total_user_devs = UserDev.objects.count()
+        total_admins = AdminDev.objects.count()
+
+        # Black/White lists
+        admins_black = AdminDev.objects.filter(blacklist=True).count()
+        admins_white = AdminDev.objects.filter(whitelist=True).count()
+        users_black = UserDev.objects.filter(blacklist=True).count()
+        users_white = UserDev.objects.filter(whitelist=True).count()
+
+        # Aggregations по токенам
+        sums = Token.objects.aggregate(
+            total_trans_sum=Sum('total_trans'),
+            total_fees_sum=Sum('total_fees')
+        )
+        total_trans_sum = int(sums.get('total_trans_sum') or 0)
+        total_fees_sum = float(sums.get('total_fees_sum') or 0.0)
+
+        # Последние токены
+        latest_tokens_qs = Token.objects.select_related('dev', 'twitter').order_by('-created_at')[:10]
+        latest_tokens = []
+        for t in latest_tokens_qs:
+            latest_tokens.append({
+                'address': t.address,
+                'dev_adress': getattr(t.dev, 'adress', None),
+                'twitter': getattr(t.twitter, 'name', None) if hasattr(t, 'twitter') else None,
+                'created_at': t.created_at.isoformat() if t.created_at else None,
+                'total_trans': t.total_trans,
+                'total_fees': t.total_fees,
+                'processed': t.processed,
+                'migrated': t.migrated,
+            })
+
+        # Настройки (полезно видеть текущие флаги)
+        settings_obj = Settings.objects.first()
+        settings_data = None
+        if settings_obj:
+            settings_data = {
+                'start': settings_obj.start,
+                'one_token_enabled': settings_obj.one_token_enabled,
+                'whitelist_enabled': settings_obj.whitelist_enabled,
+                'ath_from': settings_obj.ath_from,
+                'total_trans_from': getattr(settings_obj, 'total_trans_from', 0),
+                'total_fees_from': getattr(settings_obj, 'total_fees_from', 0),
+                'median': getattr(settings_obj, 'median', 0),
+            }
+
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_tokens': total_tokens,
+                'total_user_devs': total_user_devs,
+                'total_admins': total_admins,
+                'admins_blacklist': admins_black,
+                'admins_whitelist': admins_white,
+                'users_blacklist': users_black,
+                'users_whitelist': users_white,
+                'total_trans_sum': total_trans_sum,
+                'total_fees_sum': total_fees_sum,
+            },
+            'latest_tokens': latest_tokens,
+            'settings': settings_data,
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 def search_page(request):
     """Главная страница с поисковой строкой"""
     return render(request, 'mainapp/search.html')

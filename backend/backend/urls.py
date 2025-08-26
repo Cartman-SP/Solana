@@ -20,6 +20,7 @@ from mainapp.views import *
 
 urlpatterns = [
     path('', home_page, name='home_page'),
+    path('dashboard/', dashboard_page, name='dashboard_page'),
     path('search/', search_results, name='search_results'),
     path('admindev/<str:twitter>/', admindev_detail, name='admindev_detail'),
     path('userdev/<str:adress>/', userdev_detail, name='userdev_detail'),
@@ -32,6 +33,7 @@ urlpatterns = [
     path('api/admin_data', admin_data, name='get_admin_devs'),
     path('api/pump_hook/', pump_hook, name='pump_hook'),
     path('api/token_count/', token_count, name='token_count'),
+    path('api/dashboard_stats/', dashboard_stats, name='dashboard_stats'),
     # Unified endpoint for both GET and POST to avoid 405
     path('api/auto_buy_settings/', auto_buy_settings, name='auto_buy_settings'),
 ]
