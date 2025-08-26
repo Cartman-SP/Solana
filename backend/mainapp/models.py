@@ -40,7 +40,7 @@ class Token(models.Model):
     processed = models.BooleanField(default=False)
     total_trans = models.IntegerField(default=0)
     total_fees = models.FloatField(default=0)
-
+    bonding_curve = models.CharField(max_length=255,default="")
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)

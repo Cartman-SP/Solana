@@ -24,6 +24,7 @@ async def process_create(data):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
         twitter_name = data.get('twitter_name','')
+        bonding_curve = data.get('bonding_curve','')
         token_created = False
         if not(twitter_name) or twitter_name == "@" or twitter_name=="@None":
             twitter_name = ""
@@ -55,6 +56,7 @@ async def process_create(data):
         else:
             token, token_created = await sync_to_async(Token.objects.get_or_create)(
                     address=mint,
+                    bonding_curve = bonding_curve,
                     defaults={
                         'dev': user_dev,
                         'ath': 0,

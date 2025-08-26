@@ -266,6 +266,7 @@ def parse_pump_create(raw: bytes):
         "creator": creator,
         'name': name,
         'symbol': symbol,
+        'bonding_curve':bonding_curve,
     }
 
 def find_community_from_uri(uri: str) -> Optional[str]:
@@ -345,6 +346,7 @@ async def process_message(msg, session):
         creator = (parsed["creator"] or "").strip()
         name = (parsed["name"] or "").strip()
         symbol = (parsed["symbol"] or "").strip()
+        bonding_curve = (parsed["bonding_curve"] or "").strip()
         if not mint:
             return
         
@@ -368,6 +370,7 @@ async def process_message(msg, session):
             'name': name,
             'symbol': symbol,
             'twitter_name': twitter_name,
+            'bonding_curve':bonding_curve,
         }
         create_live_task = asyncio.create_task(process_live(data))
         create_create_task = asyncio.create_task(process_create(data))
