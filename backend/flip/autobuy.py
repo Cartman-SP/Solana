@@ -313,12 +313,11 @@ async def check_twitter_whitelist(twitter_name,creator):
                 .order_by('-created_at')[:3]
             ))()
         except Exception as e:
-            print("Нет токенов у Твитера")
-            return False
+            last_tokens = await sync_to_async(lambda: list(
+                Token.objects.filter(twitter=twitter_obj, processed=True)
+                .order_by('-created_at')
+            ))()
 
-        if len(last_tokens) < 3:
-            print("Меньше 3 токенов")
-            return False
 
         for token in last_tokens:
             if token.total_trans < settings_obj.median:
