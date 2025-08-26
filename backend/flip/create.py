@@ -24,7 +24,6 @@ async def process_create(data):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
         twitter_name = data.get('twitter_name','')
-        print(symbol)
         token_created = False
         if not(twitter_name) or twitter_name == "@" or twitter_name=="@None":
             twitter_name = ""

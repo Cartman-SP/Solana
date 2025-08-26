@@ -303,7 +303,7 @@ async def process_live(data):
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
         recent_tokens_fees_str = " | ".join([f"{token['name']}: {token['total_fees']:.6f}" for token in user_dev_data['recent_tokens']])
-        print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Total Fees: {extension_data['user_total_fees']:.6f} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | Recent Fees: {recent_tokens_fees_str} | User: {extension_data['user'][:8]}...")
+        #print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Total Fees: {extension_data['user_total_fees']:.6f} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | Recent Fees: {recent_tokens_fees_str} | User: {extension_data['user'][:8]}...")
         
     except Exception as e:
         pass
