@@ -301,10 +301,16 @@ async def check_twitter_whitelist(twitter_name,creator):
             except Exception as e:
                 print(e)
                 pass
-        if(twitter_obj.ath<settings_obj.ath_from and twitter_obj.total_trans < settings_obj.total_trans_from and twitter_obj.total_fees < settings_obj.total_fees_from):
-            print("АТХ, тотал транс или тотал фис не подходят:",twitter_obj.total_trans,twitter_obj.ath,twitter_obj.total_fees)
+        if(twitter_obj.ath<settings_obj.ath_from):
+            print("ATH не подходят:",twitter_obj.ath,'<',settings_obj.ath_from)
             return False
-            
+        if(twitter_obj.total_trans < settings_obj.total_trans_from):
+            print("тотал транс не подходят:",twitter_obj.total_trans,'<',settings_obj.total_trans_from)
+            return False
+        if(twitter_obj.total_fees < settings_obj.total_fees_from)
+            print("тотал фис не подходят:",twitter_obj.total_fees,'<',settings_obj.total_fees_from)
+            return False
+ 
         try:
             last_tokens = await sync_to_async(lambda: list(
                 Token.objects.filter(twitter=twitter_obj, processed=True)

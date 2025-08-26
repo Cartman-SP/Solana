@@ -345,24 +345,19 @@ async def process_message(msg, session):
         creator = (parsed["creator"] or "").strip()
         name = (parsed["name"] or "").strip()
         symbol = (parsed["symbol"] or "").strip()
-        print(mint)
         if not mint:
             return
         
 
         community_id = None
-        print("\nsymbol:",symbol)
         meta = await fetch_meta_with_retries(session, uri)
-        print("meta:",meta)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
             
 
         twitter_name = ""
         if community_id:
-            print("community_id:",community_id)
             twitter_name = await get_creator_username(session, community_id)
-            print("community_id:",twitter_name)
 
         if twitter_name:
             twitter_name=f"@{twitter_name}"
