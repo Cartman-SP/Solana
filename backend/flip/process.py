@@ -327,7 +327,7 @@ def get_token_fees(pair_address: str):
             
             axiom_response = requests.get(axiom_url, params=params, headers=headers)
             axiom_response.raise_for_status()
-            
+            print(axiom_response.text)
             fees = axiom_response.json().get('totalPairFeesPaid')
             # Проверяем, что fees не None и является числом
             if fees is not None and isinstance(fees, (int, float)):
