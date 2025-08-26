@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db.models import Q
 from typing import Dict, List, Optional, Tuple
 import time
+import requests
 
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -304,7 +305,7 @@ async def get_tokens_for_processing():
             ath=0,
             processed = False,
             created_at__lt=sixty_minutes_ago,
-        ).select_related('dev')[:100]
+        ).select_related('dev', 'twitter')[:100]
     )
     print(len(tokens))
     return tokens
@@ -340,8 +341,8 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
         fees = 0
-        if token.twitter:
-            fees = get_token_fees(token.address)
+        if token.twitter_id:
+            fees = await sync_to_async(get_token_fees)(token.address)
         ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
         
         # Обновляем токен только если не было ошибок API
