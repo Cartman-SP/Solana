@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import django
+import aiohttp
 from datetime import datetime
 # Настройка Django
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -192,6 +193,47 @@ async def get_twitter_data(name,mint):
         }
 
 
+async def send_telegram_message(token_address, dev_address, twitter_name, user_ath, user_total_trans, user_total_fees):
+    """Отправляет сообщение в Telegram чаты при autobuy = True"""
+    bot_token = "8361879327:AAHFHe2qm0dEQpsvfyZSB_vCJYukmEWJ_tc"
+    chat_ids = ["612594627", "784111198"]
+    
+    # Формируем красивое сообщение
+    message = f"""
+🚀 **НОВЫЙ ТОКЕН ДЛЯ ПОКУПКИ!** 🚀
+
+📍 **Адрес токена:** `{token_address}`
+👨‍💻 **Адрес разработчика:** `{dev_address}`
+🐦 **Twitter:** @{twitter_name}
+
+📊 **Метрики разработчика:**
+• ATH: **{user_ath:,}** SOL
+• Всего транзакций: **{user_total_trans:,}**
+• Общие комиссии: **{user_total_fees:.6f}** SOL
+
+⏰ **Время:** {datetime.now().strftime('%H:%M:%S')}
+"""
+    
+    # Отправляем сообщение в каждый чат
+    async with aiohttp.ClientSession() as session:
+        for chat_id in chat_ids:
+            try:
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                payload = {
+                    "chat_id": chat_id,
+                    "text": message,
+                    "parse_mode": "Markdown"
+                }
+                
+                async with session.post(url, json=payload) as response:
+                    if response.status == 200:
+                        print(f"✅ Сообщение отправлено в чат {chat_id}")
+                    else:
+                        print(f"❌ Ошибка отправки в чат {chat_id}: {response.status}")
+                        
+            except Exception as e:
+                print(f"❌ Ошибка при отправке в Telegram: {e}")
+
 async def check_twitter_whitelist(twitter_name,creator):
     try:
         print(twitter_name)
@@ -293,6 +335,17 @@ async def process_live(data):
             'twitter_blacklisted': twitter_data['blacklist'],
             'autobuy': autobuy
         }
+        
+        # Отправляем сообщение в Telegram если autobuy = True
+        if autobuy:
+            await send_telegram_message(
+                token_address=mint,
+                dev_address=user,
+                twitter_name=twitter,
+                user_ath=user_dev_data['ath'],
+                user_total_trans=user_dev_data.get('total_trans', 0),
+                user_total_fees=user_dev_data.get('total_fees', 0)
+            )
         
         await broadcast_to_extension(extension_data)
         with open('extension_data.json', 'w') as f:
