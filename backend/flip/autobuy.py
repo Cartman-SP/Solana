@@ -281,26 +281,23 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
 
 async def check_twitter_whitelist(twitter_name,creator):
     try:
+        print(twitter_name)
         settings_obj = await sync_to_async(Settings.objects.first)()
         if not(settings_obj.start):
             return False
+        twitter_obj = await sync_to_async(Twitter.objects.get)(name=twitter_name,)
+        total_tokens = 1
         try:
-            twitter_obj = await sync_to_async(Twitter.objects.get)(
-                        name=f"@{twitter_name}",
-                    )
+            dev = await sync_to_async(UserDev.objects.get)(adress=creator)
+            total_tokens = dev.total_tokens
         except:
-            print("Твитера нет в бд")
-            return False
+            pass
+
         if(settings_obj.whitelist_enabled and twitter_obj.whitelist):
             return True
-        if(settings_obj.one_token_enabled):
-            try:
-                await sync_to_async(UserDev.objects.get)(adress=creator,total_tokens__gt=1)
-                print("Больше 1 токена")
-                return False
-            except Exception as e:
-                print(e)
-                pass
+        if(settings_obj.one_token_enabled and total_tokens>1):
+            print("total_tokens > 1", total_tokens)
+            return False
         if(twitter_obj.ath<settings_obj.ath_from):
             print("ATH не подходят:",twitter_obj.ath,'<',settings_obj.ath_from)
             return False
