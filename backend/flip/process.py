@@ -305,7 +305,7 @@ async def get_tokens_for_processing():
             ath=0,
             processed = False,
             created_at__lt=sixty_minutes_ago,
-        ).select_related('dev', 'twitter')[:100]
+        ).select_related('dev')[:100]
     )
     print(len(tokens))
     return tokens
@@ -315,26 +315,46 @@ async def get_tokens_for_processing():
 def get_token_fees(token_mint: str):
     SOL_MINT = "So11111111111111111111111111111111111111112"
     
-    # Получаем pairAddress из Jupiter
-    jupiter_url = f"https://quote-api.jup.ag/v6/quote?inputMint={SOL_MINT}&outputMint={token_mint}&amount=1000000"
-    jupiter_response = requests.get(jupiter_url)
-    jupiter_data = jupiter_response.json()
-    pair_address = jupiter_data['routePlan'][0]['swapInfo']['ammKey']
-    
-    # Получаем информацию из Axiom
-    axiom_url = "https://api10.axiom.trade/token-info"
-    params = {"pairAddress": pair_address}
-    headers = {
-        "authority": "api10.axiom.trade",
-        "accept": "application/json, text/plain, */*",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "cookie": "auth-refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoVG9rZW5JZCI6ImUzMGYzMTA0LTVhMTQtNDBmMS04ZmZhLTg2YzYwZjg5N2NhMSIsImlhdCI6MTc1MzYyODQ5Nn0.Z94GO02XpIOwkqdatPlT7z9SSoIcVYYoQWQugabzVas; auth-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoZW50aWNhdGVkVXNlcklkIjoiNTlkZThjZWItNjdhZi00MTNjLTk1YWYtNjQxNWNmOWJkYzU4IiwiaWF0IjoxNzU2MTU3NzY4LCJleHAiOjE3NTYxNTg3Mjh9.zr_girqpZJFAPYLnifQwg-tOGD8a83Tgb_pJ4WJfRkQ",
-
-    }
-    
-    axiom_response = requests.get(axiom_url, params=params, headers=headers)
-    return axiom_response.json()['totalPairFeesPaid']
-
+    try:
+        # Получаем pairAddress из Jupiter
+        jupiter_url = f"https://quote-api.jup.ag/v6/quote?inputMint={SOL_MINT}&outputMint={token_mint}&amount=1000000"
+        jupiter_response = requests.get(jupiter_url)
+        jupiter_response.raise_for_status()  # Проверяем HTTP ошибки
+        jupiter_data = jupiter_response.json()
+        
+        # Проверяем наличие routePlan в ответе
+        if 'routePlan' not in jupiter_data or not jupiter_data['routePlan']:
+            raise ValueError(f"No route plan found for token {token_mint}")
+        
+        pair_address = jupiter_data['routePlan'][0]['swapInfo']['ammKey']
+        
+        # Получаем информацию из Axiom
+        axiom_url = "https://api10.axiom.trade/token-info"
+        params = {"pairAddress": pair_address}
+        headers = {
+            "authority": "api10.axiom.trade",
+            "accept": "application/json, text/plain, */*",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "cookie": "auth-refresh-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoVG9rZW5JZCI6ImUzMGYzMTA0LTVhMTQtNDBmMS04ZmZhLTg2YzYwZjg5N2NhMSIsImlhdCI6MTc1MzYyODQ5Nn0.Z94GO02XpIOwkqdatPlT7z9SSoIcVYYoQWQugabzVas; auth-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoZW50aWNhdGVkVXNlcklkIjoiNTlkZThjZWItNjdhZi00MTNjLTk1YWYtNjQxNWNmOWJkYzU4IiwiaWF0IjoxNzU2MTU3NzY4LCJleHAiOjE3NTYxNTg3Mjh9.zr_girqpZJFAPYLnifQwg-tOGD8a83Tgb_pJ4WJfRkQ",
+        }
+        
+        axiom_response = requests.get(axiom_url, params=params, headers=headers)
+        axiom_response.raise_for_status()
+        
+        return axiom_response.json()['totalPairFeesPaid']
+        
+    except requests.exceptions.RequestException as e:
+        print(f"HTTP error occurred: {e}")
+        return None
+    except KeyError as e:
+        print(f"Missing expected key in response: {e}")
+        return None
+    except ValueError as e:
+        print(f"Value error: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
 
 async def process_token_ath(token, session: aiohttp.ClientSession):
