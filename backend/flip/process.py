@@ -315,7 +315,7 @@ async def get_tokens_for_processing():
 def get_token_fees(pair_address: str):
         
     try:
-        if(pair_address)
+        if(pair_address):
             axiom_url = "https://api10.axiom.trade/token-info"
             params = {"pairAddress": pair_address}
             headers = {
