@@ -169,7 +169,7 @@ async def get_twitter_data(name,mint):
         await sync_to_async(lambda: setattr(user_dev, 'total_trans', int(avg_total_trans)))()
         await sync_to_async(lambda: setattr(user_dev, 'total_fees', avg_total_fees))()
 
-        sync_to_async(user_dev.save)()
+        await sync_to_async(user_dev.save)()
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
