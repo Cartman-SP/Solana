@@ -19,7 +19,7 @@ from django.urls import path
 from mainapp.views import *
 
 urlpatterns = [
-    path('', search_page, name='search_page'),
+    path('', home_page, name='home_page'),
     path('search/', search_results, name='search_results'),
     path('admindev/<str:twitter>/', admindev_detail, name='admindev_detail'),
     path('userdev/<str:adress>/', userdev_detail, name='userdev_detail'),
@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/get_wallets/', get_wallets, name='get_wallets'),
     path('api/admin_data', admin_data, name='get_admin_devs'),
     path('api/pump_hook/', pump_hook, name='pump_hook'),
+    path('api/token_count/', token_count, name='token_count'),
     # Unified endpoint for both GET and POST to avoid 405
     path('api/auto_buy_settings/', auto_buy_settings, name='auto_buy_settings'),
 ]

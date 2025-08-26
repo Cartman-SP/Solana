@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Количество токенов</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 32px; width: 92vw; max-width: 720px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+        .title { font-size: 24px; color: #93c5fd; margin-bottom: 12px; }
+        .counter { font-size: 64px; font-weight: 700; letter-spacing: 1px; color: #f8fafc; }
+        .sub { color: #94a3b8; margin-top: 8px; }
+        .pill { display: inline-block; margin-top: 18px; padding: 6px 12px; border-radius: 999px; background: #1f2937; color: #cbd5e1; font-size: 12px; }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .right { text-align: right; }
+        .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:8px; box-shadow:0 0 12px rgba(16,185,129,.7); }
+        @media (max-width: 520px) { .counter { font-size: 44px; } .row { flex-direction: column; align-items: flex-start; } .right { text-align: left; } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="row">
+            <div>
+                <div class="title">Общее количество токенов</div>
+                <div id="counter" class="counter">—</div>
+                <div class="sub">Обновляется в реальном времени</div>
+            </div>
+            <div class="right">
+                <div class="pill"><span class="dot"></span>Live</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const counterEl = document.getElementById('counter');
+        const endpoint = '/api/token_count/';
+        let lastValue = null;
+        let retryDelay = 2000;
+
+        async function fetchCount() {
+            try {
+                const res = await fetch(endpoint, { cache: 'no-store' });
+                if (!res.ok) throw new Error('Network');
+                const data = await res.json();
+                if (data && data.success === true && typeof data.count === 'number') {
+                    animateToValue(data.count);
+                    retryDelay = 2000; // reset backoff on success
+                }
+            } catch (e) {
+                // exponential backoff on errors
+                retryDelay = Math.min(retryDelay * 1.5, 15000);
+            }
+        }
+
+        function animateToValue(nextValue) {
+            if (lastValue === null) {
+                lastValue = nextValue;
+                counterEl.textContent = formatNumber(nextValue);
+                return;
+            }
+            const duration = 500;
+            const start = performance.now();
+            const from = lastValue;
+            const to = nextValue;
+            function frame(now) {
+                const t = Math.min(1, (now - start) / duration);
+                const eased = 0.5 - Math.cos(Math.PI * t) / 2; // easeInOut
+                const current = Math.round(from + (to - from) * eased);
+                counterEl.textContent = formatNumber(current);
+                if (t < 1) requestAnimationFrame(frame);
+                else lastValue = nextValue;
+            }
+            requestAnimationFrame(frame);
+        }
+
+        function formatNumber(n) {
+            return n.toLocaleString('ru-RU');
+        }
+
+        function loop() {
+            fetchCount().finally(() => setTimeout(loop, retryDelay));
+        }
+
+        // Kickoff
+        loop();
+    </script>
+</body>
+</html>

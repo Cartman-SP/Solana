@@ -426,6 +426,19 @@ def get_wallets(request):
     except Exception as e:
         return JsonResponse({"success":"False",'error':str(e),'token':token_address})
 
+def home_page(request):
+    """Новая главная страница с live-счётчиком общего количества токенов"""
+    return render(request, 'mainapp/home.html')
+
+@require_GET
+def token_count(request):
+    """Возвращает текущее общее количество токенов"""
+    try:
+        count = Token.objects.count()
+        return JsonResponse({"success": True, "count": count})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 def search_page(request):
     """Главная страница с поисковой строкой"""
     return render(request, 'mainapp/search.html')
