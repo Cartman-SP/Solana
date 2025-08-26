@@ -213,7 +213,6 @@ async def check_twitter_whitelist(twitter_name,creator):
                 print("Больше 1 токена")
                 return False
             except Exception as e:
-                print(e)
                 pass
         if(twitter_obj.ath<settings_obj.ath_from):
             print("ATH не подходят:",twitter_obj.ath,'<',settings_obj.ath_from)
