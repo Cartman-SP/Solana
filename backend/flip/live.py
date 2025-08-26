@@ -59,10 +59,10 @@ async def broadcast_to_extension(data):
     
     extension_clients.difference_update(disconnected_clients)
 
-async def get_user_dev_data(user_address,mint):
+async def get_user_dev_data(name,mint):
     """Получает данные UserDev из базы данных"""
     try:
-        user_dev = await sync_to_async(UserDev.objects.get)(adress=user_address)
+        user_dev = await sync_to_async(UserDev.objects.get)(adress=name)
                 
         # Получаем последние 5 токенов с ATH > 0 и НЕ мигрированных
         recent_dev_tokens = await sync_to_async(list)(
@@ -101,14 +101,13 @@ async def get_user_dev_data(user_address,mint):
                 'total_trans': token.total_trans,
                 'total_fees': round(token.total_fees, 6)  # Оставляем как float с 6 знаками после запятой
             })
-            
         return {
             'ath': int(avg_ath),  # Средний ATH последних 5 токенов
             'total_trans': int(avg_total_trans),  # Средний total_trans последних 5 токенов
             'total_fees': avg_total_fees,  # Средний total_fees последних 5 токенов (float)
             'total_tokens': max(1, user_dev.total_tokens),
             'whitelist': user_dev.whitelist,
-            'blacklist': user_dev.blacklisted,
+            'blacklist': user_dev.blacklist,
             'migrations': round(migration_percentage, 1),  # Процент мигрированных токенов
             'recent_tokens': recent_tokens_info  # Последние 3 токена
         }
@@ -122,6 +121,7 @@ async def get_user_dev_data(user_address,mint):
             'migrations': 0,
             'recent_tokens': []
         }
+
 
 async def get_twitter_data(name,mint):
     """Получает данные UserDev из базы данных"""
