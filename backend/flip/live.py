@@ -220,7 +220,7 @@ async def check_twitter_whitelist(twitter_name,creator):
         if(twitter_obj.total_trans < settings_obj.total_trans_from):
             print("тотал транс не подходят:",twitter_obj.total_trans,'<',settings_obj.total_trans_from)
             return False
-        if(twitter_obj.total_fees < settings_obj.total_fees_from)
+        if(twitter_obj.total_fees < settings_obj.total_fees_from):
             print("тотал фис не подходят:",twitter_obj.total_fees,'<',settings_obj.total_fees_from)
             return False
         try:

@@ -307,10 +307,9 @@ async def check_twitter_whitelist(twitter_name,creator):
         if(twitter_obj.total_trans < settings_obj.total_trans_from):
             print("тотал транс не подходят:",twitter_obj.total_trans,'<',settings_obj.total_trans_from)
             return False
-        if(twitter_obj.total_fees < settings_obj.total_fees_from)
+        if(twitter_obj.total_fees < settings_obj.total_fees_from):
             print("тотал фис не подходят:",twitter_obj.total_fees,'<',settings_obj.total_fees_from)
             return False
- 
         try:
             last_tokens = await sync_to_async(lambda: list(
                 Token.objects.filter(twitter=twitter_obj, processed=True)
@@ -328,7 +327,7 @@ async def check_twitter_whitelist(twitter_name,creator):
             if token.total_trans < settings_obj.median:
                 print("Один из токенов не подходит по тотал транс",token.address)
                 return False
-
+        print(f"\nАТХ:{twitter_obj.ath} > {settings_obj.ath_from}\n Total Trans:{twitter_obj.total_trans} > {settings_obj.total_trans_from}\nTotal Fees:{twitter_obj.total_fees} > {settings_obj.total_fees_from} \n")
         return True
     except Exception as e:
         print(e)
