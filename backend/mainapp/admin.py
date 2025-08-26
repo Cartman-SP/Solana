@@ -36,7 +36,7 @@ class UserDevAdmin(admin.ModelAdmin):
 
 @admin.register(Token)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ('address', 'dev', 'twitter', 'ath', 'total_trans','migrated', 'created_at', 'processed','total_fees')
+    list_display = ('address', 'dev', 'twitter','bonding_curve', 'ath', 'total_trans','migrated', 'created_at', 'processed','total_fees')
     list_filter = ('migrated', 'created_at', 'processed')
     search_fields = ('address', 'dev__adress')
     ordering = ('-created_at', 'address')
