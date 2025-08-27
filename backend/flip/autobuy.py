@@ -316,11 +316,11 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         else:
             avg_ath = avg_total_trans = avg_total_fees = 0
             check_median = False
-        total_tokens = 1
+        total_tokens = 0
         try:
             dev = await sync_to_async(UserDev.objects.get)(adress=creator)
             total_tokens = await sync_to_async(
-                lambda: Token.objects.filter(dev=dev).count()
+                lambda: Token.objects.filter(dev=dev).exclude(address=mint).count()
             )()
         except:
             pass
@@ -329,7 +329,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         if not check_median:
             return False
         
-        if settings_obj.one_token_enabled and total_tokens > 1:
+        if settings_obj.one_token_enabled and total_tokens > 0:
             return False
         
         if avg_ath < settings_obj.ath_from:
