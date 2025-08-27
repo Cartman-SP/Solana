@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class AdminDev(models.Model):
     twitter = models.CharField(max_length=255,default = "",unique = False)
@@ -27,6 +28,7 @@ class Twitter(models.Model):
     ath = models.IntegerField(default=0)
     total_trans = models.IntegerField(default=0)
     total_fees = models.FloatField(default=0)
+    last_autobuy_time = models.DateTimeField(default=lambda: timezone.now() - timedelta(minutes=60))
     def __str__(self):
         return self.name
 
@@ -41,6 +43,7 @@ class Token(models.Model):
     total_trans = models.IntegerField(default=0)
     total_fees = models.FloatField(default=0)
     bonding_curve = models.CharField(max_length=255,default="",null=True, blank=True)
+    
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
