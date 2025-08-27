@@ -240,10 +240,9 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
 
     try:
         # Получаем настройки и объекты одним запросом
-        settings_obj, twitter_obj, dev = await asyncio.gather(
+        settings_obj, twitter_obj = await asyncio.gather(
             sync_to_async(Settings.objects.first)(),
             sync_to_async(Twitter.objects.get)(name=twitter_name),
-            sync_to_async(UserDev.objects.get)(adress=creator)
         )
         
         if not settings_obj.start:
@@ -274,11 +273,14 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         else:
             avg_ath = avg_total_trans = avg_total_fees = 0
             check_median = False
-        
-        # Проверяем количество токенов разработчика
-        total_tokens = await sync_to_async(
-            lambda: Token.objects.filter(dev=dev).count()
-        )()
+        total_tokens = 1
+        try:
+            dev = await sync_to_async(UserDev.objects.get)(adress=creator)
+            total_tokens = await sync_to_async(
+                lambda: Token.objects.filter(dev=dev).count()
+            )()
+        except:
+            pass
         
         # Проверяем все условия
         if not check_median:
