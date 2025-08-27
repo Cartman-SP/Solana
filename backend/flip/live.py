@@ -253,7 +253,8 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         # Проверяем вайтлист в первую очередь
         if settings_obj.whitelist_enabled and twitter_obj.whitelist:
             return True
-        
+        if twitter_obj.blacklist:
+            return False
         # Получаем статистику за один запрос
         recent_tokens = await sync_to_async(
             lambda: list(
