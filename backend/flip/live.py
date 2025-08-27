@@ -272,7 +272,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
             time_diff = timezone.now() - newest_token.created_at
             
             if time_diff > timedelta(hours=1):
-                print(f"Токен слишком старый: {newest_token.created_at}")
+                print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
                 return False
         
         # Рассчитываем средние значения
