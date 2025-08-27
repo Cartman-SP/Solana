@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
 
 class AdminDev(models.Model):
     twitter = models.CharField(max_length=255,default = "",unique = False)
@@ -19,7 +20,7 @@ class UserDev(models.Model):
 
     def __str__(self):
         return self.adress
-        
+
 def default_last_autobuy_time():
     return timezone.now() - timedelta(minutes=60)
 
