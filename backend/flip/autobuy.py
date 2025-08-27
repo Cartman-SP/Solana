@@ -279,7 +279,7 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
-async def check_twitter_whitelist(twitter_name, creator):
+async def check_twitter_whitelist(twitter_name, creator,mint):
 
     try:
         # Получаем настройки и объекты одним запросом
@@ -353,7 +353,7 @@ async def check_twitter_whitelist(twitter_name, creator):
         print(f"Ошибка: {e}")
         return False
 
-async def checker(session, uri,creator):
+async def checker(session, uri,creator,mint):
         community_id = None
         meta = await fetch_meta_with_retries(session, uri)
         if meta:
@@ -361,7 +361,7 @@ async def checker(session, uri,creator):
         if community_id:
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
-            check = await check_twitter_whitelist(twitter_name,creator)
+            check = await check_twitter_whitelist(twitter_name,creator,mint)
             print(check)
             return check
             
@@ -390,7 +390,7 @@ async def process_message(msg, session):
         amount = float(settings_obj.sol_amount)
         slippage = float(settings_obj.slippage_percent)
         priorityFee = float(settings_obj.priority_fee_sol)
-        need_to_buy = await checker(session, uri, creator)
+        need_to_buy = await checker(session, uri, creator,mint)
 
         if need_to_buy:
             # Отправка транзакции — блокирующий код, выполняем в отдельном потоке

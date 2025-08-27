@@ -236,7 +236,7 @@ async def send_telegram_message(token_address, dev_address, twitter_name, user_a
 
 
 
-async def check_twitter_whitelist(twitter_name, creator):
+async def check_twitter_whitelist(twitter_name, creator,mint):
 
     try:
         # Получаем настройки и объекты одним запросом
@@ -327,7 +327,7 @@ async def process_live(data):
             return
 
         results = await asyncio.gather(
-            check_twitter_whitelist(twitter, user),
+            check_twitter_whitelist(twitter, user,mint),
             get_user_dev_data(user, mint),
             get_twitter_data(twitter, mint),
         )
