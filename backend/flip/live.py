@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 from django.utils import timezone
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from mainapp.models import UserDev, Token, Twitter, Settings
 from asgiref.sync import sync_to_async

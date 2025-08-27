@@ -19,7 +19,7 @@ import base58
 import time
 import uvloop
 from base58 import b58encode, b58decode
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
