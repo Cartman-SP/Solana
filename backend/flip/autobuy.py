@@ -287,7 +287,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         # Получаем настройки и объекты одним запросом
         settings_obj, twitter_obj = await asyncio.gather(
             sync_to_async(Settings.objects.first)(),
-            sync_to_async(Twitter.objects.get)(name="@{twitter_name}"),
+            sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}"),
         )
         
         if not settings_obj.start:
