@@ -254,12 +254,6 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         if settings_obj.whitelist_enabled and twitter_obj.whitelist:
             return True
         
-        # Проверяем время последнего автобая (блокировка на 1 час)
-        time_since_last_autobuy = timezone.now() - twitter_obj.last_autobuy_time
-        if time_since_last_autobuy < timedelta(hours=1):
-            print(f"Автобай заблокирован на 1 час. Последний автобай: {twitter_obj.last_autobuy_time}")
-            return False
-        
         # Получаем статистику за один запрос
         recent_tokens = await sync_to_async(
             lambda: list(
@@ -277,7 +271,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
             newest_token = recent_tokens[0]  # Первый токен в списке (самый свежий)
             time_diff = timezone.now() - newest_token.created_at
             
-            if time_diff < timedelta(hours=3):
+            if time_diff < timedelta(hours=1):
                 print(f"Токен слишком старый: {newest_token.created_at}")
                 return False
         
@@ -322,15 +316,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
               f"Total Trans: {avg_total_trans} > {settings_obj.total_trans_from}\n"
               f"Total Fees: {avg_total_fees} > {settings_obj.total_fees_from}\n"
               f"Всего токенов: {total_tokens}")
-        
-        # Обновляем время последнего автобая при успешной проверке
-        try:
-            twitter_obj.last_autobuy_time = timezone.now()
-            await sync_to_async(twitter_obj.save)()
-            print(f"Обновлено время последнего автобая для {twitter_name}")
-        except Exception as e:
-            print(f"Ошибка обновления времени автобая: {e}")
-        
+                
         return True
         
     except Exception as e:
