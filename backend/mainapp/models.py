@@ -19,6 +19,9 @@ class UserDev(models.Model):
 
     def __str__(self):
         return self.adress
+        
+def default_last_autobuy_time():
+    return timezone.now() - timedelta(minutes=60)
 
 class Twitter(models.Model):
     name = models.CharField(max_length=255)
@@ -28,7 +31,7 @@ class Twitter(models.Model):
     ath = models.IntegerField(default=0)
     total_trans = models.IntegerField(default=0)
     total_fees = models.FloatField(default=0)
-    last_autobuy_time = models.DateTimeField(default=lambda: timezone.now() - timedelta(minutes=60))
+    last_autobuy_time = models.DateTimeField(default=default_last_autobuy_time)
     def __str__(self):
         return self.name
 

@@ -115,18 +115,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydjangodb',
-        'USER': 'djangouser',
-        'PASSWORD': 'securepass123!',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'OPTIONS': {
-            'options': '-c search_path=djangoschema,public'  # Или только public
-        },
-        # Настройки для управления соединениями:
-        'CONN_MAX_AGE': 0,  # Закрывать соединения после каждого запроса
-        'CONN_HEALTH_CHECKS': True,  # Проверять здоровье соединений
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 # Password validation
