@@ -22,6 +22,8 @@ class UserDev(models.Model):
         return self.adress
 
 def default_last_autobuy_time():
+    from django.utils import timezone
+    from datetime import timedelta
     return timezone.now() - timedelta(minutes=60)
 
 class Twitter(models.Model):
