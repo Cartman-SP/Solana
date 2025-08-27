@@ -279,55 +279,78 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
-async def check_twitter_whitelist(twitter_name,creator):
+async def check_twitter_whitelist(twitter_name, creator):
+
     try:
-        print(twitter_name)
-        settings_obj = await sync_to_async(Settings.objects.first)()
-        if not(settings_obj.start):
+        # Получаем настройки и объекты одним запросом
+        settings_obj, twitter_obj, dev = await asyncio.gather(
+            sync_to_async(Settings.objects.first)(),
+            sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}"),
+            sync_to_async(UserDev.objects.get)(adress=creator)
+        )
+        
+        if not settings_obj.start:
             return False
-        twitter_obj = await sync_to_async(Twitter.objects.get)(name=f"@{twitter_name}",)
-        total_tokens = 1
-        try:
-            dev = await sync_to_async(UserDev.objects.get)(adress=creator)
-            total_tokens = dev.total_tokens
-        except:
-            pass
-
-        if(settings_obj.whitelist_enabled and twitter_obj.whitelist):
+        
+        # Проверяем вайтлист в первую очередь
+        if settings_obj.whitelist_enabled and twitter_obj.whitelist:
             return True
-        if(settings_obj.one_token_enabled and total_tokens>1):
-            print("total_tokens > 1", total_tokens)
-            return False
-        if(twitter_obj.ath<settings_obj.ath_from):
-            print("ATH не подходят:",twitter_obj.ath,'<',settings_obj.ath_from)
-            return False
-        if(twitter_obj.total_trans < settings_obj.total_trans_from):
-            print("тотал транс не подходят:",twitter_obj.total_trans,'<',settings_obj.total_trans_from)
-            return False
-        if(twitter_obj.total_fees < settings_obj.total_fees_from):
-            print("тотал фис не подходят:",twitter_obj.total_fees,'<',settings_obj.total_fees_from)
-            return False
-        try:
-            last_tokens = await sync_to_async(lambda: list(
-                Token.objects.filter(twitter=twitter_obj, processed=True)
-                .order_by('-created_at')[:3]
-            ))()
-        except Exception as e:
-            last_tokens = await sync_to_async(lambda: list(
-                Token.objects.filter(twitter=twitter_obj, processed=True)
+        
+        # Получаем статистику за один запрос
+        recent_tokens = await sync_to_async(
+            lambda: list(
+                Token.objects.filter(
+                    twitter=twitter_obj,
+                    processed=True
+                ).exclude(address=mint)
                 .order_by('-created_at')
-            ))()
-
-
-        for token in last_tokens:
-            if token.total_trans < settings_obj.median:
-                print("Один из токенов не подходит по тотал транс",token.address)
-                return False
-        print(f"\nАТХ:{twitter_obj.ath} > {settings_obj.ath_from}\n Total Trans:{twitter_obj.total_trans} > {settings_obj.total_trans_from}\nTotal Fees:{twitter_obj.total_fees} > {settings_obj.total_fees_from} \n")
+                .only('ath', 'total_trans', 'total_fees')[:3]
+            )
+        )()
+        
+        # Рассчитываем средние значения
+        if recent_tokens:
+            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
+            avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens)
+            avg_total_fees = sum(token.total_fees for token in recent_tokens) / len(recent_tokens)
+            check_median = all(token.total_trans >= settings_obj.median for token in recent_tokens)
+        else:
+            avg_ath = avg_total_trans = avg_total_fees = 0
+            check_median = False
+        
+        # Проверяем количество токенов разработчика
+        total_tokens = await sync_to_async(
+            lambda: Token.objects.filter(dev=dev).count()
+        )()
+        
+        # Проверяем все условия
+        if not check_median:
+            return False
+        
+        if settings_obj.one_token_enabled and total_tokens > 1:
+            return False
+        
+        if avg_ath < settings_obj.ath_from:
+            print(f"ATH не подходят: {avg_ath} < {settings_obj.ath_from}")
+            return False
+        
+        if avg_total_trans < settings_obj.total_trans_from:
+            print(f"Тотал транс не подходят: {avg_total_trans} < {settings_obj.total_trans_from}")
+            return False
+        
+        if avg_total_fees < settings_obj.total_fees_from:
+            print(f"Тотал фис не подходят: {avg_total_fees} < {settings_obj.total_fees_from}")
+            return False
+        
+        print(f"\nАТХ: {avg_ath} > {settings_obj.ath_from}\n"
+              f"Total Trans: {avg_total_trans} > {settings_obj.total_trans_from}\n"
+              f"Total Fees: {avg_total_fees} > {settings_obj.total_fees_from}\n"
+              f"Всего токенов: {total_tokens}")
+        
         return True
+        
     except Exception as e:
-        print(e)
-        print("Ошибка")
+        print(f"Ошибка: {e}")
         return False
 
 async def checker(session, uri,creator):
