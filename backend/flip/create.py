@@ -12,6 +12,7 @@ django.setup()
 
 from mainapp.models import UserDev, Token, Twitter
 from asgiref.sync import sync_to_async
+from datetime import datetime, timezone, timedelta
 
 async def process_create(data):
     """Создает UserDev и Token из полученных данных"""
