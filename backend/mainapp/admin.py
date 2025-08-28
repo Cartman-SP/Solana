@@ -38,7 +38,7 @@ class UserDevAdmin(admin.ModelAdmin):
 class TokenAdmin(admin.ModelAdmin):
     list_display = ('address', 'dev', 'twitter','bonding_curve', 'ath', 'total_trans','migrated', 'created_at', 'processed','total_fees')
     list_filter = ('migrated', 'created_at', 'processed')
-    search_fields = ('address', 'dev__adress')
+    search_fields = ('address', 'dev__adress','twitter__name')
     ordering = ('-created_at', 'address')
     list_per_page = 50
     date_hierarchy = 'created_at'
