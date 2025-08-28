@@ -355,6 +355,7 @@ async def process_message(msg, session):
             print(meta)
             if meta:
                 community_url, community_id, _ = find_community_anywhere_with_src(meta)
+                print(community_id)
                 if community_id:
                     twitter_name = await get_creator_username(session, community_id)
                     if twitter_name:

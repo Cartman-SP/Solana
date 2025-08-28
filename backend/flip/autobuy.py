@@ -73,9 +73,9 @@ async def buy(api_private, mint, ammonut_to_buy, slippage, priorityFee):
                 data=payload,
                 timeout=timeout
             ) as response:
-                print(payload)
+    print(payload)
                 data = await response.json()
-                print(data)       # Tx signature or error(s)
+    print(data)       # Tx signature or error(s)
                 return data
         except Exception as e:
             print(f"Error buying {mint}: {e}")
@@ -630,9 +630,9 @@ async def checker(session, uri,creator,mint):
             twitter_name = await get_creator_username(session, community_id)
             print(twitter_name)
             if twitter_name:
-                check = await check_twitter_whitelist(twitter_name,creator,mint)
-                print(check)
-                return check
+            check = await check_twitter_whitelist(twitter_name,creator,mint)
+            print(check)
+            return check
         return False
             
 
@@ -680,29 +680,29 @@ async def main_loop():
     )
     
     try:
-        while True:
-            try:
-                async with websockets.connect(
-                    WS_URL,
-                    ping_interval=30,
-                    max_size=2**20,
-                    compression=None
-                ) as ws:
-                    await ws.send(LOGS_SUB_JSON)
-                    await ws.recv()
-                    async for raw in ws:
-                        try:
-                            msg = json.loads(raw)
-                            if msg.get("method") == "logsNotification":
-                                await process_message(msg, session)
-                        except Exception as e:
+    while True:
+        try:
+            async with websockets.connect(
+                WS_URL,
+                ping_interval=30,
+                max_size=2**20,
+                compression=None
+            ) as ws:
+                await ws.send(LOGS_SUB_JSON)
+                await ws.recv()
+                async for raw in ws:
+                    try:
+                        msg = json.loads(raw)
+                        if msg.get("method") == "logsNotification":
+                            await process_message(msg, session)
+                    except Exception as e:
                             print(f"Error processing message: {e}")
-                            continue
-            except Exception as e:
+                        continue
+        except Exception as e:
                 print(f"WebSocket error: {e}")
-                await asyncio.sleep(0.1)
-    finally:
-        await session.close()
+            await asyncio.sleep(0.1)
+        finally:
+            await session.close()
 
 if __name__ == "__main__":
     asyncio.run(main_loop())
