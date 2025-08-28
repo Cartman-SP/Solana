@@ -24,6 +24,7 @@ async def process_create(data):
         name = data.get('name', '')
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
+        community_id = data.get('community_id', '')
         twitter_name = data.get('twitter_name','')
         bonding_curve = data.get('bonding_curve','')
         token_created = False
@@ -55,6 +56,7 @@ async def process_create(data):
                         'total_trans': 0,
                         'total_fees': 0.0,
                         'bonding_curve': bonding_curve or "",
+                        'community_id': community_id or "",
                     }
                 )
         else:
@@ -67,6 +69,7 @@ async def process_create(data):
                         'total_trans': 0,
                         'total_fees': 0.0,
                         'bonding_curve': bonding_curve or "",
+                        'community_id': community_id or "",
                     }
                 )
 

@@ -49,7 +49,7 @@ class Token(models.Model):
     total_trans = models.IntegerField(default=0)
     total_fees = models.FloatField(default=0)
     bonding_curve = models.CharField(max_length=255,default="",null=True, blank=True)
-    
+    community_id = models.CharField(max_length=255,default="",null=True, blank=True)
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)

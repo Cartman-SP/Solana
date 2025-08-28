@@ -375,6 +375,7 @@ async def process_message(msg, session):
             'symbol': symbol,
             'twitter_name': twitter_name,
             'bonding_curve':bonding_curve,
+            'community_id': community_id,
         }
         create_live_task = asyncio.create_task(process_live(data))
         create_create_task = asyncio.create_task(process_create(data))
