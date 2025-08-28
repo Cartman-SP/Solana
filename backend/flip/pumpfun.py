@@ -284,14 +284,10 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         return None
         
     try:
-        while True:
-            try:
-                async with session.get(uri, timeout=aiohttp.ClientTimeout(total=1)) as r:
-                    data = await r.json()
-                    if(data):
-                        return data
-            except Exception:
-                await asyncio.sleep(0.5)
+        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=1)) as r:
+            data = await r.json()
+            print(r.text, r.status)
+            return data
     except Exception:
         return None
 

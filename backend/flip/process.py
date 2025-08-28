@@ -340,6 +340,13 @@ def get_token_fees(pair_address: str):
         print(f"Ошибка при получении fees для {pair_address}: {e}")
         return 0.0
 
+
+
+async def get_token_data_from(mint):
+    
+
+
+
 async def process_token_ath(token, session: aiohttp.ClientSession):
     """Обрабатывает ATH для одного токена"""
     try:
@@ -354,7 +361,6 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
         
         # Обновляем токен только если не было ошибок API
         await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
-        await sync_to_async(lambda: setattr(token, 'migrated', is_migrated))()
         await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
         await sync_to_async(lambda: setattr(token, 'processed', True))()
         await sync_to_async(lambda: setattr(token, 'total_fees', float(fees)))()
