@@ -544,6 +544,52 @@ async def fetch_meta_hybrid(session: aiohttp.ClientSession, uri: str) -> dict | 
     
     return None
 
+
+async def fetch_meta_with_extended_retry(session: aiohttp.ClientSession, uri: str, max_time: int = 20) -> dict | None:
+    """Загрузка метаданных с расширенными попытками до указанного времени"""
+    if not uri:
+        return None
+    
+    start_time = time.time()
+    
+    async def single_request(timeout_val=0.5):
+        try:
+            timeout = aiohttp.ClientTimeout(total=timeout_val, connect=0.1)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    return await response.json()
+        except:
+            pass
+        return None
+    
+    # Пробуем разные стратегии в течение max_time секунд
+    while time.time() - start_time < max_time:
+        remaining_time = max_time - (time.time() - start_time)
+        
+        # Если осталось мало времени, увеличиваем таймауты
+        if remaining_time < 5:
+            timeout_val = min(remaining_time - 0.5, 2.0)
+        else:
+            timeout_val = 0.5
+        
+        try:
+            # Пробуем несколько параллельных запросов
+            tasks = [single_request(timeout_val) for _ in range(3)]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for result in results:
+                if isinstance(result, dict):
+                    return result
+            
+            # Если не получилось, ждем немного и пробуем еще раз
+            await asyncio.sleep(0.5)
+            
+        except Exception:
+            await asyncio.sleep(0.5)
+            continue
+    
+    return None
+
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
     """Ищет community ID в метаданных"""
     # Проверяем основные поля
@@ -616,19 +662,48 @@ async def process_message(msg, session):
 
         if twitter_name:
             twitter_name=f"@{twitter_name}"
-        data = {
+        
+        # Базовые данные для live (отправляем сразу)
+        live_data = {
             'source': 'pumpfun',
             'mint': mint,
             'user': creator,
             'name': name,
             'symbol': symbol,
             'twitter_name': twitter_name,
-            'bonding_curve':bonding_curve,
+            'bonding_curve': bonding_curve,
             'community_id': community_id,
         }
-        # Создаем задачи для параллельного выполнения, но не ждем их завершения
-        create_live_task = asyncio.create_task(process_live(data))
-        create_create_task = asyncio.create_task(process_create(data))
+        
+        # Запускаем live сразу
+        live_task = asyncio.create_task(process_live(live_data))
+        
+        # Если метаданные не найдены, пробуем получить их в течение 20 секунд
+        if not meta and uri:
+            print(f"Starting 20-second metadata fetch for {name} ({mint})")
+            meta = await fetch_meta_with_extended_retry(session, uri, max_time=20)
+            if meta:
+                community_url, community_id, _ = find_community_anywhere_with_src(meta)
+                if community_id:
+                    twitter_name = await get_creator_username(session, community_id)
+                    if twitter_name:
+                        twitter_name = f"@{twitter_name}"
+                print(f"Successfully found metadata for {name} after extended retry")
+        
+        # Обновленные данные для create (с полученными метаданными)
+        create_data = {
+            'source': 'pumpfun',
+            'mint': mint,
+            'user': creator,
+            'name': name,
+            'symbol': symbol,
+            'twitter_name': twitter_name,
+            'bonding_curve': bonding_curve,
+            'community_id': community_id,
+        }
+        
+        # Запускаем create с обновленными данными
+        create_task = asyncio.create_task(process_create(create_data))
         
         # Не ждем завершения задач, чтобы не блокировать обработку следующих сообщений
         print(f"Started processing tasks for {name} ({mint})")
