@@ -283,7 +283,6 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
     if not uri:
         return None
     data = requests.get(uri)
-    print(data.text)
     return data.json()
 
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:

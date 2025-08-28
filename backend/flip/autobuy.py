@@ -237,14 +237,8 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
     """Загружает метаданные с URI"""
     if not uri:
         return None
-        
-    try:
-        # Пробуем только один раз с коротким таймаутом
-        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
-            data = await r.json()
-            return data
-    except Exception:
-        return None
+    data = requests.get(uri)
+    return data.json()
 
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
     """Ищет community ID в метаданных"""
