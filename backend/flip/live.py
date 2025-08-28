@@ -291,7 +291,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
         if recent_tokens and not any(token.migrated for token in recent_tokens):
             print(f"Нет токенов с migrated = True для {twitter_name}")
             return False
-        
+
 
 
         # Проверяем возраст самого свежего токена
@@ -355,7 +355,7 @@ async def process_live(data):
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
         community_id = data.get('community_id', '')
-
+        print('\n-------------------------------------------------\n',twitter,'\n-------------------------------------------------\n')
         if not(twitter) or twitter == "@" or twitter=="@None":
             return
 
