@@ -354,6 +354,8 @@ async def process_message(msg, session):
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
             
+        else:
+            print(f"\n--------------------------------\nNo meta found for {name}, {mint}\n--------------------------------\n")
 
         twitter_name = ""
         if community_id:
