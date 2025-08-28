@@ -335,7 +335,7 @@ async def process_message(msg, session):
         community_id = None
         twitter_name = ""
         meta_found_quickly = False
-        
+        followers = 0
         if uri:
             try:
                 # Быстрая попытка получить метаданные
@@ -343,7 +343,7 @@ async def process_message(msg, session):
                 if meta:
                     community_url, community_id, _ = find_community_anywhere_with_src(meta)
                     if community_id:
-                        twitter_name = await get_creator_username(session, community_id)
+                        twitter_name,followers = await get_creator_username(session, community_id)
                         if twitter_name:
                             twitter_name = f"@{twitter_name}"
                     meta_found_quickly = True
@@ -363,6 +363,7 @@ async def process_message(msg, session):
             'twitter_name': twitter_name if meta_found_quickly else "",
             'bonding_curve': bonding_curve,
             'community_id': community_id if meta_found_quickly else None,
+            'twitter_followers': followers
         }
         
         # Запускаем live
