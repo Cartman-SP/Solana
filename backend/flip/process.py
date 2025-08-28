@@ -342,8 +342,36 @@ def get_token_fees(pair_address: str):
 
 
 
-async def get_token_data_from(mint):
+TRACKER_BASE_URL = "https://data.solanatracker.io"
+TRACKER_API_KEY = "37d8f458-170e-4bb7-9bba-0b2a685cc4c0"
+
+async def get_token_info(tokenAddress: str):
+    url = f"{TRACKER_BASE_URL}/tokens/{tokenAddress}"
+    headers = {
+        "x-api-key": TRACKER_API_KEY
+    }
+    response = requests.get(url, headers=headers)
+    print(response.text)
+    data = response.json()
     
+    # Получаем tokenSupply из первого пула
+    if data.get("pools") and len(data["pools"]) > 0:
+        supply = data["pools"][0]["tokenSupply"]
+    else:
+        print("No pools found")
+        return None, None
+    
+    # Получаем общее количество транзакций
+    total_trans = data.get("txns", 0)
+    # Получаем ATH цену
+    ath_response = requests.get(f"{TRACKER_BASE_URL}/tokens/{tokenAddress}/ath",headers=headers)
+    ath_data = ath_response.json()
+    price = ath_data.get('highest_price')
+    # Вычисляем ATH в долларах
+    ath = price * supply
+
+    
+    return ath, total_trans
 
 
 
@@ -357,7 +385,7 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
             if fees is None:
                 fees = 0.0
         
-        ath_result, is_migrated, total_trans = await process_token_complete(token.address, session)
+        ath_result, total_trans = total_trans(token.address)
         
         # Обновляем токен только если не было ошибок API
         await sync_to_async(lambda: setattr(token, 'ath', ath_result))()

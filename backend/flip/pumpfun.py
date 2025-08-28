@@ -114,7 +114,7 @@ def send_tx(encodedSignedTransactions, txSignatures):
                    
 async def _tw_get(session, path, params):
     """Быстрый запрос к Twitter API"""
-    to = aiohttp.ClientTimeout(total=0.8)  # Уменьшаем timeout для скорости
+    to = aiohttp.ClientTimeout(total=0.5, connect=0.1)  # Еще более короткий timeout
     async with session.get(f"{TW_BASE}{path}", headers=TW_HEADERS, params=params, timeout=to) as r:
         r.raise_for_status()
         return await r.json()
@@ -180,8 +180,12 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
         task1 = asyncio.create_task(_get_creator_from_info(session, community_id))
         task2 = asyncio.create_task(_get_first_member_via_members(session, community_id))
         
-        # Ждем первый успешный результат
-        done, pending = await asyncio.wait([task1, task2], return_when=asyncio.FIRST_COMPLETED)
+        # Ждем первый успешный результат с таймаутом
+        done, pending = await asyncio.wait(
+            [task1, task2], 
+            return_when=asyncio.FIRST_COMPLETED,
+            timeout=0.5  # Таймаут 0.5 секунды
+        )
         
         # Отменяем оставшиеся задачи
         for task in pending:
@@ -196,6 +200,10 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
             except:
                 continue
                 
+    except asyncio.TimeoutError:
+        # Если таймаут, отменяем все задачи
+        task1.cancel()
+        task2.cancel()
     except:
         pass
     
@@ -278,12 +286,146 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     match = COMMUNITY_ID_RE.search(uri)
     return match.group(1) if match else None
 
-async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
-    """Загружает метаданные с URI"""
+async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str, max_retries: int = 3) -> dict | None:
+    """Загружает метаданные с URI с повторными попытками"""
     if not uri:
         return None
-    data = requests.get(uri)
-    return data.json()
+    
+    for attempt in range(max_retries):
+        try:
+            # Уменьшаем таймаут для быстрого получения данных
+            timeout = aiohttp.ClientTimeout(total=0.5, connect=0.2)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data
+                elif response.status == 404:
+                    # Если 404, возможно данные еще не готовы, пробуем еще раз
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(0.1)  # Минимальная задержка
+                        continue
+                else:
+                    print(f"HTTP {response.status} for {uri}")
+                    
+        except asyncio.TimeoutError:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(0.05)  # Очень короткая задержка при таймауте
+                continue
+            print(f"Timeout after {max_retries} attempts for {uri}")
+        except aiohttp.ClientError as e:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(0.05)
+                continue
+            print(f"Client error for {uri}: {e}")
+        except Exception as e:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(0.05)
+                continue
+            print(f"Unexpected error for {uri}: {e}")
+    
+    return None
+
+
+async def fetch_meta_aggressive(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Агрессивная загрузка метаданных с максимальной скоростью"""
+    if not uri:
+        return None
+    
+    # Пробуем до 5 раз с очень короткими интервалами
+    for attempt in range(5):
+        try:
+            # Очень короткий таймаут для максимальной скорости
+            timeout = aiohttp.ClientTimeout(total=0.3, connect=0.1)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data
+                elif response.status == 404:
+                    # При 404 сразу пробуем еще раз без задержки
+                    continue
+                else:
+                    # Для других ошибок небольшая задержка
+                    if attempt < 4:
+                        await asyncio.sleep(0.02)
+                        continue
+                    
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            # При любых сетевых ошибках сразу пробуем еще раз
+            if attempt < 4:
+                continue
+        except Exception:
+            # При других ошибках минимальная задержка
+            if attempt < 4:
+                await asyncio.sleep(0.01)
+                continue
+    
+    return None
+
+
+async def fetch_meta_parallel(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Параллельная загрузка метаданных с несколькими одновременными запросами"""
+    if not uri:
+        return None
+    
+    async def single_request():
+        try:
+            timeout = aiohttp.ClientTimeout(total=0.2, connect=0.1)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    return await response.json()
+        except:
+            pass
+        return None
+    
+    # Запускаем 3 параллельных запроса
+    tasks = [single_request() for _ in range(3)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Возвращаем первый успешный результат
+    for result in results:
+        if isinstance(result, dict):
+            return result
+    
+    return None
+
+
+async def fetch_meta_ultra_fast(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Ультра-быстрая загрузка метаданных с максимальной агрессивностью"""
+    if not uri:
+        return None
+    
+    # Первая волна: 5 параллельных запросов
+    async def single_request():
+        try:
+            timeout = aiohttp.ClientTimeout(total=0.15, connect=0.05)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    return await response.json()
+        except:
+            pass
+        return None
+    
+    # Запускаем 5 параллельных запросов
+    tasks = [single_request() for _ in range(5)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Проверяем результаты
+    for result in results:
+        if isinstance(result, dict):
+            return result
+    
+    # Если первая волна не удалась, пробуем еще раз с небольшой задержкой
+    await asyncio.sleep(0.01)
+    
+    # Вторая волна: еще 3 запроса
+    tasks2 = [single_request() for _ in range(3)]
+    results2 = await asyncio.gather(*tasks2, return_exceptions=True)
+    
+    for result in results2:
+        if isinstance(result, dict):
+            return result
+    
+    return None
 
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
     """Ищет community ID в метаданных"""
@@ -344,7 +486,7 @@ async def process_message(msg, session):
         
 
         community_id = None
-        meta = await fetch_meta_with_retries(session, uri)
+        meta = await fetch_meta_ultra_fast(session, uri)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
             
@@ -367,15 +509,14 @@ async def process_message(msg, session):
             'bonding_curve':bonding_curve,
             'community_id': community_id,
         }
+        # Создаем задачи для параллельного выполнения, но не ждем их завершения
         create_live_task = asyncio.create_task(process_live(data))
         create_create_task = asyncio.create_task(process_create(data))
         
-        result = await asyncio.gather(
-            create_live_task, 
-            create_create_task,
-        )
+        # Не ждем завершения задач, чтобы не блокировать обработку следующих сообщений
+        print(f"Started processing tasks for {name} ({mint})")
     except Exception as e:
-        print(e)
+        print(f"Error in process_message: {e}")
         pass
         
 
@@ -404,10 +545,10 @@ async def main_loop():
                             if msg.get("method") == "logsNotification":
                                 await process_message(msg, session)
                         except Exception as e:
-                            print(e)
+                            print(f"Error processing message: {e}")
                             continue
             except Exception as e:
-                print(e)
+                print(f"WebSocket error: {e}")
                 await asyncio.sleep(0.1)
     finally:
         await session.close()
