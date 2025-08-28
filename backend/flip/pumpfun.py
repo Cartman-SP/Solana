@@ -352,7 +352,6 @@ async def process_message(msg, session):
         
         if uri:
             meta = await fetch_meta_simple(session, uri)
-            print(meta)
             if meta:
                 community_url, community_id, _ = find_community_anywhere_with_src(meta)
                 print(community_id)
