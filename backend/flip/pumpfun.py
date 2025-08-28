@@ -427,6 +427,123 @@ async def fetch_meta_ultra_fast(session: aiohttp.ClientSession, uri: str) -> dic
     
     return None
 
+
+async def fetch_meta_super_aggressive(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Супер-агрессивная загрузка метаданных с множественными волнами"""
+    if not uri:
+        return None
+    
+    async def single_request(timeout_val=0.1):
+        try:
+            timeout = aiohttp.ClientTimeout(total=timeout_val, connect=0.05)
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    return await response.json()
+        except:
+            pass
+        return None
+    
+    # Волна 1: 8 параллельных запросов (очень быстро)
+    tasks1 = [single_request(0.1) for _ in range(8)]
+    results1 = await asyncio.gather(*tasks1, return_exceptions=True)
+    
+    for result in results1:
+        if isinstance(result, dict):
+            return result
+    
+    # Волна 2: 5 запросов с небольшой задержкой
+    await asyncio.sleep(0.02)
+    tasks2 = [single_request(0.15) for _ in range(5)]
+    results2 = await asyncio.gather(*tasks2, return_exceptions=True)
+    
+    for result in results2:
+        if isinstance(result, dict):
+            return result
+    
+    # Волна 3: 3 запроса с большей задержкой
+    await asyncio.sleep(0.05)
+    tasks3 = [single_request(0.2) for _ in range(3)]
+    results3 = await asyncio.gather(*tasks3, return_exceptions=True)
+    
+    for result in results3:
+        if isinstance(result, dict):
+            return result
+    
+    # Волна 4: 2 запроса с еще большей задержкой
+    await asyncio.sleep(0.1)
+    tasks4 = [single_request(0.3) for _ in range(2)]
+    results4 = await asyncio.gather(*tasks4, return_exceptions=True)
+    
+    for result in results4:
+        if isinstance(result, dict):
+            return result
+    
+    return None
+
+
+async def fetch_meta_with_persistent_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Загрузка метаданных с постоянными повторными попытками"""
+    if not uri:
+        return None
+    
+    # Пробуем до 10 раз с увеличивающимися интервалами
+    for attempt in range(10):
+        try:
+            # Увеличиваем таймаут с каждой попыткой
+            timeout_val = min(0.1 + (attempt * 0.05), 0.5)
+            timeout = aiohttp.ClientTimeout(total=timeout_val, connect=0.05)
+            
+            async with session.get(uri, timeout=timeout) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data
+                elif response.status == 404:
+                    # При 404 пробуем еще раз с увеличивающейся задержкой
+                    if attempt < 9:
+                        await asyncio.sleep(0.02 * (attempt + 1))
+                        continue
+                else:
+                    # Для других ошибок небольшая задержка
+                    if attempt < 9:
+                        await asyncio.sleep(0.01)
+                        continue
+                    
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            # При сетевых ошибках пробуем еще раз
+            if attempt < 9:
+                await asyncio.sleep(0.01)
+                continue
+        except Exception:
+            # При других ошибках минимальная задержка
+            if attempt < 9:
+                await asyncio.sleep(0.01)
+                continue
+    
+    return None
+
+
+async def fetch_meta_hybrid(session: aiohttp.ClientSession, uri: str) -> dict | None:
+    """Гибридная загрузка метаданных с несколькими стратегиями"""
+    if not uri:
+        return None
+    
+    # Стратегия 1: Супер-агрессивная параллельная загрузка
+    result = await fetch_meta_super_aggressive(session, uri)
+    if result:
+        return result
+    
+    # Стратегия 2: Если не получилось, пробуем с постоянными попытками
+    result = await fetch_meta_with_persistent_retries(session, uri)
+    if result:
+        return result
+    
+    # Стратегия 3: Последняя попытка - обычная агрессивная загрузка
+    result = await fetch_meta_aggressive(session, uri)
+    if result:
+        return result
+    
+    return None
+
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
     """Ищет community ID в метаданных"""
     # Проверяем основные поля
@@ -486,7 +603,7 @@ async def process_message(msg, session):
         
 
         community_id = None
-        meta = await fetch_meta_ultra_fast(session, uri)
+        meta = await fetch_meta_hybrid(session, uri)
         if meta:
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
             
