@@ -387,7 +387,7 @@ async def process_message(msg, session):
 async def main_loop():
     """Основной цикл обработки"""
     session = aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
+        connector=aiohttp.TCPConnector(limit=100000, ttl_dns_cache=300000),
         headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
         timeout=aiohttp.ClientTimeout(total=1)
     )
