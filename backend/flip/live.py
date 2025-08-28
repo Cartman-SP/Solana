@@ -238,7 +238,7 @@ async def send_telegram_message(token_address, dev_address, twitter_name, user_a
 
 
 
-async def check_twitter_whitelist(twitter_name, creator,mint):
+async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
 
     try:
         # Получаем настройки и объекты одним запросом
@@ -258,12 +258,22 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
         except:
             pass
 
-        if settings_obj.one_token_enabled and total_tokens > 0:
+        if total_tokens > settings_obj.dev_tokens:
             return False
         if twitter_obj.blacklist:
             return False
         if settings_obj.whitelist_enabled and twitter_obj.whitelist:
             return True
+        same_tokens = 0    
+        try:
+            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
+        except Exception as e:
+            same_tokens = 0
+        
+        if(same_tokens>0):
+            return False
+
+
 
         print(twitter_name)
         recent_tokens = await sync_to_async(
@@ -273,16 +283,23 @@ async def check_twitter_whitelist(twitter_name, creator,mint):
                     processed=True
                 ).exclude(address=mint)
                 .order_by('-created_at')
-                .only('ath', 'total_trans', 'total_fees', 'created_at')[:3]
+                .only('ath', 'total_trans', 'total_fees', 'created_at','migrated')[:3]
             )
         )()
         
+        # Проверяем, есть ли хотя бы один токен с migrated = True
+        if recent_tokens and not any(token.migrated for token in recent_tokens):
+            print(f"Нет токенов с migrated = True для {twitter_name}")
+            return False
+        
+
+
         # Проверяем возраст самого свежего токена
         if recent_tokens:
             newest_token = recent_tokens[0]  # Первый токен в списке (самый свежий)
             time_diff = timezone.now() - newest_token.created_at
             
-            if time_diff < timedelta(hours=1):
+            if time_diff < timedelta(minutes=30):
                 print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
                 return False
         
@@ -337,11 +354,13 @@ async def process_live(data):
         symbol = data.get('symbol', '')
         twitter = data.get('twitter_name','')
         twitter_followers = data.get('twitter_followers','')
+        community_id = data.get('community_id', '')
+
         if not(twitter) or twitter == "@" or twitter=="@None":
             return
 
         results = await asyncio.gather(
-            check_twitter_whitelist(twitter, user,mint),
+            check_twitter_whitelist(twitter, user,mint,community_id),
             get_user_dev_data(user, mint),
             get_twitter_data(twitter, mint),
         )

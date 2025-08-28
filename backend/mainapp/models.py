@@ -62,3 +62,4 @@ class Settings(models.Model):
     total_trans_from = models.IntegerField(default=0)
     total_fees_from = models.FloatField(default=0)
     median = models.IntegerField(default=0)
+    dev_tokens = models.IntegerField(default=0)

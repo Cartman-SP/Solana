@@ -100,6 +100,9 @@ class SettingsManager {
                     if (document.getElementById('auto-buy-median')) {
                         document.getElementById('auto-buy-median').value = s.median || 0;
                     }
+                    if (document.getElementById('auto-buy-dev-tokens')) {
+                        document.getElementById('auto-buy-dev-tokens').value = s.dev_tokens || 0;
+                    }
                     document.getElementById('auto-buy-buyer-pubkey').value = s.buyer_pubkey;
                     document.getElementById('auto-buy-sol-amount').value = s.sol_amount;
                     document.getElementById('auto-buy-slippage').value = s.slippage_percent;
@@ -153,6 +156,7 @@ class SettingsManager {
             total_trans_from: parseInt((document.getElementById('auto-buy-total-trans-from') || { value: 0 }).value) || 0,
             total_fees_from: parseFloat((document.getElementById('auto-buy-total-fees-from') || { value: 0 }).value) || 0,
             median: parseInt((document.getElementById('auto-buy-median') || { value: 0 }).value) || 0,
+            dev_tokens: parseInt((document.getElementById('auto-buy-dev-tokens') || { value: 0 }).value) || 0,
             buyer_pubkey: document.getElementById('auto-buy-buyer-pubkey').value,
             sol_amount: document.getElementById('auto-buy-sol-amount').value,
             slippage_percent: document.getElementById('auto-buy-slippage').value,

@@ -493,6 +493,7 @@ def dashboard_stats(request):
                 'total_trans_from': getattr(settings_obj, 'total_trans_from', 0),
                 'total_fees_from': getattr(settings_obj, 'total_fees_from', 0),
                 'median': getattr(settings_obj, 'median', 0),
+                'dev_tokens': getattr(settings_obj, 'dev_tokens', 0),
             }
 
         return JsonResponse({
@@ -689,6 +690,8 @@ def get_auto_buy_settings(request):
             'ath_from': settings.ath_from,
             'total_trans_from': getattr(settings, 'total_trans_from', 0),
             'total_fees_from': getattr(settings, 'total_fees_from', 0),
+            'median': getattr(settings, 'median', 0),
+            'dev_tokens': getattr(settings, 'dev_tokens', 0),
             'buyer_pubkey': settings.buyer_pubkey,
             'sol_amount': str(settings.sol_amount),
             'slippage_percent': str(settings.slippage_percent),
@@ -723,6 +726,7 @@ def update_auto_buy_settings(request):
         settings.total_trans_from = data.get('total_trans_from', getattr(settings, 'total_trans_from', 0))
         settings.total_fees_from = data.get('total_fees_from', getattr(settings, 'total_fees_from', 0))
         settings.median = data.get('median', getattr(settings, 'median', 0))
+        settings.dev_tokens = data.get('dev_tokens', getattr(settings, 'dev_tokens', 0))
         settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
         settings.sol_amount = data.get('sol_amount', settings.sol_amount)
         settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
@@ -763,6 +767,7 @@ def auto_buy_settings(request):
                 'total_trans_from': getattr(settings, 'total_trans_from', 0),
                 'total_fees_from': getattr(settings, 'total_fees_from', 0),
                 'median': getattr(settings, 'median', 0),
+                'dev_tokens': getattr(settings, 'dev_tokens', 0),
                 'buyer_pubkey': settings.buyer_pubkey,
                 'sol_amount': str(settings.sol_amount),
                 'slippage_percent': str(settings.slippage_percent),
@@ -789,6 +794,7 @@ def auto_buy_settings(request):
         settings.total_trans_from = data.get('total_trans_from', getattr(settings, 'total_trans_from', 0))
         settings.total_fees_from = data.get('total_fees_from', getattr(settings, 'total_fees_from', 0))
         settings.median = data.get('median', getattr(settings, 'median', 0))
+        settings.dev_tokens = data.get('dev_tokens', getattr(settings, 'dev_tokens', 0))
         settings.buyer_pubkey = data.get('buyer_pubkey', settings.buyer_pubkey)
         settings.sol_amount = data.get('sol_amount', settings.sol_amount)
         settings.slippage_percent = data.get('slippage_percent', settings.slippage_percent)
