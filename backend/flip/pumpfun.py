@@ -284,10 +284,14 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         return None
         
     try:
-        # Пробуем только один раз с коротким таймаутом
-        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
-            data = await r.json()
-            return data
+        while True:
+            try:
+                async with session.get(uri, timeout=aiohttp.ClientTimeout(total=1)) as r:
+                    data = await r.json()
+                    if(data):
+                        return data
+            except Exception:
+                await asyncio.sleep(0.5)
     except Exception:
         return None
 
@@ -355,7 +359,7 @@ async def process_message(msg, session):
             community_url, community_id, _ = find_community_anywhere_with_src(meta)
             
         else:
-            print(f"\n--------------------------------\nNo meta found for {name}, {mint}, {uri}\n--------------------------------\n")
+            print(f"\n--------------------------------\nNo meta found for {name}, {mint}\n--------------------------------\n")
 
         twitter_name = ""
         if community_id:
