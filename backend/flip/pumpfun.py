@@ -174,7 +174,7 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
         done, pending = await asyncio.wait(
             [task1, task2], 
             return_when=asyncio.FIRST_COMPLETED,
-            timeout=0.5
+            timeout=2
         )
         
         for task in pending:
@@ -184,7 +184,7 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
             try:
                 u, f, src = task.result()
                 if u:
-                    return u
+                    return u, f
             except:
                 continue
                 
@@ -331,36 +331,93 @@ async def process_message(msg, session):
         if not mint:
             return
 
-        # Базовые данные для live (отправляем сразу)
+        # Пробуем быстро получить метаданные (до 2 секунд)
+        community_id = None
+        twitter_name = ""
+        meta_found_quickly = False
+        
+        if uri:
+            try:
+                # Быстрая попытка получить метаданные
+                meta = await asyncio.wait_for(fetch_meta_simple(session, uri), timeout=2.0)
+                if meta:
+                    community_url, community_id, _ = find_community_anywhere_with_src(meta)
+                    if community_id:
+                        twitter_name = await get_creator_username(session, community_id)
+                        if twitter_name:
+                            twitter_name = f"@{twitter_name}"
+                    meta_found_quickly = True
+                    print(f"Quick metadata found for {name}")
+            except asyncio.TimeoutError:
+                print(f"Quick metadata fetch timeout for {name}")
+            except Exception as e:
+                print(f"Quick metadata fetch error for {name}: {e}")
+
+        # Данные для live (с метаданными если получили быстро, без если нет)
         live_data = {
             'source': 'pumpfun',
             'mint': mint,
             'user': creator,
             'name': name,
             'symbol': symbol,
-            'twitter_name': "",
+            'twitter_name': twitter_name if meta_found_quickly else "",
             'bonding_curve': bonding_curve,
-            'community_id': None,
+            'community_id': community_id if meta_found_quickly else None,
         }
         
-        # Запускаем live сразу
+        # Запускаем live
         asyncio.create_task(process_live(live_data))
         
-        # Пробуем получить метаданные
+        # Для create продолжаем ждать метаданные если не получили быстро
+        if not meta_found_quickly and uri:
+            # Запускаем фоновую задачу для получения метаданных для create
+            asyncio.create_task(process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri))
+        else:
+            # Если метаданные уже есть, отправляем в create сразу
+            create_data = {
+                'source': 'pumpfun',
+                'mint': mint,
+                'user': creator,
+                'name': name,
+                'symbol': symbol,
+                'twitter_name': twitter_name,
+                'bonding_curve': bonding_curve,
+                'community_id': community_id,
+            }
+            asyncio.create_task(process_create(create_data))
+        
+        print(f"Processed: {name} ({mint}) - Quick meta: {meta_found_quickly}")
+        
+    except Exception as e:
+        print(f"Error in process_message: {e}")
+
+async def process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri):
+    """Фоновая задача для получения метаданных и отправки в create"""
+    try:
+        print(f"Starting extended metadata fetch for {name}")
+        
+        # Пробуем получить метаданные в течение 20 секунд
+        start_time = time.time()
         community_id = None
         twitter_name = ""
         
-        if uri:
-            meta = await fetch_meta_simple(session, uri)
-            if meta:
-                community_url, community_id, _ = find_community_anywhere_with_src(meta)
-                print(community_id)
-                if community_id:
-                    twitter_name = await get_creator_username(session, community_id)
-                    if twitter_name:
-                        twitter_name = f"@{twitter_name}"
+        while time.time() - start_time < 20:
+            try:
+                meta = await fetch_meta_simple(session, uri)
+                if meta:
+                    community_url, community_id, _ = find_community_anywhere_with_src(meta)
+                    if community_id:
+                        twitter_name = await get_creator_username(session, community_id)
+                        if twitter_name:
+                            twitter_name = f"@{twitter_name}"
+                    print(f"Extended metadata found for {name} after {time.time() - start_time:.1f}s")
+                    break
+            except Exception as e:
+                print(f"Extended metadata fetch error for {name}: {e}")
+            
+            await asyncio.sleep(0.5)
         
-        # Обновленные данные для create
+        # Отправляем данные в create
         create_data = {
             'source': 'pumpfun',
             'mint': mint,
@@ -372,13 +429,11 @@ async def process_message(msg, session):
             'community_id': community_id,
         }
         
-        # Запускаем create
-        asyncio.create_task(process_create(create_data))
-        
-        print(f"Processed: {name} ({mint})")
+        await process_create(create_data)
+        print(f"Create completed for {name}")
         
     except Exception as e:
-        print(f"Error in process_message: {e}")
+        print(f"Error in process_create_with_metadata for {name}: {e}")
 
 async def main_loop():
     """Основной цикл обработки"""
