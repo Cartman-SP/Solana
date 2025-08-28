@@ -32,6 +32,7 @@ async def subscribe():
       async for message in websocket:
         try:
           mint = json.loads(message).get('mint')
+          print(mint)
           await sync_to_async(Token.objects.filter(address=mint).update)(migrated=True)
         except Exception as e:
           print(e)
