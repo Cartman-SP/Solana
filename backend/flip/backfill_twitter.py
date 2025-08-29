@@ -66,7 +66,7 @@ async def main():
         def _fetch_ids():
             qs = (
                 Token.objects
-                .filter(community_id__isnull=False)
+                .filter(community_id__isnull=False,migrated=True)
                 .exclude(community_id="")
                 .filter(twitter__isnull=True)
                 .values_list('id', 'community_id')
