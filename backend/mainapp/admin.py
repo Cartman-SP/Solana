@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django import forms
+from django.core.exceptions import ValidationError
 from .models import AdminDev, UserDev, Token, Twitter, Settings
 
 class TotalTokensFilter(admin.SimpleListFilter):
@@ -42,6 +44,54 @@ class TokenAdmin(admin.ModelAdmin):
     ordering = ('-created_at', 'address')
     list_per_page = 50
     date_hierarchy = 'created_at'
+
+    # Кастомная форма для текстового ввода dev/twitter
+    class TokenAdminForm(forms.ModelForm):
+        dev_input = forms.CharField(label='Dev adress', required=True)
+        twitter_input = forms.CharField(label='Twitter name', required=False)
+
+        class Meta:
+            model = Token
+            fields = '__all__'
+            widgets = {
+                'dev': forms.HiddenInput(),
+                'twitter': forms.HiddenInput(),
+            }
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if self.instance and self.instance.pk:
+                self.fields['dev_input'].initial = getattr(self.instance.dev, 'adress', '')
+                self.fields['twitter_input'].initial = getattr(self.instance.twitter, 'name', '') if self.instance.twitter_id else ''
+
+        def clean(self):
+            cleaned_data = super().clean()
+            dev_text = cleaned_data.get('dev_input')
+            twitter_text = cleaned_data.get('twitter_input')
+
+            if not dev_text:
+                raise ValidationError({'dev_input': 'Укажите adress разработчика'})
+
+            try:
+                dev_obj = UserDev.objects.get(adress=dev_text)
+            except UserDev.DoesNotExist:
+                raise ValidationError({'dev_input': f'UserDev с adress="{dev_text}" не найден'})
+
+            twitter_obj = None
+            if twitter_text:
+                try:
+                    twitter_obj = Twitter.objects.get(name=twitter_text)
+                except Twitter.DoesNotExist:
+                    raise ValidationError({'twitter_input': f'Twitter с name="{twitter_text}" не найден'})
+
+            # Проставляем реальные FK в скрытые поля
+            cleaned_data['dev'] = dev_obj
+            self.cleaned_data['dev'] = dev_obj
+            cleaned_data['twitter'] = twitter_obj
+            self.cleaned_data['twitter'] = twitter_obj
+            return cleaned_data
+
+    form = TokenAdminForm
 
 @admin.register(Settings)
 class SettingsAdmin(admin.ModelAdmin):
