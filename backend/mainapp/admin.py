@@ -99,7 +99,8 @@ class TokenAdmin(admin.ModelAdmin):
                 try:
                     twitter_obj = Twitter.objects.get(name=twitter_text)
                 except Twitter.DoesNotExist:
-                    raise ValidationError({'twitter_input': f'Twitter с name="{twitter_text}" не найден'})
+                    # Создаем новый Twitter объект
+                    twitter_obj = Twitter.objects.create(name=twitter_text)
 
             # Проставляем реальные FK в скрытые поля
             cleaned_data['dev'] = dev_obj
