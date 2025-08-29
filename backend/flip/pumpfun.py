@@ -423,6 +423,8 @@ async def ensure_twitter_name(session: aiohttp.ClientSession, community_id: str,
     """Дожидается появления twitter для community_id в течение timeout_seconds."""
     start = time.time()
     delay = 0.5
+    count = 0
+    print(community_id)
     while True:
         try:
             u, f = await get_creator_username(session, community_id)
@@ -435,6 +437,9 @@ async def ensure_twitter_name(session: aiohttp.ClientSession, community_id: str,
         await asyncio.sleep(delay)
         # лёгкий джиттер/рост интервала
         delay = min(delay + 0.1, 1.5)
+        count +=1
+        if count > 10:
+            return None
 
 async def ensure_meta_and_twitter(session: aiohttp.ClientSession, uri: str, timeout_meta_seconds: float = 120.0, timeout_twitter_seconds: float = 60.0) -> tuple[str | None, str | None]:
     """Гарантирует получение meta; если найден community_id — дожидается twitter."""
