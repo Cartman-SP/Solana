@@ -165,8 +165,8 @@ async def _get_first_member_via_members(session: aiohttp.ClientSession, communit
         pass
     return None, None, None
 
-async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
-    """Получает username с несколькими попытками и fallback методами"""
+async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> tuple[str | None, int | None]:
+    """Получает username и followers с несколькими попытками и fallback методами"""
     try:
         task1 = asyncio.create_task(_get_creator_from_info(session, community_id))
         task2 = asyncio.create_task(_get_first_member_via_members(session, community_id))
@@ -194,7 +194,7 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
     except:
         pass
     
-    return None
+    return None, None
 
 def collect_progdata_bytes_after_create(logs):
     """Собирает байты данных программы после инструкции Create"""
@@ -374,7 +374,11 @@ async def process_message(msg, session):
             # Запускаем фоновую задачу для получения метаданных для create
             asyncio.create_task(process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri))
         else:
-            # Если метаданные уже есть, отправляем в create сразу
+            # Если метаданные уже есть, то перед create гарантируем twitter при наличии community_id
+            if community_id and not twitter_name:
+                u, f = await ensure_twitter_name(session, community_id)
+                if u:
+                    twitter_name = f"@{u}"
             create_data = {
                 'source': 'pumpfun',
                 'mint': mint,
@@ -393,32 +397,11 @@ async def process_message(msg, session):
         print(f"Error in process_message: {e}")
 
 async def process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri):
-    """Фоновая задача для получения метаданных и отправки в create"""
+    """Фоновая задача: гарантировать meta; при наличии community — гарантировать twitter; затем отправить в create"""
     try:
         print(f"Starting extended metadata fetch for {name}")
-        
-        # Пробуем получить метаданные в течение 20 секунд
-        start_time = time.time()
-        community_id = None
-        twitter_name = ""
-        
-        while time.time() - start_time < 20:
-            try:
-                meta = await fetch_meta_simple(session, uri)
-                if meta:
-                    community_url, community_id, _ = find_community_anywhere_with_src(meta)
-                    if community_id:
-                        twitter_name = await get_creator_username(session, community_id)
-                        if twitter_name:
-                            twitter_name = f"@{twitter_name}"
-                    print(f"Extended metadata found for {name} after {time.time() - start_time:.1f}s")
-                    break
-            except Exception as e:
-                print(f"Extended metadata fetch error for {name}: {e}")
-            
-            await asyncio.sleep(0.5)
-        
-        # Отправляем данные в create
+        community_id, twitter_name = await ensure_meta_and_twitter(session, uri)
+
         create_data = {
             'source': 'pumpfun',
             'mint': mint,
@@ -429,12 +412,61 @@ async def process_create_with_metadata(session, mint, creator, name, symbol, bon
             'bonding_curve': bonding_curve,
             'community_id': community_id,
         }
-        
+
         await process_create(create_data)
         print(f"Create completed for {name}")
-        
+
     except Exception as e:
         print(f"Error in process_create_with_metadata for {name}: {e}")
+
+async def ensure_twitter_name(session: aiohttp.ClientSession, community_id: str, timeout_seconds: float = 60.0) -> tuple[str | None, int | None]:
+    """Дожидается появления twitter для community_id в течение timeout_seconds."""
+    start = time.time()
+    delay = 0.5
+    while True:
+        try:
+            u, f = await get_creator_username(session, community_id)
+            if u:
+                return u, f
+        except Exception:
+            pass
+        if time.time() - start >= timeout_seconds:
+            return None, None
+        await asyncio.sleep(delay)
+        # лёгкий джиттер/рост интервала
+        delay = min(delay + 0.1, 1.5)
+
+async def ensure_meta_and_twitter(session: aiohttp.ClientSession, uri: str, timeout_meta_seconds: float = 120.0, timeout_twitter_seconds: float = 60.0) -> tuple[str | None, str | None]:
+    """Гарантирует получение meta; если найден community_id — дожидается twitter."""
+    # 1) Ждём meta столько, сколько нужно (с разумным верхним пределом)
+    start = time.time()
+    community_id = None
+    twitter_name = ""
+    delay = 0.5
+    while True:
+        try:
+            meta = await fetch_meta_simple(session, uri)
+            if meta:
+                _, community_id, _ = find_community_anywhere_with_src(meta)
+                # meta получена, выходим из этого цикла
+                break
+        except Exception:
+            pass
+        if time.time() - start >= timeout_meta_seconds:
+            # Даже если meta не пришла — продолжаем ждать дальше, т.к. требуется 100%
+            # но ставим защитный предел, чтобы не зависнуть навсегда
+            # Продлим ещё столько же, если всё ещё нет
+            start = time.time()
+        await asyncio.sleep(delay)
+        delay = min(delay + 0.1, 1.5)
+
+    # 2) Если есть community_id — дожидаемся twitter
+    if community_id:
+        u, f = await ensure_twitter_name(session, community_id, timeout_seconds=timeout_twitter_seconds)
+        if u:
+            twitter_name = f"@{u}"
+
+    return community_id, twitter_name
 
 async def main_loop():
     """Основной цикл обработки"""
