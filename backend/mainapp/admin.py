@@ -27,6 +27,9 @@ class TwitterAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     ordering = ('name',)
     list_per_page = 50
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).only('name', 'blacklist', 'whitelist', 'total_tokens', 'ath', 'total_trans', 'total_fees')
 
 @admin.register(UserDev)
 class UserDevAdmin(admin.ModelAdmin):
@@ -35,15 +38,29 @@ class UserDevAdmin(admin.ModelAdmin):
     search_fields = ('adress',)
     ordering = ('-total_tokens', 'adress')
     list_per_page = 50
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).only('id', 'adress', 'total_tokens')
 
 @admin.register(Token)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ('address', 'dev', 'twitter','bonding_curve', 'ath', 'total_trans','migrated', 'created_at', 'processed','total_fees','community_id')
+    list_display = ('address', 'dev_adress', 'twitter_name','bonding_curve', 'ath', 'total_trans','migrated', 'created_at', 'processed','total_fees','community_id')
     list_filter = ('migrated', 'created_at', 'processed')
     search_fields = ('address', 'dev__adress','twitter__name')
     ordering = ('-created_at', 'address')
     list_per_page = 50
     date_hierarchy = 'created_at'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('dev', 'twitter')
+    
+    def dev_adress(self, obj):
+        return obj.dev.adress if obj.dev else '-'
+    dev_adress.short_description = 'Dev'
+    
+    def twitter_name(self, obj):
+        return obj.twitter.name if obj.twitter else '-'
+    twitter_name.short_description = 'Twitter'
 
     # Кастомная форма для текстового ввода dev/twitter
     class TokenAdminForm(forms.ModelForm):
