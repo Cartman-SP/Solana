@@ -42,7 +42,6 @@ async def process_create(data):
                 'total_tokens': 0,
             }
         )
-        
         # Проверяем, что twitter существует и не в черном списке
         if twitter:
             if twitter.blacklist == False:
@@ -57,6 +56,7 @@ async def process_create(data):
                         'total_fees': 0.0,
                         'bonding_curve': bonding_curve or "",
                         'community_id': community_id or "",
+                        'processed': False
                     }
                 )
         else:
@@ -70,6 +70,7 @@ async def process_create(data):
                         'total_fees': 0.0,
                         'bonding_curve': bonding_curve or "",
                         'community_id': community_id or "",
+                        'processed': True
                     }
                 )
 

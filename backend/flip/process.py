@@ -345,33 +345,56 @@ def get_token_fees(pair_address: str):
 TRACKER_BASE_URL = "https://data.solanatracker.io"
 TRACKER_API_KEY = "37d8f458-170e-4bb7-9bba-0b2a685cc4c0"
 
-async def get_token_info(tokenAddress: str):
-    url = f"{TRACKER_BASE_URL}/tokens/{tokenAddress}"
-    headers = {
-        "x-api-key": TRACKER_API_KEY
-    }
-    response = requests.get(url, headers=headers)
-    print(response.text)
-    data = response.json()
-    
-    # Получаем tokenSupply из первого пула
-    if data.get("pools") and len(data["pools"]) > 0:
-        supply = data["pools"][0]["tokenSupply"]
-    else:
-        print("No pools found")
-        return None, None
-    
-    # Получаем общее количество транзакций
-    total_trans = data.get("txns", 0)
-    # Получаем ATH цену
-    ath_response = requests.get(f"{TRACKER_BASE_URL}/tokens/{tokenAddress}/ath",headers=headers)
-    ath_data = ath_response.json()
-    price = ath_data.get('highest_price')
-    # Вычисляем ATH в долларах
-    ath = price * supply
-
-    
-    return ath, total_trans
+async def get_token_info(tokenAddress: str, session: aiohttp.ClientSession):
+    try:
+        url = f"{TRACKER_BASE_URL}/tokens/{tokenAddress}"
+        headers = {
+            "x-api-key": TRACKER_API_KEY
+        }
+        
+        async with session.get(url, headers=headers) as response:
+            if response.status != 200:
+                print(f"API error for {tokenAddress}: {response.status}")
+                raise APIError(f"API returned status {response.status}")
+            
+            data = await response.json()
+            print(f"Token data for {tokenAddress}: {data}")
+        
+        # Получаем tokenSupply из первого пула
+        if data.get("pools") and len(data["pools"]) > 0:
+            supply = data["pools"][0]["tokenSupply"]
+        else:
+            print(f"No pools found for {tokenAddress}")
+            return None, None
+        
+        # Получаем общее количество транзакций
+        total_trans = data.get("txns", 0)
+        
+        # Получаем ATH цену
+        ath_url = f"{TRACKER_BASE_URL}/tokens/{tokenAddress}/ath"
+        async with session.get(ath_url, headers=headers) as ath_response:
+            if ath_response.status != 200:
+                print(f"ATH API error for {tokenAddress}: {ath_response.status}")
+                raise APIError(f"ATH API returned status {ath_response.status}")
+            
+            ath_data = await ath_response.json()
+        
+        price = ath_data.get('highest_price')
+        if price is None:
+            print(f"No highest_price found for {tokenAddress}")
+            return None, None
+            
+        # Вычисляем ATH в долларах
+        ath = price * supply
+        
+        return ath, total_trans
+        
+    except aiohttp.ClientError as e:
+        print(f"Network error for {tokenAddress}: {e}")
+        raise APIError(f"Network error: {e}")
+    except Exception as e:
+        print(f"Unexpected error for {tokenAddress}: {e}")
+        raise APIError(f"Unexpected error: {e}")
 
 
 
@@ -385,15 +408,15 @@ async def process_token_ath(token, session: aiohttp.ClientSession):
             if fees is None:
                 fees = 0.0
         
-        ath_result, total_trans = total_trans(token.address)
-        
-        # Обновляем токен только если не было ошибок API
-        await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
-        await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
-        await sync_to_async(lambda: setattr(token, 'processed', True))()
-        await sync_to_async(lambda: setattr(token, 'total_fees', float(fees)))()
+            ath_result, total_trans = await get_token_info(token.address, session)
+            
+            # Обновляем токен только если не было ошибок API
+            await sync_to_async(lambda: setattr(token, 'ath', ath_result))()
+            await sync_to_async(lambda: setattr(token, 'total_trans', total_trans))()
 
-        # Сохраняем изменения
+            await sync_to_async(lambda: setattr(token, 'total_fees', float(fees)))()
+
+        await sync_to_async(lambda: setattr(token, 'processed', True))()
         await sync_to_async(token.save)()
         
         print(f"Обработан токен {token.address}: ATH = {token.ath}, migrated = {token.migrated}, total_trans = {token.total_trans}, total_fees = {fees}")
