@@ -491,7 +491,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
                 else:
                     print('ipfs говно')
                     return data
-        else:
+        elif 'irys' in uri:
             code = uri.split('/')[-1]
             uri1 = f"https://node1.irys.xyz/{code}"
             uri2 = f"https://node2.irys.xyz/{code}"
