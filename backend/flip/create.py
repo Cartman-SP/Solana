@@ -237,7 +237,7 @@ async def get_twitter_data(session,uri):
 
 
 
-async def process_create(data,session):
+async def process_create(data):
     """Создает UserDev и Token из полученных данных"""
     try:
         time.sleep(5)
@@ -247,6 +247,12 @@ async def process_create(data,session):
         name = data.get('name', '')
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
+        session = aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
+        headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
+        timeout=aiohttp.ClientTimeout(total=1)
+        )
+
 
         twitter_name,community_id = await get_twitter_data(session,uri)
         bonding_curve = data.get('bonding_curve','')
