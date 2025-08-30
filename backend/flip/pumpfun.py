@@ -155,8 +155,8 @@ async def process_message(msg, session):
             'symbol': symbol,
             'bonding_curve':bonding_curve,
         }
-        create_live_task = asyncio.create_task(process_live(data))
-        create_create_task = asyncio.create_task(process_create(data))
+        create_live_task = asyncio.create_task(process_live(data,session))
+        create_create_task = asyncio.create_task(process_create(data,session))
         
         result = await asyncio.gather(
             create_live_task, 

@@ -525,7 +525,7 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
 
 
 
-def get_twitter_data_manualy(session,uri):
+async def get_twitter_data_manualy(session,uri):
     community_id = None
     meta = await fetch_meta_with_retries(session, uri)
     if meta:
@@ -550,7 +550,7 @@ async def process_live(data,session):
         name = data.get('name', '')
         symbol = data.get('symbol', '')
 
-        twitter,twitter_followers,community_id = get_twitter_data_manualy(session,uri)
+        twitter,twitter_followers,community_id = await get_twitter_data_manualy(session,uri)
 
         print('\n-------------------------------------------------\n',twitter,'\n-------------------------------------------------\n')
         if not(twitter) or twitter == "@" or twitter=="@None":
