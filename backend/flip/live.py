@@ -535,6 +535,7 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
 async def get_twitter_data_manualy(session,uri):
     community_id = None
     meta = await fetch_meta_with_retries(session, uri)
+    print(meta)
     if meta:
         community_url, community_id, _ = find_community_anywhere_with_src(meta)
         
