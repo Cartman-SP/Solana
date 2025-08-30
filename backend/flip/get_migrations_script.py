@@ -27,15 +27,31 @@ async def subscribe():
           "method": "subscribeMigration",
       }
       await websocket.send(json.dumps(payload))
-
+      
       
       async for message in websocket:
         try:
           mint = json.loads(message).get('mint')
-          print(mint)
-          await sync_to_async(Token.objects.filter(address=mint).update)(migrated=True)
+          print(f"Получен mint: {mint}")
+          
+          # Проверяем, существует ли токен
+          token_exists = await sync_to_async(Token.objects.filter(address=mint).exists)()
+          
+          if token_exists:
+              # Если токен существует, обновляем его
+              await sync_to_async(Token.objects.filter(address=mint).update)(migrated=True)
+              print(f"Токен {mint} обновлен (migrated=True)")
+          else:
+              # Если токена нет, создаем новый
+              new_token = await sync_to_async(Token.objects.create)(
+                  address=mint,
+                  migrated=True,
+                  created_at=timezone.now()
+              )
+              print(f"Создан новый токен: {mint}")
+              
         except Exception as e:
-          print(e)
+          print(f"Ошибка при обработке mint {mint}: {e}")
 
 # Run the subscribe function
 asyncio.get_event_loop().run_until_complete(subscribe())

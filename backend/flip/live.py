@@ -480,7 +480,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         return None
         
     try:
-        if('https://ipfs.io/ipfs/' in uri):
+        if('https://ipfs.io/ipfs/' in uri or "https://gateway.pinata.cloud/ipfs/" in uri):
             print(123,uri)
             code = uri.split('/')[-1]
             uri = f"http://127.0.0.1:8180/ipfs/{code}"
