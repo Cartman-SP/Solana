@@ -15,7 +15,7 @@ async def subscribe():
             data = json.loads(message)
             try:
                 if'uri' in data:
-                    asyncio.create_task(process_create(data))
+                    asyncio.run(process_create(data))
             except:
                 pass
         
