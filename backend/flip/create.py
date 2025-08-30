@@ -170,7 +170,7 @@ async def fetch_local(uri,session):
         print(123,uri)
         code = uri.split('/')[-1]
         uri = f"http://127.0.0.1:8180/ipfs/{code}"
-        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
+        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=20)) as r:
             data = await r.json()
             if(data):
                 return data

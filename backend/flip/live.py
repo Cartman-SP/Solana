@@ -682,8 +682,6 @@ async def process_live(data):
             )
         
         await broadcast_to_extension(extension_data)
-        with open('extension_data.json', 'w') as f:
-            json.dump(extension_data, f)
         # Единственный вывод с оформленными данными
         recent_tokens_str = " | ".join([f"{token['name']}: {token['ath']}" for token in user_dev_data['recent_tokens']])
         recent_tokens_fees_str = " | ".join([f"{token['name']}: {token['total_fees']:.6f}" for token in user_dev_data['recent_tokens']])
