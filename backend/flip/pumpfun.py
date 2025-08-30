@@ -155,13 +155,9 @@ async def process_message(msg, session):
             'symbol': symbol,
             'bonding_curve':bonding_curve,
         }
-        create_live_task = asyncio.create_task(process_live(data,session))
-        create_create_task = asyncio.create_task(process_create(data,session))
+        await process_live(data,session)
+        await process_create(data,session)
         
-        result = await asyncio.gather(
-            create_live_task, 
-            create_create_task,
-        )
     except Exception as e:
         print(e)
         pass
