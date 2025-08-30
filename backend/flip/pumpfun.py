@@ -154,6 +154,7 @@ async def process_message(msg, session):
             'name': name,
             'symbol': symbol,
             'bonding_curve':bonding_curve,
+            'uri': uri
         }
         asyncio.create_task(process_live(data,session))
         asyncio.create_task(process_create(data,session))

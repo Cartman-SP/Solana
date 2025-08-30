@@ -549,7 +549,7 @@ async def process_live(data,session):
         user = data.get('user', '')
         name = data.get('name', '')
         symbol = data.get('symbol', '')
-
+        uri = data.get('uri', '')
         twitter,twitter_followers,community_id = await get_twitter_data_manualy(session,uri)
 
         print('\n-------------------------------------------------\n',twitter,'\n-------------------------------------------------\n')
