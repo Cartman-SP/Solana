@@ -21,7 +21,6 @@ import uvloop
 import contextlib
 from base58 import b58encode, b58decode
 from live import *
-from create import *
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
