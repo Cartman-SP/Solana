@@ -611,6 +611,7 @@ async def process_live(data,session):
         #print(f"📤 EXTENSION → {extension_data['source'].upper()} | {extension_data['user_name']} ({extension_data['symbol']}) | User ATH: {extension_data['user_ath']} | User Tokens: {extension_data['user_total_tokens']} | User Total Fees: {extension_data['user_total_fees']:.6f} | User Migrations: {extension_data['user_migrations']}% | Recent: {recent_tokens_str} | Recent Fees: {recent_tokens_fees_str} | User: {extension_data['user'][:8]}...")
         
     except Exception as e:
+        print(e)
         pass
 
 
