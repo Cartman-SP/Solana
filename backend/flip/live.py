@@ -541,6 +541,19 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
                 pass
                 
             return None
+        else:
+            # Для всех остальных URI делаем обычный запрос без изменений
+            try:
+                async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                    if r.status == 200:
+                        data = await r.json()
+                        return data
+                    else:
+                        print(f'Ошибка при запросе {uri}: статус {r.status}')
+                        return None
+            except Exception as e:
+                print(f'Ошибка при запросе {uri}: {e}')
+                return None
     except Exception as e:
         print(e)
         return None
