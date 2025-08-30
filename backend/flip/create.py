@@ -165,7 +165,7 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     return match.group(1) if match else None
 
 
-async def fetch_local(uri):
+async def fetch_local(uri,session):
     if('https://ipfs.io/ipfs/' in uri or "https://gateway.pinata.cloud/ipfs/" in uri):
         print(123,uri)
         code = uri.split('/')[-1]
@@ -235,7 +235,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         
     try:
         for i in range(10):
-            data = await fetch_local(uri)
+            data = await fetch_local(uri,session)
             if data:
                 return data
             else:
