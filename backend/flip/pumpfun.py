@@ -42,6 +42,7 @@ COMMUNITY_ID_RE = re.compile(r"/communities/(\d+)", re.IGNORECASE)
 PROGDATA_RE = re.compile(r"Program data:\s*([A-Za-z0-9+/=]+)")
 INSTRUCTION_MINT_RE = re.compile(r"Program log: Instruction: (InitializeMint2|InitializeMint)", re.IGNORECASE)
 
+
 LOGS_SUB_JSON = json.dumps({
     "jsonrpc": "2.0",
     "id": "logs-auto-buy",
@@ -52,149 +53,7 @@ LOGS_SUB_JSON = json.dumps({
     ]
 })
 
-def generate_tx(pubkey, mint, amount, slippage, priorityFee): 
-    signerKeypairs = [
-        Keypair.from_base58_string(pubkey),
-    ]
 
-    response = requests.post(
-        "https://pumpportal.fun/api/trade-local",
-        headers={"Content-Type": "application/json"},
-        json=[
-            {
-                "publicKey": str(signerKeypairs[0].pubkey()),
-                "action": "buy", 
-                "mint": mint,
-                "denominatedInSol": "false",
-                "amount": amount,
-                "slippage": slippage,
-                "priorityFee": priorityFee,
-                "pool": "pump"
-            },
-        ]
-    )
-
-    if response.status_code != 200: 
-        print("Failed to generate transactions.")
-        print(response.reason)
-    else:
-        encodedTransactions = response.json()
-        encodedSignedTransactions = []
-        txSignatures = []
-
-        for index, encodedTransaction in enumerate(encodedTransactions):
-            signedTx = VersionedTransaction(VersionedTransaction.from_bytes(base58.b58decode(encodedTransaction)).message, [signerKeypairs[index]])
-            encodedSignedTransactions.append(base58.b58encode(bytes(signedTx)).decode())
-            txSignatures.append(str(signedTx.signatures[0]))
-
-        return encodedSignedTransactions, txSignatures
-
-def send_tx(encodedSignedTransactions, txSignatures):
-    jito_response = requests.post(
-        "https://wispy-little-river.solana-mainnet.quiknode.pro/134b4b837e97bb3711c20296010e32eff69ad1af/",
-        headers={"Content-Type": "application/json"},
-        json={
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "sendBundle",
-            "params": [
-                encodedSignedTransactions
-            ]
-        }
-    )
-
-    for i, signature in enumerate(txSignatures):
-        print(f'Transaction {i}: https://solscan.io/tx/{signature}')
-
-async def _tw_get(session, path, params):
-    """Быстрый запрос к Twitter API"""
-    to = aiohttp.ClientTimeout(total=0.5, connect=0.1)
-    async with session.get(f"{TW_BASE}{path}", headers=TW_HEADERS, params=params, timeout=to) as r:
-        r.raise_for_status()
-        return await r.json()
-
-def _extract_username_followers(user_obj: dict) -> tuple[str|None, int|None]:
-    """Извлекает username и followers из объекта пользователя"""
-    if not isinstance(user_obj, dict):
-        return None, None
-    username = user_obj.get("screen_name") or user_obj.get("userName") or user_obj.get("username")
-    followers = (
-        user_obj.get("followers_count")
-        or user_obj.get("followers")
-        or ((user_obj.get("public_metrics") or {}).get("followers_count"))
-    )
-    try:
-        followers = int(followers) if followers is not None else None
-    except Exception:
-        followers = None
-    return (username, followers) if username else (None, None)
-
-async def _get_creator_from_info(session: aiohttp.ClientSession, community_id: str):
-    """Получает создателя community из info API"""
-    try:
-        j = await _tw_get(session, "/twitter/community/info", {"community_id": community_id})
-        ci = (j or {}).get("community_info", {}) or {}
-        u, f = _extract_username_followers(ci.get("creator") or {})
-        if u:
-            return u, f, "creator"
-        u, f = _extract_username_followers(ci.get("first_member") or {})
-        if u:
-            return u, f, "member"
-    except:
-        pass
-    return None, None, None
-
-async def _get_first_member_via_members(session: aiohttp.ClientSession, community_id: str):
-    """Получает первого участника community из members API"""
-    try:
-        j = await _tw_get(session, "/twitter/community/members", {"community_id": community_id, "limit": 1})
-        candidates = []
-        for key in ("members", "data", "users"):
-            arr = j.get(key)
-            if isinstance(arr, list):
-                candidates.extend(arr)
-        if not candidates:
-            data = j.get("data")
-            if isinstance(data, dict) and isinstance(data.get("users"), list):
-                candidates.extend(data["users"])
-        if candidates:
-            u, f = _extract_username_followers(candidates[0] or {})
-            if u:
-                return u, f, "member"
-    except:
-        pass
-    return None, None, None
-
-async def get_creator_username(session: aiohttp.ClientSession, community_id: str) -> tuple[str | None, int | None]:
-    """Получает username и followers с несколькими попытками и fallback методами"""
-    try:
-        task1 = asyncio.create_task(_get_creator_from_info(session, community_id))
-        task2 = asyncio.create_task(_get_first_member_via_members(session, community_id))
-        
-        done, pending = await asyncio.wait(
-            [task1, task2], 
-            return_when=asyncio.FIRST_COMPLETED,
-            timeout=2
-        )
-        
-        for task in pending:
-            task.cancel()
-        
-        for task in done:
-            try:
-                u, f, src = task.result()
-                if u:
-                    return u, f
-            except:
-                continue
-                
-    except asyncio.TimeoutError:
-        task1.cancel()
-        task2.cancel()
-    except:
-        pass
-    
-    return None, None
 
 def collect_progdata_bytes_after_create(logs):
     """Собирает байты данных программы после инструкции Create"""
@@ -225,6 +84,7 @@ def collect_progdata_bytes_after_create(logs):
                 return None
     return bytes(out)
 
+
 def _read_borsh_string(buf: memoryview, off: int):
     """Читает Borsh строку из буфера"""
     if off + 4 > len(buf): return None, off
@@ -237,10 +97,12 @@ def _read_borsh_string(buf: memoryview, off: int):
     off += ln
     return s, off
 
+
 def _take_pk(buf: memoryview, off: int):
     """Читает публичный ключ из буфера"""
     if off + 32 > len(buf): return None, off
     return base58.b58encode(bytes(buf[off:off+32])).decode(), off + 32
+
 
 def parse_pump_create(raw: bytes):
     """Парсит данные создания токена PumpFun"""
@@ -255,58 +117,12 @@ def parse_pump_create(raw: bytes):
     creator, off       = _take_pk(mv, off)
     return {
         "uri": uri,
-        "mint": mint,
+        "mint": mint ,
         "creator": creator,
         'name': name,
         'symbol': symbol,
-        'bonding_curve': bonding_curve,
+        'bonding_curve':bonding_curve,
     }
-
-async def fetch_meta_simple(session: aiohttp.ClientSession, uri: str) -> dict | None:
-    """Простая загрузка метаданных"""
-    if not uri:
-        return None
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=1.0, connect=0.2)
-        async with session.get(uri, timeout=timeout) as response:
-            if response.status == 200:
-                return await response.json()
-    except:
-        pass
-    
-    return None
-
-def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
-    """Ищет community ID в метаданных"""
-    for field in ['twitter', 'x', 'external_url', 'website']:
-        if field in meta_json:
-            url, cid = canonicalize_community_url(meta_json[field])
-            if cid:
-                return url, cid, field
-    
-    if 'extensions' in meta_json:
-        for field in ['twitter', 'x', 'website']:
-            if field in meta_json['extensions']:
-                url, cid = canonicalize_community_url(meta_json['extensions'][field])
-                if cid:
-                    return url, cid, f"extensions.{field}"
-    
-    return None, None, None
-
-def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
-    """Нормализует URL community и извлекает ID"""
-    if not url_or_id:
-        return None, None
-        
-    if url_or_id.isdigit():
-        return f"https://x.com/i/communities/{url_or_id}", url_or_id
-        
-    match = COMMUNITY_ID_RE.search(url_or_id)
-    if match:
-        return f"https://x.com/i/communities/{match.group(1)}", match.group(1)
-        
-    return None, None
 
 async def process_message(msg, session):
     """Обработка входящего сообщения"""
@@ -315,7 +131,6 @@ async def process_message(msg, session):
         
         if not any(INSTRUCTION_MINT_RE.search(log) for log in logs):
             return
-            
         data = collect_progdata_bytes_after_create(logs)
         parsed = parse_pump_create(data or b"")
         if not parsed:
@@ -327,158 +142,37 @@ async def process_message(msg, session):
         name = (parsed["name"] or "").strip()
         symbol = (parsed["symbol"] or "").strip()
         bonding_curve = (parsed["bonding_curve"] or "").strip()
-        
         if not mint:
             return
+        
 
-        # Пробуем быстро получить метаданные (до 2 секунд)
-        community_id = None
-        twitter_name = ""
-        meta_found_quickly = False
-        followers = 0
-        if uri:
-            try:
-                # Быстрая попытка получить метаданные
-                meta = await asyncio.wait_for(fetch_meta_simple(session, uri), timeout=2.0)
-                if meta:
-                    community_url, community_id, _ = find_community_anywhere_with_src(meta)
-                    if community_id:
-                        twitter_name,followers = await get_creator_username(session, community_id)
-                        if twitter_name:
-                            twitter_name = f"@{twitter_name}"
-                    meta_found_quickly = True
-                    print(f"Quick metadata found for {name}")
-            except asyncio.TimeoutError:
-                print(f"Quick metadata fetch timeout for {name}")
-            except Exception as e:
-                print(f"Quick metadata fetch error for {name}: {e}")
 
-        # Данные для live (с метаданными если получили быстро, без если нет)
-        live_data = {
+        data = {
             'source': 'pumpfun',
             'mint': mint,
             'user': creator,
             'name': name,
             'symbol': symbol,
-            'twitter_name': twitter_name if meta_found_quickly else "",
-            'bonding_curve': bonding_curve,
-            'community_id': community_id if meta_found_quickly else None,
-            'twitter_followers': followers
+            'bonding_curve':bonding_curve,
         }
+        create_live_task = asyncio.create_task(process_live(data))
+        create_create_task = asyncio.create_task(process_create(data))
         
-        # Запускаем live
-        asyncio.create_task(process_live(live_data))
-        
-        # Для create продолжаем ждать метаданные если не получили быстро
-        if not meta_found_quickly and uri:
-            # Запускаем фоновую задачу для получения метаданных для create
-            asyncio.create_task(process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri))
-        else:
-            # Если метаданные уже есть, то перед create гарантируем twitter при наличии community_id
-            if community_id and not twitter_name:
-                u, f = await ensure_twitter_name(session, community_id)
-                if u:
-                    twitter_name = f"@{u}"
-            create_data = {
-                'source': 'pumpfun',
-                'mint': mint,
-                'user': creator,
-                'name': name,
-                'symbol': symbol,
-                'twitter_name': twitter_name,
-                'bonding_curve': bonding_curve,
-                'community_id': community_id,
-            }
-            asyncio.create_task(process_create(create_data))
-        
-        print(f"Processed: {name} ({mint}) - Quick meta: {meta_found_quickly}")
-        
+        result = await asyncio.gather(
+            create_live_task, 
+            create_create_task,
+        )
     except Exception as e:
-        print(f"Error in process_message: {e}")
-
-async def process_create_with_metadata(session, mint, creator, name, symbol, bonding_curve, uri):
-    """Фоновая задача: гарантировать meta; при наличии community — гарантировать twitter; затем отправить в create"""
-    try:
-        print(f"Starting extended metadata fetch for {name}")
-        community_id, twitter_name = await ensure_meta_and_twitter(session, uri)
-
-        create_data = {
-            'source': 'pumpfun',
-            'mint': mint,
-            'user': creator,
-            'name': name,
-            'symbol': symbol,
-            'twitter_name': twitter_name,
-            'bonding_curve': bonding_curve,
-            'community_id': community_id,
-        }
-
-        await process_create(create_data)
-        print(f"Create completed for {name}")
-
-    except Exception as e:
-        print(f"Error in process_create_with_metadata for {name}: {e}")
-
-async def ensure_twitter_name(session: aiohttp.ClientSession, community_id: str, timeout_seconds: float = 60.0) -> tuple[str | None, int | None]:
-    """Дожидается появления twitter для community_id в течение timeout_seconds."""
-    start = time.time()
-    delay = 0.5
-    count = 0
-    print(community_id)
-    while True:
-        try:
-            u, f = await get_creator_username(session, community_id)
-            if u:
-                return u, f
-        except Exception:
-            pass
-        if time.time() - start >= timeout_seconds:
-            return None, None
-        await asyncio.sleep(delay)
-        # лёгкий джиттер/рост интервала
-        delay = min(delay + 0.1, 1.5)
-        count +=1
-        if count > 10:
-            return None
-
-async def ensure_meta_and_twitter(session: aiohttp.ClientSession, uri: str, timeout_meta_seconds: float = 120.0, timeout_twitter_seconds: float = 60.0) -> tuple[str | None, str | None]:
-    """Гарантирует получение meta; если найден community_id — дожидается twitter."""
-    # 1) Ждём meta столько, сколько нужно (с разумным верхним пределом)
-    start = time.time()
-    community_id = None
-    twitter_name = ""
-    delay = 0.5
-    while True:
-        try:
-            meta = await fetch_meta_simple(session, uri)
-            if meta:
-                _, community_id, _ = find_community_anywhere_with_src(meta)
-                # meta получена, выходим из этого цикла
-                break
-        except Exception:
-            pass
-        if time.time() - start >= timeout_meta_seconds:
-            # Даже если meta не пришла — продолжаем ждать дальше, т.к. требуется 100%
-            # но ставим защитный предел, чтобы не зависнуть навсегда
-            # Продлим ещё столько же, если всё ещё нет
-            start = time.time()
-        await asyncio.sleep(delay)
-        delay = min(delay + 0.1, 1.5)
-
-    # 2) Если есть community_id — дожидаемся twitter
-    if community_id:
-        u, f = await ensure_twitter_name(session, community_id, timeout_seconds=timeout_twitter_seconds)
-        if u:
-            twitter_name = f"@{u}"
-
-    return community_id, twitter_name
+        print(e)
+        pass
+        
 
 async def main_loop():
     """Основной цикл обработки"""
     session = aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=1000, ttl_dns_cache=300000),
-        headers={"User-Agent": "pumpfun/1.0"},
-        timeout=aiohttp.ClientTimeout(total=5)
+        connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
+        headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
+        timeout=aiohttp.ClientTimeout(total=1)
     )
 
     try:
@@ -492,21 +186,20 @@ async def main_loop():
                 ) as ws:
                     await ws.send(LOGS_SUB_JSON)
                     await ws.recv()
-                    
                     async for raw in ws:
                         try:
                             msg = json.loads(raw)
                             if msg.get("method") == "logsNotification":
                                 await process_message(msg, session)
                         except Exception as e:
-                            print(f"Error processing message: {e}")
+                            print(e)
                             continue
-                            
             except Exception as e:
-                print(f"WebSocket error: {e}")
-                await asyncio.sleep(1)
+                print(e)
+                await asyncio.sleep(0.1)
     finally:
         await session.close()
+
 
 async def runner():
     """Запускает сервер для расширения и основной цикл параллельно"""
