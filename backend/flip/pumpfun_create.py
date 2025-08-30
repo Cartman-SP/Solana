@@ -6,14 +6,11 @@ from create import *
 async def subscribe():
     uri = "wss://pumpportal.fun/api/data"
     async with websockets.connect(uri) as websocket:
-      
         # Subscribing to token creation events
         payload = {
             "method": "subscribeNewToken",
         }
         await websocket.send(json.dumps(payload))
-
-        
         async for message in websocket:
             data = json.loads(message)
             try:
