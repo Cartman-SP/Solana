@@ -157,7 +157,7 @@ async def process_message(msg, session):
             'uri': uri
         }
         asyncio.create_task(process_live(data))
-        asyncio.create_task(process_create(data))
+        
         
     except Exception as e:
         print(e)

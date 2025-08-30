@@ -164,6 +164,70 @@ def find_community_from_uri(uri: str) -> Optional[str]:
     match = COMMUNITY_ID_RE.search(uri)
     return match.group(1) if match else None
 
+
+async def fetch_local(uri):
+    if('https://ipfs.io/ipfs/' in uri or "https://gateway.pinata.cloud/ipfs/" in uri):
+        print(123,uri)
+        code = uri.split('/')[-1]
+        uri = f"http://127.0.0.1:8180/ipfs/{code}"
+        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
+            data = await r.json()
+            if(data):
+                return data
+            else:
+                print('ipfs говно')
+                return data
+    else:
+        code = uri.split('/')[-1]
+        uri1 = f"https://node1.irys.xyz/{code}"
+        uri2 = f"https://node2.irys.xyz/{code}"
+        
+        # Создаем задачи для одновременных запросов
+        async def fetch_from_uri(uri_to_fetch):
+            try:
+                async with session.get(uri_to_fetch, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                    if r.status == 200:
+                        data = await r.json()
+                        return data
+                    return None
+            except Exception:
+                return None
+        
+        # Запускаем оба запроса одновременно
+        task1 = asyncio.create_task(fetch_from_uri(uri1))
+        task2 = asyncio.create_task(fetch_from_uri(uri2))
+        
+        # Ждем первый успешный ответ
+        done, pending = await asyncio.wait(
+            [task1, task2], 
+            return_when=asyncio.FIRST_COMPLETED,
+            timeout=0.5
+        )
+        
+        # Отменяем оставшиеся задачи
+        for task in pending:
+            task.cancel()
+        
+        # Проверяем результаты
+        for task in done:
+            try:
+                result = task.result()
+                if result is not None:
+                    return result
+            except Exception:
+                continue
+        
+        # Если оба запроса не удались, пробуем оригинальный URI как fallback
+        try:
+            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                if r.status == 200:
+                    data = await r.json()
+                    return data
+        except Exception:
+            pass
+
+
+
 async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
     """Загружает метаданные с URI"""
     if not uri:
@@ -171,12 +235,11 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         
     try:
         for i in range(10):
-            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
-                data = await r.json()
-                if data:
-                    return data
-                else:
-                    await asyncio.sleep(2)
+            data = await fetch_local(uri)
+            if data:
+                return data
+            else:
+                await asyncio.sleep(2)
     except Exception as e:
         print(e)
         return None
@@ -242,11 +305,8 @@ async def process_create(data):
     session = None
     try:
         await asyncio.sleep(5)
-        source = data.get('source', '')
         mint = data.get('mint', '')
-        user = data.get('user', '')
-        name = data.get('name', '')
-        symbol = data.get('symbol', '')
+        user = data.get('traderPublicKey', '')
         uri = data.get('uri', '')
         session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
