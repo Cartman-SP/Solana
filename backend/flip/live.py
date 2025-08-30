@@ -90,7 +90,8 @@ async def broadcast_to_extension(data):
             await client.send(json.dumps(data))
         except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
             disconnected_clients.add(client)
-        except Exception:
+        except Exception as e:
+            print(e)
             disconnected_clients.add(client)
     
     extension_clients.difference_update(disconnected_clients)
@@ -394,7 +395,8 @@ def _extract_username_followers(user_obj: dict) -> tuple[str|None, int|None]:
     )
     try:
         followers = int(followers) if followers is not None else None
-    except Exception:
+    except Exception as e:
+        print(e)
         followers = None
     return (username, followers) if username else (None, None)
 
@@ -409,7 +411,8 @@ async def _get_creator_from_info(session: aiohttp.ClientSession, community_id: s
         u, f = _extract_username_followers(ci.get("first_member") or {})
         if u:
             return u, f, "member"
-    except:
+    except Exception as e:
+        print(e)
         pass
     return None, None, None
 
@@ -430,7 +433,8 @@ async def _get_first_member_via_members(session: aiohttp.ClientSession, communit
             u, f = _extract_username_followers(candidates[0] or {})
             if u:
                 return u, f, "member"
-    except:
+    except Exception as e:
+        print(e)
         pass
     return None, None, None
 
@@ -457,10 +461,12 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
                 u, f, src = task.result()
                 if u:
                     return u, f
-            except:
+            except Exception as e:
+                print(e)
                 continue
                 
-    except:
+    except Exception as e:
+        print(e)
         pass
     
     return None
@@ -485,7 +491,8 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
             data = await r.json()
             return data
-    except Exception:
+    except Exception as e:
+        print(e)
         return None
 
 def find_community_anywhere_with_src(meta_json: dict) -> tuple[str|None, str|None, str|None]:
