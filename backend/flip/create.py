@@ -176,7 +176,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
                 if data:
                     return data
                 else:
-                    time.sleep(2)
+                    await asyncio.sleep(2)
     except Exception as e:
         print(e)
         return None
@@ -239,8 +239,9 @@ async def get_twitter_data(session,uri):
 
 async def process_create(data):
     """Создает UserDev и Token из полученных данных"""
+    session = None
     try:
-        time.sleep(5)
+        await asyncio.sleep(5)
         source = data.get('source', '')
         mint = data.get('mint', '')
         user = data.get('user', '')
@@ -248,11 +249,10 @@ async def process_create(data):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
         session = aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
-        headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
-        timeout=aiohttp.ClientTimeout(total=1)
+            connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
+            headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
+            timeout=aiohttp.ClientTimeout(total=1)
         )
-
 
         twitter_name,community_id = await get_twitter_data(session,uri)
         bonding_curve = data.get('bonding_curve','')
@@ -313,5 +313,8 @@ async def process_create(data):
     except Exception as e:
         print("create",e)
         pass
+    finally:
+        if session:
+            await session.close()
 
 

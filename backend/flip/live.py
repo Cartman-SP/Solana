@@ -551,6 +551,7 @@ async def get_twitter_data_manualy(session,uri):
 
 
 async def process_live(data):
+    session = None
     try:
         source = data.get('source', '')
         mint = data.get('mint', '')
@@ -559,9 +560,9 @@ async def process_live(data):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
         session = aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
-        headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
-        timeout=aiohttp.ClientTimeout(total=1)
+            connector=aiohttp.TCPConnector(limit=100, ttl_dns_cache=300),
+            headers={"User-Agent": "auto-buy/5.0-ultra-fastest"},
+            timeout=aiohttp.ClientTimeout(total=1)
         )
 
         twitter,twitter_followers,community_id = await get_twitter_data_manualy(session,uri)
@@ -627,6 +628,9 @@ async def process_live(data):
     except Exception as e:
         print(e)
         pass
+    finally:
+        if session:
+            await session.close()
 
 
 async def start_extension_server():
