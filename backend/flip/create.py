@@ -177,7 +177,7 @@ async def fetch_local(uri,session):
             else:
                 print('ipfs говно')
                 return data
-    else:
+    elif 'irys' in uri:
         code = uri.split('/')[-1]
         uri1 = f"https://node1.irys.xyz/{code}"
         uri2 = f"https://node2.irys.xyz/{code}"
@@ -225,7 +225,22 @@ async def fetch_local(uri,session):
                     return data
         except Exception:
             pass
-
+        
+        # Если ничего не сработало, возвращаем None
+        return None
+    else:
+        # Для всех остальных URI делаем обычный запрос без изменений
+        try:
+            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                if r.status == 200:
+                    data = await r.json()
+                    return data
+                else:
+                    print(f'Ошибка при запросе {uri}: статус {r.status}')
+                    return None
+        except Exception as e:
+            print(f'Ошибка при запросе {uri}: {e}')
+            return None
 
 
 async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
