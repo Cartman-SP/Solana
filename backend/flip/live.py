@@ -531,7 +531,7 @@ async def get_twitter_data_manualy(session,uri):
     if meta:
         community_url, community_id, _ = find_community_anywhere_with_src(meta)
         
-
+    followers = 0
     twitter_name = ""
     if community_id:
         twitter_name, followers = await get_creator_username(session, community_id)
