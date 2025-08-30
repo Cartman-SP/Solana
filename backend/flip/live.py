@@ -473,13 +473,6 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
 
 
 
-def find_community_from_uri(uri: str) -> Optional[str]:
-    """Ищет community ID в URI"""
-    if not uri:
-        return None
-    print(uri)
-    match = COMMUNITY_ID_RE.search(uri)
-    return match.group(1) if match else None
 
 async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
     """Загружает метаданные с URI"""
@@ -487,10 +480,62 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         return None
         
     try:
-        # Пробуем только один раз с коротким таймаутом
-        async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
-            data = await r.json()
-            return data
+        if('ipfs' in uri):
+            code = uri.split('/')[-1]
+            uri = f"http://127.0.0.1:8180/ipfs/{code}"
+            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                data = await r.json()
+                return data
+        else:
+            code = uri.split('/')[-1]
+            uri1 = f"https://node1.irys.xyz/{code}"
+            uri2 = f"https://node2.irys.xyz/{code}"
+            
+            # Создаем задачи для одновременных запросов
+            async def fetch_from_uri(uri_to_fetch):
+                try:
+                    async with session.get(uri_to_fetch, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                        if r.status == 200:
+                            data = await r.json()
+                            return data
+                        return None
+                except Exception:
+                    return None
+            
+            # Запускаем оба запроса одновременно
+            task1 = asyncio.create_task(fetch_from_uri(uri1))
+            task2 = asyncio.create_task(fetch_from_uri(uri2))
+            
+            # Ждем первый успешный ответ
+            done, pending = await asyncio.wait(
+                [task1, task2], 
+                return_when=asyncio.FIRST_COMPLETED,
+                timeout=0.5
+            )
+            
+            # Отменяем оставшиеся задачи
+            for task in pending:
+                task.cancel()
+            
+            # Проверяем результаты
+            for task in done:
+                try:
+                    result = task.result()
+                    if result is not None:
+                        return result
+                except Exception:
+                    continue
+            
+            # Если оба запроса не удались, пробуем оригинальный URI как fallback
+            try:
+                async with session.get(uri, timeout=aiohttp.ClientTimeout(total=0.5)) as r:
+                    if r.status == 200:
+                        data = await r.json()
+                        return data
+            except Exception:
+                pass
+                
+            return None
     except Exception as e:
         print(e)
         return None
