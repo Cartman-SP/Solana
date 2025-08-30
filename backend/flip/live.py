@@ -484,7 +484,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
             print(123,uri)
             code = uri.split('/')[-1]
             uri = f"http://127.0.0.1:8180/ipfs/{code}"
-            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=2)) as r:
+            async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
                 data = await r.json()
                 if(data):
                     return data
