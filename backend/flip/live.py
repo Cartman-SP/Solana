@@ -456,7 +456,7 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
             try:
                 u, f, src = task.result()
                 if u:
-                    return u
+                    return u, f
             except:
                 continue
                 
@@ -534,11 +534,11 @@ async def get_twitter_data_manualy(session,uri):
 
     twitter_name = ""
     if community_id:
-        twitter_name = await get_creator_username(session, community_id)
+        twitter_name, followers = await get_creator_username(session, community_id)
 
     if twitter_name:
         twitter_name=f"@{twitter_name}"
-    return twitter_name, community_id
+    return twitter_name, followers, community_id
 
 
 

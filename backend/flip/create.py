@@ -243,7 +243,7 @@ async def process_create(data,session):
         symbol = data.get('symbol', '')
         uri = data.get('uri', '')
 
-        twitter_name,twitter_followers,community_id = await get_twitter_data(session,uri)
+        twitter_name,community_id = await get_twitter_data(session,uri)
         bonding_curve = data.get('bonding_curve','')
         token_created = False
         if not(twitter_name) or twitter_name == "@" or twitter_name=="@None":
