@@ -19,7 +19,7 @@ from solders.commitment_config import CommitmentLevel
 import uvloop
 import contextlib
 from base58 import b58encode, b58decode
-import ipfshttpclient
+import aioipfs
 from live import *
 from create import *
 
@@ -195,56 +195,63 @@ def find_community_from_uri(uri: str) -> Optional[str]:
 
 class IPFSClient:
     def __init__(self):
-        self.api_client = None
-        self._setup_api_client()
+        self.client = None
+        self.connected = False
+        self._setup_client()
     
-    def _setup_api_client(self):
-        """Настраиваем прямое подключение к API IPFS с множественными попытками"""
-        # Пробуем разные порты и адреса для IPFS API
-        ipfs_endpoints = [
-            '/ip4/127.0.0.1/tcp/5001',  # Стандартный порт
-            '/ip4/127.0.0.1/tcp/5101',  # Ваш текущий порт
-            '/ip4/127.0.0.1/tcp/8080',  # Альтернативный порт
-            '/ip4/0.0.0.0/tcp/5001',    # Все интерфейсы
-        ]
+    def _setup_client(self):
+        """Настраиваем асинхронный IPFS клиент с множественными попытками"""
+        # Пробуем разные порты для IPFS API
+        ipfs_ports = [5001, 5101, 8080]  # Стандартный, ваш текущий, альтернативный
         
-        for endpoint in ipfs_endpoints:
+        for port in ipfs_ports:
             try:
-                print(f"🔄 IPFSClient: Пробуем подключиться к {endpoint}")
-                self.api_client = ipfshttpclient.connect(endpoint)
+                print(f"🔄 IPFSClient: Настраиваем асинхронный клиент для порта {port}")
+                self.client = aioipfs.AsyncIPFS(host='127.0.0.1', port=port)
+                print(f"✅ IPFSClient: Клиент настроен для порта {port}")
+                return
+            except Exception as e:
+                print(f"❌ IPFSClient: Ошибка настройки для порта {port}: {e}")
+                continue
+        
+        print("⚠️ IPFSClient: Не удалось настроить клиент ни для одного порта")
+        self.client = None
+    
+    async def ensure_connection(self):
+        """Устанавливаем асинхронное соединение"""
+        if not self.client:
+            print("❌ IPFS клиент не настроен")
+            return False
+            
+        if not self.connected:
+            try:
+                print("🔄 IPFSClient: Устанавливаем соединение...")
+                await self.client.connect()
+                self.connected = True
+                print("✅ IPFSClient: Асинхронное подключение к IPFS API установлено")
                 
                 # Проверяем подключение
                 try:
-                    version = self.api_client.version()
-                    print(f"✅ IPFSClient: Успешно подключились к {endpoint}, версия: {version}")
-                    return
+                    version = await self.client.version()
+                    print(f"📋 IPFSClient: Версия IPFS: {version}")
                 except Exception as e:
-                    print(f"❌ IPFSClient: Ошибка проверки версии {endpoint}: {e}")
-                    self.api_client.close()
-                    self.api_client = None
-                    continue
+                    print(f"⚠️ IPFSClient: Не удалось получить версию: {e}")
                     
             except Exception as e:
-                print(f"❌ IPFSClient: Не удалось подключиться к {endpoint}: {e}")
-                continue
-        
-        print("⚠️ IPFSClient: Не удалось подключиться ни к одному IPFS API endpoint")
-        self.api_client = None
+                print(f"❌ IPFSClient: Ошибка подключения: {e}")
+                self.connected = False
+                return False
+        return True
     
     async def fetch_via_api(self, cid: str) -> Optional[Dict[Any, Any]]:
-        """Прямое получение данных через IPFS API - самый надежный способ"""
-        if not self.api_client:
-            print("❌ IPFS API клиент недоступен")
+        """Современный асинхронный метод получения данных через IPFS API"""
+        if not await self.ensure_connection():
+            print("❌ IPFS API: Не удалось установить соединение")
             return None
             
         try:
             print(f"🔍 IPFS API: Запрашиваем CID {cid}...")
-            # Используем синхронный вызов в отдельном потоке
-            loop = asyncio.get_event_loop()
-            data = await loop.run_in_executor(
-                None, 
-                lambda: self.api_client.cat(cid)
-            )
+            data = await self.client.cat(cid)
             
             if data:
                 print(f"📦 IPFS API: Получено {len(data)} байт")
@@ -261,6 +268,7 @@ class IPFSClient:
                     
         except Exception as e:
             print(f"❌ IPFS API: Ошибка при получении {cid}: {e}")
+            self.connected = False  # Сбрасываем флаг соединения при ошибке
             return None
     
     async def fetch_via_gateway(self, cid: str, session: aiohttp.ClientSession) -> Optional[Dict[Any, Any]]:
@@ -300,7 +308,7 @@ async def fetch_local(uri: str, session: aiohttp.ClientSession, ipfs_client: IPF
         print(f"📋 Извлеченный CID: {cid}")
         
         # ПРИОРИТЕТ 1: Прямое API подключение
-        if ipfs_client and ipfs_client.api_client:
+        if ipfs_client and ipfs_client.client:
             print("🚀 Пробуем прямое API подключение...")
             data = await ipfs_client.fetch_via_api(cid)
             if data:
@@ -615,11 +623,12 @@ async def process_create(data, ipfs_client=None):
             await session.close()
             print("Session closed")
         # Закрываем IPFS клиент только если он был создан локально
-        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.api_client and ipfs_client != globals().get('ipfs_client'):
+        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.client and ipfs_client != globals().get('ipfs_client'):
             try:
-                ipfs_client.api_client.close()
-                print("IPFS client closed")
+                if ipfs_client.connected:
+                    await ipfs_client.client.disconnect()
+                    print("IPFS client disconnected")
             except Exception as e:
-                print(f"Error closing IPFS client: {e}")
+                print(f"Error disconnecting IPFS client: {e}")
 
 

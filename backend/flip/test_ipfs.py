@@ -3,61 +3,53 @@
 Тестовый скрипт для проверки IPFS подключения
 """
 
-import ipfshttpclient
+import aioipfs
 import asyncio
 import json
 
-def test_ipfs_connection():
-    """Тестирует подключение к IPFS API"""
-    print("🧪 Тестирование IPFS подключения...")
+async def test_ipfs_connection():
+    """Тестирует асинхронное подключение к IPFS API"""
+    print("🧪 Тестирование асинхронного IPFS подключения...")
     
-    # Пробуем разные порты и адреса для IPFS API
-    ipfs_endpoints = [
-        '/ip4/127.0.0.1/tcp/5001',  # Стандартный порт
-        '/ip4/127.0.0.1/tcp/5101',  # Ваш текущий порт
-        '/ip4/127.0.0.1/tcp/8080',  # Альтернативный порт
-        '/ip4/0.0.0.0/tcp/5001',    # Все интерфейсы
-    ]
+    # Пробуем разные порты для IPFS API
+    ipfs_ports = [5001, 5101, 8080]  # Стандартный, ваш текущий, альтернативный
     
-    for endpoint in ipfs_endpoints:
+    for port in ipfs_ports:
         try:
-            print(f"\n🔄 Пробуем подключиться к IPFS API: {endpoint}")
-            client = ipfshttpclient.connect(endpoint)
+            print(f"\n🔄 Пробуем подключиться к IPFS API на порту {port}")
+            client = aioipfs.AsyncIPFS(host='127.0.0.1', port=port)
             
             # Проверяем подключение
             try:
-                version = client.version()
-                print(f"✅ Успешно подключились к {endpoint}")
-                print(f"📋 Версия IPFS: {version}")
+                await client.connect()
+                print(f"✅ Успешно подключились к порту {port}")
                 
-                # Пробуем получить информацию о node
+                # Получаем версию
                 try:
-                    id_info = client.id()
-                    print(f"🆔 Node ID: {id_info['ID']}")
-                    print(f"🌐 Адреса: {id_info['Addresses']}")
+                    version = await client.version()
+                    print(f"📋 Версия IPFS: {version}")
                 except Exception as e:
-                    print(f"⚠️ Не удалось получить ID: {e}")
+                    print(f"⚠️ Не удалось получить версию: {e}")
                 
                 # Пробуем простую команду
                 try:
-                    peers = client.swarm.peers()
+                    peers = await client.swarm.peers()
                     print(f"🔗 Подключенные пиры: {len(peers)}")
                 except Exception as e:
                     print(f"⚠️ Не удалось получить пиры: {e}")
                 
-                client.close()
+                await client.disconnect()
                 return True
                 
             except Exception as e:
-                print(f"❌ Ошибка проверки версии IPFS: {e}")
-                client.close()
+                print(f"❌ Ошибка подключения к порту {port}: {e}")
                 continue
                 
         except Exception as e:
-            print(f"❌ Не удалось подключиться к {endpoint}: {e}")
+            print(f"❌ Не удалось настроить клиент для порта {port}: {e}")
             continue
     
-    print("\n⚠️ Не удалось подключиться ни к одному IPFS API endpoint")
+    print("\n⚠️ Не удалось подключиться ни к одному IPFS API порту")
     return False
 
 def test_ipfs_gateways():
@@ -87,11 +79,11 @@ def test_ipfs_gateways():
         except Exception as e:
             print(f"❌ Gateway не работает: {gateway} - {e}")
 
-if __name__ == "__main__":
+async def main():
     print("🚀 Запуск тестов IPFS...")
     
     # Тест прямого API
-    api_works = test_ipfs_connection()
+    api_works = await test_ipfs_connection()
     
     # Тест gateways
     test_ipfs_gateways()
@@ -103,4 +95,7 @@ if __name__ == "__main__":
         print("   1. Запущен ли IPFS daemon?")
         print("   2. Правильный ли порт? (обычно 5001)")
         print("   3. Доступен ли API? (ipfs config Addresses.API)")
-        print("   4. Нет ли firewall блокировки?") 
+        print("   4. Нет ли firewall блокировки?")
+
+if __name__ == "__main__":
+    asyncio.run(main()) 
