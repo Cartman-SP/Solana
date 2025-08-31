@@ -117,9 +117,9 @@ class TokenProcessor:
             print(f"❌ Ошибка при создании/получении Twitter: {e}")
             return None
     
-    async def send_telegram_notification(self, token_mint: str) -> None:
+    async def send_telegram_notification(self, token_mint: str,uri: str) -> None:
         """Отправить уведомление в Telegram о проблеме с метаданными"""
-        message = f"проблема с метой, uri, https://trade.padre.gg/trade/solana/{token_mint}"
+        message = f"проблема с метой, {uri}, https://trade.padre.gg/trade/solana/{token_mint}"
         
         for user_id in TELEGRAM_USER_IDS:
             try:
@@ -149,7 +149,7 @@ class TokenProcessor:
             # Если достигнут лимит попыток, отправляем уведомление в Telegram
             if new_retries >= MAX_RETRIES:
                 print(f"🚨 Достигнут лимит попыток для токена {token.name}, отправляю уведомление в Telegram")
-                await self.send_telegram_notification(token.address)
+                await self.send_telegram_notification(token.address,token.uri)
                 
         except Exception as e:
             print(f"❌ Ошибка при увеличении счетчика попыток: {e}")
