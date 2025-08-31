@@ -20,7 +20,8 @@ REQUEST_DELAY = 1  # 100ms между запросами
 IPFS_GATEWAY = "http://205.172.58.34/ipfs/"
 IRYS_NODES = [
     "https://node1.irys.xyz/",
-    "https://node2.irys.xyz/"
+    "https://node2.irys.xyz/",
+    "https://uploader.irys.xyz/"
 ]
 
 # Telegram константы

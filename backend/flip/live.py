@@ -481,7 +481,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         if('https://ipfs.io/ipfs/' in uri or "https://gateway.pinata.cloud/ipfs/" in uri):
             print(123,uri)
             code = uri.split('/')[-1]
-            uri = f"http://127.0.0.1:8180/ipfs/{code}"
+            uri = f"http://205.172.58.34/ipfs/{code}"
             async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
                 data = await r.json()
                 if(data):
@@ -493,7 +493,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
             code = uri.split('/')[-1]
             uri1 = f"https://node1.irys.xyz/{code}"
             uri2 = f"https://node2.irys.xyz/{code}"
-            
+            uri3 = f"https://uploader.irys.xyz/{code}"
             # Создаем задачи для одновременных запросов
             async def fetch_from_uri(uri_to_fetch):
                 try:
