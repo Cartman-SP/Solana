@@ -36,4 +36,10 @@ urlpatterns = [
     path('api/dashboard_stats/', dashboard_stats, name='dashboard_stats'),
     # Unified endpoint for both GET and POST to avoid 405
     path('api/auto_buy_settings/', auto_buy_settings, name='auto_buy_settings'),
+    
+    # Premium Dashboard URLs
+    path('premium/', premium_dashboard, name='premium_dashboard'),
+    path('premium/token/<int:token_id>/', premium_token_details, name='premium_token_details'),
+    path('api/premium/dashboard/', premium_dashboard_data, name='premium_dashboard_data'),
+    path('api/premium/search/', premium_token_search, name='premium_token_search'),
 ]

@@ -31,7 +31,12 @@
     <div class="wrap">
         <div class="header">
             <div class="brand">Проект — Live Дашборд</div>
-            <div class="live"><span class="dot"></span>Обновление в реальном времени</div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <a href="{% url 'premium_dashboard' %}" style="color: #00d4ff; text-decoration: none; font-size: 14px; padding: 6px 12px; border: 1px solid #00d4ff; border-radius: 6px; transition: all 0.3s ease;">
+                    🚀 Premium Dashboard
+                </a>
+                <div class="live"><span class="dot"></span>Обновление в реальном времени</div>
+            </div>
         </div>
 
         <div class="grid">

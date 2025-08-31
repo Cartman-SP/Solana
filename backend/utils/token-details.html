@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Details - Solana Analytics</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0a0e1a;
+            --secondary-bg: #111827;
+            --card-bg: #1f2937;
+            --accent-blue: #00d4ff;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #374151;
+            --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Parallax Background */
+        .parallax-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-button {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Token Hero Section */
+        .token-hero {
+            background: linear-gradient(135deg, var(--card-bg), var(--secondary-bg));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .token-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.8s ease;
+        }
+
+        .token-hero:hover::before {
+            transform: translateX(100%);
+        }
+
+        .token-hero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .token-main-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .token-name-large {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .token-symbol-large {
+            background: var(--accent-blue);
+            color: var(--primary-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            align-self: flex-start;
+        }
+
+        .token-status-large {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-badge-large {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .status-badge-large.verified {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge-large.blocked {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .token-address {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        /* Token Metrics Grid */
+        .token-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .metric-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .metric-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .metric-value-large {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label-large {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Related Entities */
+        .related-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--accent-blue);
+        }
+
+        .entity-card {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .entity-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow);
+            transform: translateY(-2px);
+        }
+
+        .entity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .entity-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .entity-type {
+            background: var(--accent-teal);
+            color: var(--primary-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .entity-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .entity-detail {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Price Chart */
+        .price-chart-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-placeholder {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .token-name-large {
+                font-size: 2rem;
+            }
+            
+            .token-metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .token-hero-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Parallax Background -->
+    <div class="parallax-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="dashboard.html" class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Solana Analytics</span>
+            </a>
+            <a href="dashboard.html" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Token Hero Section -->
+        <div class="token-hero">
+            <div class="token-hero-header">
+                <div class="token-main-info">
+                    <div class="token-name-large" id="tokenName">Bonk</div>
+                    <div class="token-symbol-large" id="tokenSymbol">BONK</div>
+                    <div class="token-status-large">
+                        <span class="status-badge-large verified">
+                            <i class="fas fa-check"></i>
+                            Verified
+                        </span>
+                        <span class="status-badge-large verified">
+                            <i class="fab fa-twitter"></i>
+                            Twitter Connected
+                        </span>
+                    </div>
+                </div>
+                <div class="token-address" id="tokenAddress">
+                    DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Metrics Grid -->
+        <div class="token-metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value-large" id="athPrice">$0.0000042</div>
+                <div class="metric-label-large">ATH Price</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-area"></i>
+                </div>
+                <div class="metric-value-large" id="totalVolume">1.25M</div>
+                <div class="metric-label-large">Total Volume</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="metric-value-large" id="totalFees">45K</div>
+                <div class="metric-label-large">Total Fees</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="metric-value-large" id="totalTransactions">12.5K</div>
+                <div class="metric-label-large">Transactions</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="metric-value-large" id="createdDate">Jan 15</div>
+                <div class="metric-label-large">Created</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-value-large" id="communitySize">25.3K</div>
+                <div class="metric-label-large">Community</div>
+            </div>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="price-chart-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Price Performance
+            </h2>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 1rem;"></i>
+                    <div>Interactive Price Chart</div>
+                    <div style="font-size: 0.875rem; margin-top: 0.5rem;">Coming Soon</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creator Information -->
+        <div class="related-section">
+            <h2 class="section-title">
+                <i class="fas fa-user"></i>
+                Creator Information
+            </h2>
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-name">7YUoor187gziHWSHjothZskmcrJ745cECieFHwWFinn2</div>
+                    <div class="entity-type">Creator</div>
+                </div>
+                <div class="entity-details">
+                    <div class="entity-detail">
+                        <div class="detail-value">15</div>
+                        <div class="detail-label">Total Tokens</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">$2.5M</div>
+                        <div class="detail-label">Total Volume</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">Verified</div>
+                        <div class="detail-label">Status</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">98.5%</div>
+                        <div class="detail-label">Success Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Twitter Community -->
+        <div class="related-section">
+            <h2 class="section-title">
+                <i class="fab fa-twitter"></i>
+                Twitter Community
+            </h2>
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-name">@bonk_inu</div>
+                    <div class="entity-type">Twitter</div>
+                </div>
+                <div class="entity-details">
+                    <div class="entity-detail">
+                        <div class="detail-value">25.3K</div>
+                        <div class="detail-label">Followers</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">1.2K</div>
+                        <div class="detail-label">Following</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">5.8K</div>
+                        <div class="detail-label">Tweets</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">Active</div>
+                        <div class="detail-label">Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Tokens -->
+        <div class="related-section">
+            <h2 class="section-title">
+                <i class="fas fa-link"></i>
+                Related Tokens
+            </h2>
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-name">Dogwifhat (WIF)</div>
+                    <div class="entity-type">Token</div>
+                </div>
+                <div class="entity-details">
+                    <div class="entity-detail">
+                        <div class="detail-value">$0.0000085</div>
+                        <div class="detail-label">ATH</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">890K</div>
+                        <div class="detail-label">Volume</div>
+                    </div>
+                    <div class="entity-detail">
+                        <div class="detail-value">Verified</div>
+                        <div class="detail-label">Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Get token ID from URL parameters
+        function getTokenId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id') || '1';
+        }
+
+        // Load token data (mock for now)
+        function loadTokenData() {
+            const tokenId = getTokenId();
+            
+            // Mock data - in real app this would come from API
+            const mockToken = {
+                id: tokenId,
+                name: "Bonk",
+                symbol: "BONK",
+                address: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+                creator: "7YUoor187gziHWSHjothZskmcrJ745cECieFHwWFinn2",
+                twitter: "@bonk_inu",
+                ath: 0.0000042,
+                volume: 1250000,
+                fees: 45000,
+                transactions: 12500,
+                created_at: "2024-01-15T10:30:00Z",
+                community_size: 25300
+            };
+
+            // Update UI
+            document.getElementById('tokenName').textContent = mockToken.name;
+            document.getElementById('tokenSymbol').textContent = mockToken.symbol;
+            document.getElementById('tokenAddress').textContent = mockToken.address;
+            document.getElementById('athPrice').textContent = `$${(mockToken.ath * 1000000).toFixed(6)}`;
+            document.getElementById('totalVolume').textContent = `${(mockToken.volume / 1000000).toFixed(2)}M`;
+            document.getElementById('totalFees').textContent = `${(mockToken.fees / 1000).toFixed(0)}K`;
+            document.getElementById('totalTransactions').textContent = `${(mockToken.transactions / 1000).toFixed(1)}K`;
+            document.getElementById('createdDate').textContent = new Date(mockToken.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            document.getElementById('communitySize').textContent = `${(mockToken.community_size / 1000).toFixed(1)}K`;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTokenData();
+        });
+    </script>
+</body>
+</html> 

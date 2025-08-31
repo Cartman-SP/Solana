@@ -1,0 +1,894 @@
+{% extends 'mainapp/base.html' %}
+
+{% block title %}Premium Dashboard - Solana Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-bg: #0a0e1a;
+        --secondary-bg: #111827;
+        --card-bg: #1f2937;
+        --accent-blue: #00d4ff;
+        --accent-cyan: #06b6d4;
+        --accent-teal: #14b8a6;
+        --text-primary: #ffffff;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --border: #374151;
+        --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    body {
+        background: var(--primary-bg);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Parallax Background */
+    .parallax-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+    }
+
+    .floating-particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: var(--accent-blue);
+        border-radius: 50%;
+        animation: float 20s infinite linear;
+        opacity: 0.3;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.3; }
+        90% { opacity: 0.3; }
+        100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    /* Header */
+    .premium-header {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        text-decoration: none;
+    }
+
+    .logo i {
+        font-size: 2rem;
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .live-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--card-bg);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .live-toggle:hover {
+        border-color: var(--accent-blue);
+        box-shadow: var(--glow);
+    }
+
+    .live-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--danger);
+        animation: pulse 2s infinite;
+    }
+
+    .live-toggle.active .live-indicator {
+        background: var(--success);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Main Content */
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.05), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .stat-card:hover::before {
+        transform: translateX(100%);
+    }
+
+    .stat-card:hover {
+        border-color: var(--accent-blue);
+        box-shadow: var(--glow);
+        transform: translateY(-2px);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-title {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-change {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .stat-change.positive {
+        color: var(--success);
+    }
+
+    .stat-change.negative {
+        color: var(--danger);
+    }
+
+    /* Filters */
+    .filters-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .filters-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .filter-input {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    .filter-select {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    /* Tokens List */
+    .tokens-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .tokens-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .tokens-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .tokens-count {
+        background: var(--accent-blue);
+        color: var(--primary-bg);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .tokens-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .token-card {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .token-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .token-card:hover::before {
+        transform: scaleY(1);
+    }
+
+    .token-card:hover {
+        border-color: var(--accent-blue);
+        box-shadow: var(--glow);
+        transform: translateY(-2px);
+    }
+
+    .token-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .token-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .token-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .token-symbol {
+        background: var(--accent-blue);
+        color: var(--primary-bg);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        align-self: flex-start;
+    }
+
+    .token-status {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-badge.verified {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.blocked {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .token-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .metric-item {
+        text-align: center;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sparkline {
+        width: 100%;
+        height: 40px;
+        background: var(--primary-bg);
+        border-radius: 6px;
+        margin-top: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sparkline-line {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        transform-origin: left;
+        animation: sparkline 3s ease-in-out infinite;
+    }
+
+    @keyframes sparkline {
+        0%, 100% { transform: scaleX(0); }
+        50% { transform: scaleX(1); }
+    }
+
+    /* Loading */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0, 212, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--accent-blue);
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* New Token Animation */
+    .token-card.new {
+        animation: slideInDown 0.5s ease-out;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-container {
+            padding: 1rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .token-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Parallax Background -->
+<div class="parallax-bg"></div>
+<div class="floating-particles" id="particles"></div>
+
+<!-- Header -->
+<header class="premium-header">
+    <div class="header-content">
+        <a href="{% url 'home_page' %}" class="logo">
+            <i class="fas fa-chart-line"></i>
+            <span>Solana Analytics</span>
+        </a>
+        <div class="live-toggle" id="liveToggle">
+            <div class="live-indicator"></div>
+            <span>Live Mode</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-container">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Total Tokens</span>
+                <div class="stat-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="totalTokens">0</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span id="tokensChange">+0%</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Active Creators</span>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="activeCreators">0</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span id="creatorsChange">+0%</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Twitter Communities</span>
+                <div class="stat-icon">
+                    <i class="fab fa-twitter"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="twitterCommunities">0</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span id="twitterChange">+0%</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-title">Total Volume</span>
+                <div class="stat-icon">
+                    <i class="fas fa-chart-area"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="totalVolume">0</div>
+            <div class="stat-change negative">
+                <i class="fas fa-arrow-down"></i>
+                <span id="volumeChange">-0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filters-header">
+            <h2 class="filters-title">Filters & Search</h2>
+        </div>
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Token Name/Symbol</label>
+                <input type="text" class="filter-input" id="tokenSearch" placeholder="Search tokens...">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Creator Address</label>
+                <input type="text" class="filter-input" id="creatorSearch" placeholder="Search creators...">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Twitter Account</label>
+                <input type="text" class="filter-input" id="twitterSearch" placeholder="Search Twitter...">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="verified">Verified</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Sort By</label>
+                <select class="filter-select" id="sortBy">
+                    <option value="created_at">Date Created</option>
+                    <option value="ath">ATH Price</option>
+                    <option value="volume">Volume</option>
+                    <option value="fees">Fees</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Order</label>
+                <select class="filter-select" id="sortOrder">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tokens List -->
+    <div class="tokens-section">
+        <div class="tokens-header">
+            <h2 class="tokens-title">Token Activity</h2>
+            <div class="tokens-count" id="tokensCount">0 tokens</div>
+        </div>
+        <div class="tokens-grid" id="tokensGrid">
+            <div class="loading" style="text-align: center; padding: 2rem;">
+                <span class="loading"></span>
+                <div style="margin-top: 1rem;">Loading tokens...</div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize particles
+    function initParticles() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Live mode toggle
+    function initLiveToggle() {
+        const liveToggle = document.getElementById('liveToggle');
+        let isLive = false;
+
+        liveToggle.addEventListener('click', () => {
+            isLive = !isLive;
+            liveToggle.classList.toggle('active', isLive);
+            
+            if (isLive) {
+                startLiveMode();
+            } else {
+                stopLiveMode();
+            }
+        });
+    }
+
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('{% url "premium_dashboard_data" %}');
+            const data = await response.json();
+            
+            if (data.success) {
+                updateStats(data.stats);
+                renderTokens(data.tokens);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    // Update statistics
+    function updateStats(stats) {
+        document.getElementById('totalTokens').textContent = stats.total_tokens.toLocaleString();
+        document.getElementById('activeCreators').textContent = stats.active_creators.toLocaleString();
+        document.getElementById('twitterCommunities').textContent = stats.twitter_communities.toLocaleString();
+        document.getElementById('totalVolume').textContent = stats.total_volume.toLocaleString();
+        
+        // Calculate changes (mock for now)
+        document.getElementById('tokensChange').textContent = `+${Math.floor(Math.random() * 20)}%`;
+        document.getElementById('creatorsChange').textContent = `+${Math.floor(Math.random() * 15)}%`;
+        document.getElementById('twitterChange').textContent = `+${Math.floor(Math.random() * 25)}%`;
+        document.getElementById('volumeChange').textContent = `-${Math.floor(Math.random() * 10)}%`;
+    }
+
+    // Render tokens
+    function renderTokens(tokens) {
+        const tokensGrid = document.getElementById('tokensGrid');
+        const tokensCount = document.getElementById('tokensCount');
+        
+        tokensCount.textContent = `${tokens.length} tokens`;
+        tokensGrid.innerHTML = '';
+
+        tokens.forEach(token => {
+            const tokenCard = createTokenCard(token);
+            tokensGrid.appendChild(tokenCard);
+        });
+    }
+
+    // Create token card
+    function createTokenCard(token) {
+        const card = document.createElement('div');
+        card.className = 'token-card';
+        card.innerHTML = `
+            <div class="token-header">
+                <div class="token-info">
+                    <div class="token-name">${token.name}</div>
+                    <div class="token-symbol">${token.symbol}</div>
+                </div>
+                <div class="token-status">
+                    ${getStatusBadge(token.status)}
+                </div>
+            </div>
+            <div class="token-metrics">
+                <div class="metric-item">
+                    <div class="metric-value">${token.ath.toLocaleString()}</div>
+                    <div class="metric-label">ATH</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">${(token.volume / 1000).toFixed(1)}K</div>
+                    <div class="metric-label">Volume</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">${(token.fees / 1000).toFixed(1)}K</div>
+                    <div class="metric-label">Fees</div>
+                </div>
+            </div>
+            <div class="sparkline">
+                <div class="sparkline-line"></div>
+            </div>
+        `;
+
+        // Add click handler
+        card.addEventListener('click', () => {
+            showTokenDetails(token);
+        });
+
+        return card;
+    }
+
+    // Get status badge
+    function getStatusBadge(status) {
+        switch(status) {
+            case 'verified':
+                return '<span class="status-badge verified"><i class="fas fa-check"></i> Verified</span>';
+            case 'blocked':
+                return '<span class="status-badge blocked"><i class="fas fa-ban"></i> Blocked</span>';
+            case 'pending':
+                return '<span class="status-badge pending"><i class="fas fa-clock"></i> Pending</span>';
+            default:
+                return '<span class="status-badge pending"><i class="fas fa-question"></i> Unknown</span>';
+        }
+    }
+
+    // Show token details
+    function showTokenDetails(token) {
+        window.location.href = `{% url 'premium_token_details' token_id=0 %}`.replace('0', token.id);
+    }
+
+    // Live mode functions
+    let liveInterval;
+
+    function startLiveMode() {
+        console.log('Live mode started');
+        // Reload data every 10 seconds
+        liveInterval = setInterval(() => {
+            loadDashboardData();
+        }, 10000);
+    }
+
+    function stopLiveMode() {
+        console.log('Live mode stopped');
+        if (liveInterval) {
+            clearInterval(liveInterval);
+            liveInterval = null;
+        }
+    }
+
+    // Search and filter functionality
+    function initSearchAndFilters() {
+        const tokenSearch = document.getElementById('tokenSearch');
+        const creatorSearch = document.getElementById('creatorSearch');
+        const twitterSearch = document.getElementById('twitterSearch');
+        const statusFilter = document.getElementById('statusFilter');
+        const sortBy = document.getElementById('sortBy');
+        const sortOrder = document.getElementById('sortOrder');
+
+        // Add event listeners for real-time filtering
+        [tokenSearch, creatorSearch, twitterSearch, statusFilter, sortBy, sortOrder].forEach(element => {
+            element.addEventListener('change', filterTokens);
+            element.addEventListener('input', filterTokens);
+        });
+    }
+
+    async function filterTokens() {
+        try {
+            const tokenSearch = document.getElementById('tokenSearch').value;
+            const creatorSearch = document.getElementById('creatorSearch').value;
+            const twitterSearch = document.getElementById('twitterSearch').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            // Build query string
+            const params = new URLSearchParams();
+            if (tokenSearch || creatorSearch || twitterSearch) {
+                params.append('q', `${tokenSearch} ${creatorSearch} ${twitterSearch}`.trim());
+            }
+            if (statusFilter) params.append('status', statusFilter);
+            if (sortBy) params.append('sort', sortBy);
+            if (sortOrder) params.append('order', sortOrder);
+
+            const response = await fetch(`{% url 'premium_token_search' %}?${params.toString()}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderTokens(data.tokens);
+            }
+        } catch (error) {
+            console.error('Error filtering tokens:', error);
+        }
+    }
+
+    // Initialize everything
+    document.addEventListener('DOMContentLoaded', () => {
+        initParticles();
+        initLiveToggle();
+        initSearchAndFilters();
+        loadDashboardData();
+    });
+</script>
+{% endblock %} 

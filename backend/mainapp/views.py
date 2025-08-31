@@ -807,3 +807,206 @@ def auto_buy_settings(request):
         response = JsonResponse({'success': False, 'error': str(e)}, status=500)
         response["Access-Control-Allow-Origin"] = "*"
         return response
+
+# Premium Dashboard Views
+def premium_dashboard(request):
+    """Премиальный аналитический дашборд для мониторинга цифровых активов"""
+    return render(request, 'mainapp/premium_dashboard.html')
+
+def premium_token_details(request, token_id):
+    """Детальная страница токена для премиального дашборда"""
+    try:
+        token = Token.objects.get(id=token_id)
+        context = {
+            'token': token,
+            'user_dev': token.dev,
+            'twitter': token.twitter
+        }
+        return render(request, 'mainapp/premium_token_details.html', context)
+    except Token.DoesNotExist:
+        return render(request, 'mainapp/premium_token_details.html', {'error': 'Token not found'})
+
+@require_GET
+def premium_dashboard_data(request):
+    """API для получения данных премиального дашборда"""
+    try:
+        from django.db.models import Sum, Count, Avg
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Базовые метрики
+        total_tokens = Token.objects.count()
+        active_creators = UserDev.objects.count()
+        twitter_communities = Twitter.objects.count()
+        
+        # Объемы и комиссии
+        volume_data = Token.objects.aggregate(
+            total_volume=Sum('total_trans'),
+            total_fees=Sum('total_fees')
+        )
+        total_volume = volume_data.get('total_volume', 0) or 0
+        total_fees = volume_data.get('total_fees', 0.0) or 0.0
+        
+        # Статистика по статусам
+        verified_tokens = Token.objects.filter(processed=True).count()
+        pending_tokens = Token.objects.filter(processed=False).count()
+        blocked_creators = UserDev.objects.filter(blacklist=True).count()
+        verified_creators = UserDev.objects.filter(whitelist=True).count()
+        
+        # Последние токены (для live mode)
+        latest_tokens = Token.objects.select_related('dev', 'twitter').order_by('-created_at')[:20]
+        tokens_data = []
+        
+        for token in latest_tokens:
+            token_info = {
+                'id': token.id,
+                'name': token.name or 'Unknown',
+                'symbol': token.symbol or 'UNK',
+                'address': token.address,
+                'creator': token.dev.adress if token.dev else None,
+                'twitter': token.twitter.name if token.twitter else None,
+                'ath': token.ath,
+                'volume': token.total_trans,
+                'fees': token.total_fees,
+                'status': get_token_status(token),
+                'created_at': token.created_at.isoformat() if token.created_at else None,
+                'processed': token.processed,
+                'twitter_got': token.twitter_got,
+                'retries': token.retries
+            }
+            tokens_data.append(token_info)
+        
+        # Статистика по времени
+        now = timezone.now()
+        last_24h = now - timedelta(hours=24)
+        last_7d = now - timedelta(days=7)
+        
+        tokens_24h = Token.objects.filter(created_at__gte=last_24h).count()
+        tokens_7d = Token.objects.filter(created_at__gte=last_7d).count()
+        
+        # Топ создатели
+        top_creators = UserDev.objects.annotate(
+            token_count=Count('token')
+        ).order_by('-token_count')[:10]
+        
+        creators_data = []
+        for creator in top_creators:
+            creator_info = {
+                'address': creator.adress,
+                'total_tokens': creator.total_tokens,
+                'token_count': creator.token_count,
+                'status': 'verified' if creator.whitelist else 'blocked' if creator.blacklist else 'pending'
+            }
+            creators_data.append(creator_info)
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_tokens': total_tokens,
+                'active_creators': active_creators,
+                'twitter_communities': twitter_communities,
+                'total_volume': total_volume,
+                'total_fees': total_fees,
+                'verified_tokens': verified_tokens,
+                'pending_tokens': pending_tokens,
+                'blocked_creators': blocked_creators,
+                'verified_creators': verified_creators,
+                'tokens_24h': tokens_24h,
+                'tokens_7d': tokens_7d
+            },
+            'tokens': tokens_data,
+            'top_creators': creators_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_GET
+def premium_token_search(request):
+    """API для поиска токенов в премиальном дашборде"""
+    try:
+        query = request.GET.get('q', '').strip()
+        status_filter = request.GET.get('status', '')
+        sort_by = request.GET.get('sort', 'created_at')
+        sort_order = request.GET.get('order', 'desc')
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 20))
+        
+        # Базовый queryset
+        tokens = Token.objects.select_related('dev', 'twitter')
+        
+        # Поиск
+        if query:
+            tokens = tokens.filter(
+                Q(name__icontains=query) |
+                Q(symbol__icontains=query) |
+                Q(address__icontains=query) |
+                Q(dev__adress__icontains=query) |
+                Q(twitter__name__icontains=query)
+            )
+        
+        # Фильтр по статусу
+        if status_filter:
+            if status_filter == 'verified':
+                tokens = tokens.filter(processed=True)
+            elif status_filter == 'pending':
+                tokens = tokens.filter(processed=False)
+            elif status_filter == 'blocked':
+                tokens = tokens.filter(dev__blacklist=True)
+        
+        # Сортировка
+        if sort_order == 'desc':
+            tokens = tokens.order_by(f'-{sort_by}')
+        else:
+            tokens = tokens.order_by(sort_by)
+        
+        # Пагинация
+        paginator = Paginator(tokens, per_page)
+        page_obj = paginator.get_page(page)
+        
+        # Подготовка данных
+        tokens_data = []
+        for token in page_obj:
+            token_info = {
+                'id': token.id,
+                'name': token.name or 'Unknown',
+                'symbol': token.symbol or 'UNK',
+                'address': token.address,
+                'creator': token.dev.adress if token.dev else None,
+                'twitter': token.twitter.name if token.twitter else None,
+                'ath': token.ath,
+                'volume': token.total_trans,
+                'fees': token.total_fees,
+                'status': get_token_status(token),
+                'created_at': token.created_at.isoformat() if token.created_at else None,
+                'processed': token.processed,
+                'twitter_got': token.twitter_got,
+                'retries': token.retries
+            }
+            tokens_data.append(token_info)
+        
+        return JsonResponse({
+            'success': True,
+            'tokens': tokens_data,
+            'pagination': {
+                'current_page': page_obj.number,
+                'total_pages': page_obj.paginator.num_pages,
+                'total_count': page_obj.paginator.count,
+                'has_next': page_obj.has_next(),
+                'has_previous': page_obj.has_previous()
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+def get_token_status(token):
+    """Определяет статус токена для отображения"""
+    if token.dev and token.dev.blacklist:
+        return 'blocked'
+    elif token.dev and token.dev.whitelist:
+        return 'verified'
+    elif token.processed:
+        return 'processed'
+    else:
+        return 'pending'
