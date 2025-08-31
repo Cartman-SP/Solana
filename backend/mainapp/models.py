@@ -50,6 +50,11 @@ class Token(models.Model):
     total_fees = models.FloatField(default=0)
     bonding_curve = models.CharField(max_length=255,default="",null=True, blank=True)
     community_id = models.CharField(max_length=255,default="",null=True, blank=True)
+    initialBuy = models.DecimalField(max_digits=16, decimal_places=8, default=0, null=True, blank=True)
+    uri = models.URLField(max_length=500, null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    symbol = models.CharField(max_length=50, null=True, blank=True)
+    twitter_got = models.BooleanField(default=True)
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
