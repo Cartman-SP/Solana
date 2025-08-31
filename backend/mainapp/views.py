@@ -872,7 +872,19 @@ def premium_dashboard_data(request):
                 'created_at': token.created_at.isoformat() if token.created_at else None,
                 'processed': token.processed,
                 'twitter_got': token.twitter_got,
-                'retries': token.retries
+                'retries': token.retries,
+                'bonding_curve': token.bonding_curve or 'Unknown',
+                'community_id': token.community_id or 'None',
+                'initial_buy': float(token.initialBuy) if token.initialBuy else 0,
+                'uri': token.uri or 'None',
+                'migrated': token.migrated,
+                'creator_status': 'verified' if token.dev and token.dev.whitelist else 'blocked' if token.dev and token.dev.blacklist else 'pending',
+                'twitter_status': 'verified' if token.twitter and token.twitter.whitelist else 'blocked' if token.twitter and token.twitter.blacklist else 'pending',
+                'creator_total_tokens': token.dev.total_tokens if token.dev else 0,
+                'twitter_total_tokens': token.twitter.total_tokens if token.twitter else 0,
+                'twitter_ath': token.twitter.ath if token.twitter else 0,
+                'twitter_total_trans': token.twitter.total_trans if token.twitter else 0,
+                'twitter_total_fees': token.twitter.total_fees if token.twitter else 0
             }
             tokens_data.append(token_info)
         
@@ -954,6 +966,22 @@ def premium_token_search(request):
             elif status_filter == 'blocked':
                 tokens = tokens.filter(dev__blacklist=True)
         
+        # Фильтр по статусу обработки
+        processing_filter = request.GET.get('processing', '')
+        if processing_filter:
+            if processing_filter == 'processed':
+                tokens = tokens.filter(processed=True)
+            elif processing_filter == 'pending':
+                tokens = tokens.filter(processed=False)
+        
+        # Фильтр по статусу Twitter
+        twitter_status_filter = request.GET.get('twitter_status', '')
+        if twitter_status_filter:
+            if twitter_status_filter == 'got':
+                tokens = tokens.filter(twitter_got=True)
+            elif twitter_status_filter == 'not_got':
+                tokens = tokens.filter(twitter_got=False)
+        
         # Сортировка
         if sort_order == 'desc':
             tokens = tokens.order_by(f'-{sort_by}')
@@ -981,7 +1009,19 @@ def premium_token_search(request):
                 'created_at': token.created_at.isoformat() if token.created_at else None,
                 'processed': token.processed,
                 'twitter_got': token.twitter_got,
-                'retries': token.retries
+                'retries': token.retries,
+                'bonding_curve': token.bonding_curve or 'Unknown',
+                'community_id': token.community_id or 'None',
+                'initial_buy': float(token.initialBuy) if token.initialBuy else 0,
+                'uri': token.uri or 'None',
+                'migrated': token.migrated,
+                'creator_status': 'verified' if token.dev and token.dev.whitelist else 'blocked' if token.dev and token.dev.blacklist else 'pending',
+                'twitter_status': 'verified' if token.twitter and token.twitter.whitelist else 'blocked' if token.twitter and token.twitter.blacklist else 'pending',
+                'creator_total_tokens': token.dev.total_tokens if token.dev else 0,
+                'twitter_total_tokens': token.twitter.total_tokens if token.twitter else 0,
+                'twitter_ath': token.twitter.ath if token.twitter else 0,
+                'twitter_total_trans': token.twitter.total_trans if token.twitter else 0,
+                'twitter_total_fees': token.twitter.total_fees if token.twitter else 0
             }
             tokens_data.append(token_info)
         
