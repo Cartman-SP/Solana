@@ -149,8 +149,84 @@ class TokenProcessor:
         # Выводим результат
         if metadata:
             print(f"📊 Метаданные: {metadata}")
+            # Ищем community_id в метаданных
+            community_id = self.extract_community_id(metadata)
+            if community_id:
+                print(f"🏘️ Community ID: {community_id}")
+                # Сохраняем community_id в базу данных
+                await self.save_community_id(token, community_id)
+            else:
+                print("❌ Community ID не найден в метаданных")
         else:
             print("❌ Метаданные не получены (None)")
+        
+        # Помечаем токен как обработанный
+        await self.mark_token_processed(token)
+    
+    def extract_community_id(self, metadata: dict) -> Optional[str]:
+        """Извлечь community_id из метаданных"""
+        if not isinstance(metadata, dict):
+            return None
+        
+        def search_in_value(value, path=""):
+            """Рекурсивно искать 'communities' в значении"""
+            if isinstance(value, str):
+                if 'communities' in value.lower():
+                    print(f"🔍 Найдено 'communities' в строке: {value}")
+                    # Разбиваем по / и берем последнее значение
+                    parts = value.split('/')
+                    if parts:
+                        community_id = parts[-1].strip()
+                        # Убираем лишние символы и проверяем, что это не пустая строка
+                        community_id = community_id.strip('.,;:!?()[]{}"\'').strip()
+                        if community_id and len(community_id) > 0:
+                            print(f"✅ Извлечен community_id: '{community_id}' из пути: {path}")
+                            return community_id
+                        else:
+                            print(f"❌ Community ID пустой после очистки: '{parts[-1]}'")
+            elif isinstance(value, dict):
+                for k, v in value.items():
+                    current_path = f"{path}.{k}" if path else k
+                    result = search_in_value(v, current_path)
+                    if result:
+                        return result
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    current_path = f"{path}[{i}]" if path else f"[{i}]"
+                    result = search_in_value(item, current_path)
+                    if result:
+                        return result
+            return None
+        
+        print(f"🔍 Начинаю поиск 'communities' в метаданных...")
+        # Ищем во всех значениях метаданных
+        for key, value in metadata.items():
+            result = search_in_value(value, key)
+            if result:
+                return result
+        
+        print("❌ 'communities' не найдено в метаданных")
+        return None
+    
+    async def save_community_id(self, token: Token, community_id: str) -> None:
+        """Сохранить community_id в базу данных"""
+        try:
+            await sync_to_async(Token.objects.filter(id=token.id).update)(
+                community_id=community_id
+            )
+            print(f"💾 Community ID сохранен в базу: {community_id}")
+        except Exception as e:
+            print(f"❌ Ошибка при сохранении community_id: {e}")
+    
+    async def mark_token_processed(self, token: Token) -> None:
+        """Пометить токен как обработанный"""
+        try:
+            await sync_to_async(Token.objects.filter(id=token.id).update)(
+                twitter_got=True
+            )
+            print(f"✅ Токен помечен как обработанный")
+        except Exception as e:
+            print(f"❌ Ошибка при пометке токена: {e}")
     
     async def process_batch(self, batch_size: int = 20):
         """Обработать батч токенов"""
