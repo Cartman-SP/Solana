@@ -2,36 +2,26 @@ import asyncio
 import websockets
 import json
 import time
-import json
 import os
 import sys
 import django
-import asyncio
 import re
 import base64
-import websockets
 import aiohttp
 import requests
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 import base58
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solders.rpc.requests import SendVersionedTransaction
 from solders.rpc.config import RpcSendTransactionConfig
 from solders.commitment_config import CommitmentLevel
-import base58
-import time
 import uvloop
 import contextlib
 from base58 import b58encode, b58decode
+import ipfshttpclient
 from live import *
 from create import *
-import ipfshttpclient
-import aiohttp
-import asyncio
-import ipfshttpclient
-from typing import Optional, Dict, Any
-import json
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -331,7 +321,7 @@ async def fetch_local(uri: str, session: aiohttp.ClientSession, ipfs_client: IPF
             print(f'❌ Ошибка запроса {uri}: {e}')
             return None
 
-async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> dict | None:
+async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str, ipfs_client: IPFSClient) -> dict | None:
     """Гарантированная загрузка метаданных с множественными попытками"""
     if not uri:
         print("No URI provided")
@@ -343,7 +333,7 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
     for attempt in range(15):  # Увеличиваем до 15 попыток
         try:
             print(f"Attempt {attempt + 1}/15 to fetch metadata")
-            data = await fetch_local(uri, session)
+            data = await fetch_local(uri, session, ipfs_client)
             
             if data and isinstance(data, dict):
                 print(f"Successfully fetched metadata on attempt {attempt + 1}")
@@ -418,12 +408,12 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
         
     return None, None
 
-async def get_twitter_data(session, uri):
+async def get_twitter_data(session, uri, ipfs_client: IPFSClient):
     """Получает Twitter данные с максимальной вероятностью"""
     print(f"Starting Twitter data extraction for URI: {uri}")
     
     community_id = None
-    meta = await fetch_meta_with_retries(session, uri)
+    meta = await fetch_meta_with_retries(session, uri, ipfs_client)
     
     if meta:
         print("Metadata successfully loaded, searching for community...")
@@ -468,8 +458,11 @@ async def process_create(data):
             timeout=aiohttp.ClientTimeout(total=30)  # Увеличиваем общий timeout
         )
 
+        # Создаем IPFS клиент
+        ipfs_client = IPFSClient()
+        
         # Гарантированно получаем Twitter данные
-        twitter_name, community_id = await get_twitter_data(session, uri)
+        twitter_name, community_id = await get_twitter_data(session, uri, ipfs_client)
         
         bonding_curve = data.get('bonding_curve', '')
         token_created = False
@@ -573,5 +566,12 @@ async def process_create(data):
         if session:
             await session.close()
             print("Session closed")
+        # Закрываем IPFS клиент если он был создан
+        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.api_client:
+            try:
+                ipfs_client.api_client.close()
+                print("IPFS client closed")
+            except Exception as e:
+                print(f"Error closing IPFS client: {e}")
 
 
