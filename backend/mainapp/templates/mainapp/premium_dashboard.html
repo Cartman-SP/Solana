@@ -418,6 +418,176 @@
         margin-top: 0.25rem;
     }
 
+    /* Two-column layout for token details */
+    .token-details {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--secondary-bg);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .detail-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .detail-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .detail-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        min-width: 100px;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        flex: 1;
+        margin: 0 0.5rem;
+        font-family: 'Courier New', monospace;
+    }
+
+    .detail-value.verified {
+        color: var(--success);
+    }
+
+    .detail-value.blocked {
+        color: var(--danger);
+    }
+
+    .detail-value.pending {
+        color: var(--warning);
+    }
+
+    .detail-extra {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+
+    .uri-value {
+        cursor: pointer;
+        text-decoration: underline;
+        color: var(--accent-blue) !important;
+    }
+
+    .uri-value:hover {
+        color: var(--accent-cyan) !important;
+    }
+
+    /* Pagination Styles */
+    .pagination-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .pagination-btn {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        border-color: var(--accent-blue);
+        background: var(--accent-blue);
+        color: var(--primary-bg);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+        background: var(--accent-blue);
+        color: var(--primary-bg);
+        border-color: var(--accent-blue);
+    }
+
+    .page-numbers {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .page-number {
+        min-width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .items-per-page {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .items-per-page select {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    /* Responsive adjustments for two-column layout */
+    @media (max-width: 768px) {
+        .token-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .pagination-section {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .pagination-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
     .status-badge {
         display: flex;
         align-items: center;
@@ -1095,68 +1265,6 @@
         opacity: 1;
     }
 
-    .token-details {
-        margin: 1rem 0;
-        padding: 1rem;
-        background: var(--secondary-bg);
-        border-radius: 8px;
-        border: 1px solid var(--border);
-    }
-
-    .detail-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .detail-row:last-child {
-        margin-bottom: 0;
-    }
-
-    .detail-label {
-        color: var(--text-secondary);
-        font-weight: 500;
-        min-width: 100px;
-    }
-
-    .detail-value {
-        color: var(--text-primary);
-        font-weight: 600;
-        flex: 1;
-        margin: 0 0.5rem;
-        font-family: 'Courier New', monospace;
-    }
-
-    .detail-value.verified {
-        color: var(--success);
-    }
-
-    .detail-value.blocked {
-        color: var(--danger);
-    }
-
-    .detail-value.pending {
-        color: var(--warning);
-    }
-
-    .detail-extra {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        font-style: italic;
-    }
-
-    .uri-value {
-        cursor: pointer;
-        text-decoration: underline;
-        color: var(--accent-blue) !important;
-    }
-
-    .uri-value:hover {
-        color: var(--accent-cyan) !important;
-    }
-
     .token-footer {
         margin-top: 1rem;
         padding-top: 1rem;
@@ -1555,6 +1663,31 @@
                 <div style="margin-top: 1rem;">Loading tokens...</div>
             </div>
         </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-section" id="paginationSection" style="display: none;">
+            <div class="pagination-info">
+                <span id="paginationInfo">Showing 0-0 of 0 tokens</span>
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" id="prevPage" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <div class="page-numbers" id="pageNumbers"></div>
+                <button class="pagination-btn" id="nextPage" disabled>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="items-per-page">
+                <label>Items per page:</label>
+                <select id="itemsPerPage">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
     </div>
 </main>
 {% endblock %}
@@ -1593,20 +1726,7 @@
         });
     }
 
-    // Load dashboard data
-    async function loadDashboardData() {
-        try {
-            const response = await fetch('{% url "premium_dashboard_data" %}');
-            const data = await response.json();
-            
-            if (data.success) {
-                updateStats(data.stats);
-                renderTokens(data.tokens);
-            }
-        } catch (error) {
-            console.error('Error loading dashboard data:', error);
-        }
-    }
+
 
     // Update statistics
     function updateStats(stats) {
@@ -1626,19 +1746,7 @@
         document.getElementById('processedChange').textContent = `+${Math.floor(Math.random() * 30)}%`;
     }
 
-    // Render tokens
-    function renderTokens(tokens) {
-        const tokensGrid = document.getElementById('tokensGrid');
-        const tokensCount = document.getElementById('tokensCount');
-        
-        tokensCount.textContent = `${tokens.length} tokens`;
-        tokensGrid.innerHTML = '';
 
-        tokens.forEach(token => {
-            const tokenCard = createTokenCard(token);
-            tokensGrid.appendChild(tokenCard);
-        });
-    }
 
     // Create token card
     function createTokenCard(token) {
@@ -1663,119 +1771,121 @@
             </div>
             
             <div class="token-details">
-                <div class="detail-row">
-                    <span class="detail-label">Creator:</span>
-                    <span class="detail-value ${token.creator_status}">${token.creator ? token.creator.substring(0, 8) + '...' : 'Unknown'}</span>
-                    <span class="status-badge ${token.creator_status}">${token.creator_status}</span>
-                    <span class="detail-extra">(${token.creator_total_tokens} tokens)</span>
+                <div class="detail-column">
+                    <div class="detail-row">
+                        <span class="detail-label">Creator:</span>
+                        <span class="detail-value ${token.creator_status}">${token.creator ? token.creator.substring(0, 8) + '...' : 'Unknown'}</span>
+                        <span class="status-badge ${token.creator_status}">${token.creator_status}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Creator Reputation:</span>
+                        <span class="detail-value reputation ${token.creator_status === 'verified' ? 'high' : token.creator_status === 'blocked' ? 'low' : 'medium'}">
+                            ${token.creator_status === 'verified' ? 'High' : token.creator_status === 'blocked' ? 'Low' : 'Medium'}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Twitter:</span>
+                        <span class="detail-value">${token.twitter || 'None'}</span>
+                        ${token.twitter ? `<span class="status-badge ${token.twitter_status}">${token.twitter_status}</span>` : ''}
+                    </div>
+                    ${token.twitter ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Twitter Activity:</span>
+                        <span class="detail-value twitter-activity">
+                            ${token.twitter_total_trans} transactions, ${token.twitter_total_fees.toFixed(2)} fees
+                        </span>
+                    </div>
+                    ` : ''}
+                    <div class="detail-row">
+                        <span class="detail-label">Community ID:</span>
+                        <span class="detail-value ${token.community_id !== 'None' ? 'community-id' : ''}">${token.community_id}</span>
+                        ${token.community_id !== 'None' ? '<span class="status-badge community">Community</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Migration Status:</span>
+                        <span class="detail-value ${token.migrated ? 'migrated-status' : 'not-migrated'}">
+                            ${token.migrated ? 'Migrated' : 'Not Migrated'}
+                        </span>
+                        ${token.migrated ? '<span class="status-badge migrated-detail"><i class="fas fa-exchange-alt"></i> Migrated</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Processing Status:</span>
+                        <span class="detail-value ${token.processed ? 'processed-status' : 'pending-status'}">
+                            ${token.processed ? 'Completed' : 'Pending'}
+                        </span>
+                        ${token.processed ? '<span class="status-badge completed"><i class="fas fa-check-circle"></i> Completed</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Twitter Status:</span>
+                        <span class="detail-value ${token.twitter_got ? 'twitter-found' : 'twitter-not-found'}">
+                            ${token.twitter_got ? 'Found' : 'Not Found'}
+                        </span>
+                        ${token.twitter_got ? '<span class="status-badge twitter-found-badge"><i class="fas fa-twitter"></i> Found</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Retry Count:</span>
+                        <span class="detail-value ${token.retries > 0 ? 'retries-count' : 'no-retries'}">
+                            ${token.retries} attempts
+                        </span>
+                        ${token.retries > 0 ? '<span class="status-badge retries-badge"><i class="fas fa-redo"></i> ${token.retries} retries</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Bonding Curve:</span>
+                        <span class="detail-value ${token.bonding_curve !== 'Unknown' ? 'bonding-curve' : ''}">${token.bonding_curve}</span>
+                        ${token.bonding_curve !== 'Unknown' ? '<span class="status-badge bonding">Bonding</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Initial Buy:</span>
+                        <span class="detail-value ${token.initial_buy > 0 ? 'initial-buy' : ''}">${token.initial_buy.toFixed(4)} SOL</span>
+                        ${token.initial_buy > 0 ? '<span class="status-badge initial">Initial</span>' : ''}
+                    </div>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Creator Reputation:</span>
-                    <span class="detail-value reputation ${token.creator_status === 'verified' ? 'high' : token.creator_status === 'blocked' ? 'low' : 'medium'}">
-                        ${token.creator_status === 'verified' ? 'High' : token.creator_status === 'blocked' ? 'Low' : 'Medium'}
-                    </span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Twitter:</span>
-                    <span class="detail-value">${token.twitter || 'None'}</span>
-                    ${token.twitter ? `<span class="status-badge ${token.twitter_status}">${token.twitter_status}</span>` : ''}
-                    ${token.twitter ? `<span class="detail-extra">(${token.twitter_total_tokens} tokens, ATH: ${token.twitter_ath})</span>` : ''}
-                </div>
-                ${token.twitter ? `
-                <div class="detail-row">
-                    <span class="detail-label">Twitter Activity:</span>
-                    <span class="detail-value twitter-activity">
-                        ${token.twitter_total_trans} transactions, ${token.twitter_total_fees.toFixed(2)} fees
-                    </span>
-                </div>
-                ` : ''}
-                <div class="detail-row">
-                    <span class="detail-label">Community ID:</span>
-                    <span class="detail-value ${token.community_id !== 'None' ? 'community-id' : ''}">${token.community_id}</span>
-                    ${token.community_id !== 'None' ? '<span class="status-badge community">Community</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Migration Status:</span>
-                    <span class="detail-value ${token.migrated ? 'migrated-status' : 'not-migrated'}">
-                        ${token.migrated ? 'Migrated' : 'Not Migrated'}
-                    </span>
-                    ${token.migrated ? '<span class="status-badge migrated-detail"><i class="fas fa-exchange-alt"></i> Migrated</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Processing Status:</span>
-                    <span class="detail-value ${token.processed ? 'processed-status' : 'pending-status'}">
-                        ${token.processed ? 'Completed' : 'Pending'}
-                    </span>
-                    ${token.processed ? '<span class="status-badge completed"><i class="fas fa-check-circle"></i> Completed</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Twitter Status:</span>
-                    <span class="detail-value ${token.twitter_got ? 'twitter-found' : 'twitter-not-found'}">
-                        ${token.twitter_got ? 'Found' : 'Not Found'}
-                    </span>
-                    ${token.twitter_got ? '<span class="status-badge twitter-found-badge"><i class="fas fa-twitter"></i> Found</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Retry Count:</span>
-                    <span class="detail-value ${token.retries > 0 ? 'retries-count' : 'no-retries'}">
-                        ${token.retries} attempts
-                    </span>
-                    ${token.retries > 0 ? '<span class="status-badge retries-badge"><i class="fas fa-redo"></i> ${token.retries} retries</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Bonding Curve:</span>
-                    <span class="detail-value ${token.bonding_curve !== 'Unknown' ? 'bonding-curve' : ''}">${token.bonding_curve}</span>
-                    ${token.bonding_curve !== 'Unknown' ? '<span class="status-badge bonding">Bonding</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Initial Buy:</span>
-                    <span class="detail-value ${token.initial_buy > 0 ? 'initial-buy' : ''}">${token.initial_buy.toFixed(4)} SOL</span>
-                    ${token.initial_buy > 0 ? '<span class="status-badge initial">Initial</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">URI:</span>
-                    <span class="detail-value uri-value" title="${token.uri}">${token.uri !== 'None' ? token.uri.substring(0, 30) + '...' : 'None'}</span>
-                    ${token.uri !== 'None' ? '<span class="status-badge uri-badge"><i class="fas fa-link"></i> URI</span>' : ''}
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Created:</span>
-                    <span class="detail-value created-time">${formatDate(token.created_at)}</span>
-                    <span class="status-badge time-badge"><i class="fas fa-clock"></i> Time</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Address:</span>
-                    <span class="detail-value address-value" title="Click to copy">${token.address.substring(0, 12)}...${token.address.substring(token.address.length - 12)}</span>
-                    <span class="status-badge address-badge"><i class="fas fa-copy"></i> Copy</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Symbol:</span>
-                    <span class="detail-value symbol-value">${token.symbol}</span>
-                    <span class="status-badge symbol-badge"><i class="fas fa-tag"></i> Symbol</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Name:</span>
-                    <span class="detail-value name-value">${token.name}</span>
-                    <span class="status-badge name-badge"><i class="fas fa-font"></i> Name</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">ATH:</span>
-                    <span class="detail-value ath-value">${token.ath.toLocaleString()}</span>
-                    <span class="status-badge ath-badge"><i class="fas fa-chart-line"></i> ATH</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Volume:</span>
-                    <span class="detail-value volume-value">${(token.volume / 1000).toFixed(1)}K</span>
-                    <span class="status-badge volume-badge"><i class="fas fa-chart-area"></i> Volume</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Fees:</span>
-                    <span class="detail-value fees-value">${(token.fees / 1000).toFixed(1)}K</span>
-                    <span class="status-badge fees-badge"><i class="fas fa-coins"></i> Fees</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Retries:</span>
-                    <span class="detail-value retries-value">${token.retries}</span>
-                    <span class="status-badge retries-detail-badge"><i class="fas fa-redo"></i> Retries</span>
+                <div class="detail-column">
+                    <div class="detail-row">
+                        <span class="detail-label">URI:</span>
+                        <span class="detail-value uri-value" title="${token.uri}">${token.uri !== 'None' ? token.uri.substring(0, 30) + '...' : 'None'}</span>
+                        ${token.uri !== 'None' ? '<span class="status-badge uri-badge"><i class="fas fa-link"></i> URI</span>' : ''}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Created:</span>
+                        <span class="detail-value created-time">${formatDate(token.created_at)}</span>
+                        <span class="status-badge time-badge"><i class="fas fa-clock"></i> Time</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Address:</span>
+                        <span class="detail-value address-value" title="Click to copy">${token.address.substring(0, 12)}...${token.address.substring(token.address.length - 12)}</span>
+                        <span class="status-badge address-badge"><i class="fas fa-copy"></i> Copy</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Symbol:</span>
+                        <span class="detail-value symbol-value">${token.symbol}</span>
+                        <span class="status-badge symbol-badge"><i class="fas fa-tag"></i> Symbol</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value name-value">${token.name}</span>
+                        <span class="status-badge name-badge"><i class="fas fa-font"></i> Name</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">ATH:</span>
+                        <span class="detail-value ath-value">${token.ath.toLocaleString()}</span>
+                        <span class="status-badge ath-badge"><i class="fas fa-chart-line"></i> ATH</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Volume:</span>
+                        <span class="detail-value volume-value">${(token.volume / 1000).toFixed(1)}K</span>
+                        <span class="status-badge volume-badge"><i class="fas fa-chart-area"></i> Volume</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Fees:</span>
+                        <span class="detail-value fees-value">${(token.fees / 1000).toFixed(1)}K</span>
+                        <span class="status-badge fees-badge"><i class="fas fa-coins"></i> Fees</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Retries:</span>
+                        <span class="detail-value retries-value">${token.retries}</span>
+                        <span class="status-badge retries-detail-badge"><i class="fas fa-redo"></i> Retries</span>
+                    </div>
                 </div>
             </div>
             
@@ -1920,38 +2030,7 @@
         });
     }
 
-    async function filterTokens() {
-        try {
-            const tokenSearch = document.getElementById('tokenSearch').value;
-            const creatorSearch = document.getElementById('creatorSearch').value;
-            const twitterSearch = document.getElementById('twitterSearch').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const processingFilter = document.getElementById('processingFilter').value;
-            const twitterFilter = document.getElementById('twitterFilter').value;
-            const sortBy = document.getElementById('sortBy').value;
-            const sortOrder = document.getElementById('sortOrder').value;
 
-            // Build query string
-            const params = new URLSearchParams();
-            if (tokenSearch || creatorSearch || twitterSearch) {
-                params.append('q', `${tokenSearch} ${creatorSearch} ${twitterSearch}`.trim());
-            }
-            if (statusFilter) params.append('status', statusFilter);
-            if (processingFilter) params.append('processing', processingFilter);
-            if (twitterFilter) params.append('twitter_status', twitterFilter);
-            if (sortBy) params.append('sort', sortBy);
-            if (sortOrder) params.append('order', sortOrder);
-
-            const response = await fetch(`{% url 'premium_token_search' %}?${params.toString()}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                renderTokens(data.tokens);
-            }
-        } catch (error) {
-            console.error('Error filtering tokens:', error);
-        }
-    }
 
     // Copy to clipboard function
     function copyToClipboard(text) {
@@ -2001,11 +2080,202 @@
         };
     }
 
+    // Pagination variables
+    let allTokens = [];
+    let currentPage = 1;
+    let itemsPerPage = 25;
+    let totalPages = 1;
+
+    // Initialize pagination
+    function initPagination() {
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderCurrentPage();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderCurrentPage();
+            }
+        });
+
+        itemsPerPageSelect.addEventListener('change', () => {
+            itemsPerPage = parseInt(itemsPerPageSelect.value);
+            currentPage = 1;
+            totalPages = Math.ceil(allTokens.length / itemsPerPage);
+            renderCurrentPage();
+        });
+    }
+
+    // Render current page
+    function renderCurrentPage() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentTokens = allTokens.slice(startIndex, endIndex);
+
+        renderTokens(currentTokens);
+        updatePagination();
+    }
+
+    // Update pagination controls
+    function updatePagination() {
+        const paginationSection = document.getElementById('paginationSection');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const pageNumbers = document.getElementById('pageNumbers');
+
+        if (allTokens.length === 0) {
+            paginationSection.style.display = 'none';
+            return;
+        }
+
+        paginationSection.style.display = 'flex';
+        
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, allTokens.length);
+        
+        paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${allTokens.length} tokens`;
+        
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+
+        // Generate page numbers
+        pageNumbers.innerHTML = '';
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        // Add first page if not visible
+        if (startPage > 1) {
+            addPageNumber(1);
+            if (startPage > 2) {
+                addPageEllipsis();
+            }
+        }
+
+        // Add visible page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            addPageNumber(i);
+        }
+
+        // Add last page if not visible
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                addPageEllipsis();
+            }
+            addPageNumber(totalPages);
+        }
+    }
+
+    // Add page number button
+    function addPageNumber(pageNum) {
+        const pageNumbers = document.getElementById('pageNumbers');
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn page-number ${pageNum === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = pageNum;
+        pageBtn.addEventListener('click', () => {
+            currentPage = pageNum;
+            renderCurrentPage();
+        });
+        pageNumbers.appendChild(pageBtn);
+    }
+
+    // Add page ellipsis
+    function addPageEllipsis() {
+        const pageNumbers = document.getElementById('pageNumbers');
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-btn';
+        ellipsis.textContent = '...';
+        ellipsis.style.cursor = 'default';
+        pageNumbers.appendChild(ellipsis);
+    }
+
+    // Modified renderTokens function to work with pagination
+    function renderTokens(tokens) {
+        const tokensGrid = document.getElementById('tokensGrid');
+        const tokensCount = document.getElementById('tokensCount');
+        
+        tokensCount.textContent = `${allTokens.length} tokens`;
+        tokensGrid.innerHTML = '';
+
+        tokens.forEach(token => {
+            const tokenCard = createTokenCard(token);
+            tokensGrid.appendChild(tokenCard);
+        });
+    }
+
+    // Modified loadDashboardData to store all tokens
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('{% url "premium_dashboard_data" %}');
+            const data = await response.json();
+            
+            if (data.success) {
+                updateStats(data.stats);
+                allTokens = data.tokens;
+                totalPages = Math.ceil(allTokens.length / itemsPerPage);
+                renderCurrentPage();
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    // Modified filterTokens to work with pagination
+    async function filterTokens() {
+        try {
+            const tokenSearch = document.getElementById('tokenSearch').value;
+            const creatorSearch = document.getElementById('creatorSearch').value;
+            const twitterSearch = document.getElementById('twitterSearch').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const processingFilter = document.getElementById('processingFilter').value;
+            const twitterFilter = document.getElementById('twitterFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            // Build query string
+            const params = new URLSearchParams();
+            if (tokenSearch || creatorSearch || twitterSearch) {
+                params.append('q', `${tokenSearch} ${creatorSearch} ${twitterSearch}`.trim());
+            }
+            if (statusFilter) params.append('status', statusFilter);
+            if (processingFilter) params.append('processing', processingFilter);
+            if (twitterFilter) params.append('twitter_status', twitterFilter);
+            if (sortBy) params.append('sort', sortBy);
+            if (sortOrder) params.append('order', sortOrder);
+
+            const response = await fetch(`{% url 'premium_token_search' %}?${params.toString()}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                allTokens = data.tokens;
+                currentPage = 1;
+                totalPages = Math.ceil(allTokens.length / itemsPerPage);
+                renderCurrentPage();
+            }
+        } catch (error) {
+            console.error('Error filtering tokens:', error);
+        }
+    }
+
     // Initialize everything
     document.addEventListener('DOMContentLoaded', () => {
         initParticles();
         initLiveToggle();
         initSearchAndFilters();
+        initPagination();
         loadDashboardData();
     });
 </script>
