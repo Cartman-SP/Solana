@@ -229,7 +229,7 @@ async def get_twitter_data(name,mint):
 
 async def send_telegram_message(token_address, dev_address, twitter_name, user_ath, user_total_trans, user_total_fees):
     """Отправляет сообщение в Telegram чаты при autobuy = True"""
-    bot_token = "8361879327:AAHFHe2qm0dEQpsvfyZSB_vCJYukmEWJ_tc"
+    bot_token = "8073210340:AAFEH4CmZq7L2RpO4-cqBmUjOoM5WadObJo"
     chat_ids = ["612594627", "784111198"]
     
     # Формируем красивое сообщение
