@@ -63,4 +63,5 @@ async def subscribe():
                 await create_token_from_message(data)
     
 # Run the subscribe function
-asyncio.get_event_loop().run_until_complete(subscribe()) 
+asyncio.get_event_loop().run_until_complete(subscribe())
+
