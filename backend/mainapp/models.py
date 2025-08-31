@@ -54,7 +54,7 @@ class Token(models.Model):
     uri = models.URLField(max_length=500, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     symbol = models.CharField(max_length=50, null=True, blank=True)
-    twitter_got = models.BooleanField(default=True)
+    twitter_got = models.BooleanField(default=False)
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
