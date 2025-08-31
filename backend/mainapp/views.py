@@ -13,7 +13,7 @@ import base64
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from .models import AdminDev, Token
+from .models import AdminDev, Token, Twitter
 from django.shortcuts import redirect
 from .models import Settings
 from django.views.decorators.http import require_GET, require_POST
