@@ -38,7 +38,9 @@ async def test_ipfs_connection():
                 except Exception as e:
                     print(f"⚠️ Не удалось получить пиры: {e}")
                 
-                await client.disconnect()
+                # Проверяем, что клиент поддерживает disconnect
+                if hasattr(client, 'disconnect'):
+                    await client.disconnect()
                 return True
                 
             except Exception as e:

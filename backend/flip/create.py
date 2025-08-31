@@ -226,16 +226,24 @@ class IPFSClient:
         if not self.connected:
             try:
                 print("🔄 IPFSClient: Устанавливаем соединение...")
-                await self.client.connect()
-                self.connected = True
-                print("✅ IPFSClient: Асинхронное подключение к IPFS API установлено")
-                
-                # Проверяем подключение
-                try:
-                    version = await self.client.version()
-                    print(f"📋 IPFSClient: Версия IPFS: {version}")
-                except Exception as e:
-                    print(f"⚠️ IPFSClient: Не удалось получить версию: {e}")
+                # Проверяем, что клиент поддерживает connect
+                if hasattr(self.client, 'connect'):
+                    await self.client.connect()
+                    self.connected = True
+                    print("✅ IPFSClient: Асинхронное подключение к IPFS API установлено")
+                    
+                    # Проверяем подключение
+                    try:
+                        if hasattr(self.client, 'version'):
+                            version = await self.client.version()
+                            print(f"📋 IPFSClient: Версия IPFS: {version}")
+                        else:
+                            print("⚠️ IPFSClient: Клиент не поддерживает version")
+                    except Exception as e:
+                        print(f"⚠️ IPFSClient: Не удалось получить версию: {e}")
+                else:
+                    print("❌ IPFSClient: Клиент не поддерживает connect")
+                    return False
                     
             except Exception as e:
                 print(f"❌ IPFSClient: Ошибка подключения: {e}")
@@ -251,19 +259,24 @@ class IPFSClient:
             
         try:
             print(f"🔍 IPFS API: Запрашиваем CID {cid}...")
-            data = await self.client.cat(cid)
-            
-            if data:
-                print(f"📦 IPFS API: Получено {len(data)} байт")
-                try:
-                    json_data = json.loads(data.decode('utf-8'))
-                    print(f"✅ IPFS API: Успешно декодирован JSON")
-                    return json_data
-                except json.JSONDecodeError as e:
-                    print(f"❌ IPFS API: Данные не JSON: {data[:100]}... Ошибка: {e}")
+            # Проверяем, что клиент поддерживает cat
+            if hasattr(self.client, 'cat'):
+                data = await self.client.cat(cid)
+                
+                if data:
+                    print(f"📦 IPFS API: Получено {len(data)} байт")
+                    try:
+                        json_data = json.loads(data.decode('utf-8'))
+                        print(f"✅ IPFS API: Успешно декодирован JSON")
+                        return json_data
+                    except json.JSONDecodeError as e:
+                        print(f"❌ IPFS API: Данные не JSON: {data[:100]}... Ошибка: {e}")
+                        return None
+                else:
+                    print(f"❌ IPFS API: Получены пустые данные для CID {cid}")
                     return None
             else:
-                print(f"❌ IPFS API: Получены пустые данные для CID {cid}")
+                print("❌ IPFS API: Клиент не поддерживает cat")
                 return None
                     
         except Exception as e:
@@ -308,7 +321,7 @@ async def fetch_local(uri: str, session: aiohttp.ClientSession, ipfs_client: IPF
         print(f"📋 Извлеченный CID: {cid}")
         
         # ПРИОРИТЕТ 1: Прямое API подключение
-        if ipfs_client and ipfs_client.client:
+        if ipfs_client and hasattr(ipfs_client, 'client') and ipfs_client.client:
             print("🚀 Пробуем прямое API подключение...")
             data = await ipfs_client.fetch_via_api(cid)
             if data:
@@ -623,9 +636,9 @@ async def process_create(data, ipfs_client=None):
             await session.close()
             print("Session closed")
         # Закрываем IPFS клиент только если он был создан локально
-        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.client and ipfs_client != globals().get('ipfs_client'):
+        if 'ipfs_client' in locals() and ipfs_client and hasattr(ipfs_client, 'client') and ipfs_client.client and ipfs_client != globals().get('ipfs_client'):
             try:
-                if ipfs_client.connected:
+                if hasattr(ipfs_client, 'connected') and ipfs_client.connected:
                     await ipfs_client.client.disconnect()
                     print("IPFS client disconnected")
             except Exception as e:

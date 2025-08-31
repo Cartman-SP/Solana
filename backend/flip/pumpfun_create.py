@@ -67,8 +67,12 @@ async def cleanup():
     global ipfs_client
     if ipfs_client:
         try:
-            await ipfs_client.disconnect()
-            print("✅ IPFS клиент отключен")
+            # Проверяем, что это AsyncIPFS объект
+            if hasattr(ipfs_client, 'disconnect'):
+                await ipfs_client.disconnect()
+                print("✅ IPFS клиент отключен")
+            else:
+                print("⚠️ IPFS клиент не поддерживает disconnect")
         except Exception as e:
             print(f"⚠️ Ошибка при отключении IPFS клиента: {e}")
 
