@@ -199,20 +199,46 @@ class IPFSClient:
         self._setup_api_client()
     
     def _setup_api_client(self):
-        """Настраиваем прямое подключение к API IPFS"""
-        try:
-            self.api_client = ipfshttpclient.connect('/ip4/127.0.0.1/tcp/5101')
-            print("✓ Подключение к IPFS API установлено")
-        except Exception as e:
-            print(f"✗ Ошибка подключения к IPFS API: {e}")
-            self.api_client = None
+        """Настраиваем прямое подключение к API IPFS с множественными попытками"""
+        # Пробуем разные порты и адреса для IPFS API
+        ipfs_endpoints = [
+            '/ip4/127.0.0.1/tcp/5001',  # Стандартный порт
+            '/ip4/127.0.0.1/tcp/5101',  # Ваш текущий порт
+            '/ip4/127.0.0.1/tcp/8080',  # Альтернативный порт
+            '/ip4/0.0.0.0/tcp/5001',    # Все интерфейсы
+        ]
+        
+        for endpoint in ipfs_endpoints:
+            try:
+                print(f"🔄 IPFSClient: Пробуем подключиться к {endpoint}")
+                self.api_client = ipfshttpclient.connect(endpoint)
+                
+                # Проверяем подключение
+                try:
+                    version = self.api_client.version()
+                    print(f"✅ IPFSClient: Успешно подключились к {endpoint}, версия: {version}")
+                    return
+                except Exception as e:
+                    print(f"❌ IPFSClient: Ошибка проверки версии {endpoint}: {e}")
+                    self.api_client.close()
+                    self.api_client = None
+                    continue
+                    
+            except Exception as e:
+                print(f"❌ IPFSClient: Не удалось подключиться к {endpoint}: {e}")
+                continue
+        
+        print("⚠️ IPFSClient: Не удалось подключиться ни к одному IPFS API endpoint")
+        self.api_client = None
     
     async def fetch_via_api(self, cid: str) -> Optional[Dict[Any, Any]]:
         """Прямое получение данных через IPFS API - самый надежный способ"""
         if not self.api_client:
+            print("❌ IPFS API клиент недоступен")
             return None
             
         try:
+            print(f"🔍 IPFS API: Запрашиваем CID {cid}...")
             # Используем синхронный вызов в отдельном потоке
             loop = asyncio.get_event_loop()
             data = await loop.run_in_executor(
@@ -221,14 +247,20 @@ class IPFSClient:
             )
             
             if data:
+                print(f"📦 IPFS API: Получено {len(data)} байт")
                 try:
-                    return json.loads(data.decode('utf-8'))
-                except json.JSONDecodeError:
-                    print(f"Данные не JSON: {data[:100]}...")
+                    json_data = json.loads(data.decode('utf-8'))
+                    print(f"✅ IPFS API: Успешно декодирован JSON")
+                    return json_data
+                except json.JSONDecodeError as e:
+                    print(f"❌ IPFS API: Данные не JSON: {data[:100]}... Ошибка: {e}")
                     return None
+            else:
+                print(f"❌ IPFS API: Получены пустые данные для CID {cid}")
+                return None
                     
         except Exception as e:
-            print(f"Ошибка при получении {cid} через API: {e}")
+            print(f"❌ IPFS API: Ошибка при получении {cid}: {e}")
             return None
     
     async def fetch_via_gateway(self, cid: str, session: aiohttp.ClientSession) -> Optional[Dict[Any, Any]]:
@@ -240,16 +272,23 @@ class IPFSClient:
             f"https://cloudflare-ipfs.com/ipfs/{cid}",
         ]
         
-        for gateway in gateways:
+        print(f"🌐 Gateway: Пробуем {len(gateways)} шлюзов для CID {cid}")
+        
+        for i, gateway in enumerate(gateways, 1):
             try:
+                print(f"🌐 Gateway {i}/{len(gateways)}: {gateway}")
                 async with session.get(gateway, timeout=aiohttp.ClientTimeout(total=5)) as response:
                     if response.status == 200:
                         data = await response.json()
-                        print(f"✓ Получено через шлюз: {gateway}")
+                        print(f"✅ Gateway: Успешно получено через {gateway}")
                         return data
+                    else:
+                        print(f"⚠️ Gateway: Статус {response.status} от {gateway}")
             except Exception as e:
-                print(f"✗ Ошибка шлюза {gateway}: {e}")
+                print(f"❌ Gateway: Ошибка {gateway}: {e}")
                 continue
+        
+        print("❌ Gateway: Все шлюзы не сработали")
         return None
 
 async def fetch_local(uri: str, session: aiohttp.ClientSession, ipfs_client: IPFSClient) -> Optional[Dict[Any, Any]]:
@@ -258,12 +297,19 @@ async def fetch_local(uri: str, session: aiohttp.ClientSession, ipfs_client: IPF
     if 'ipfs' in uri:
         print(f"🔍 Обрабатываем IPFS URI: {uri}")
         cid = uri.split('/ipfs/')[-1].split('/')[0]  # Берем только CID
+        print(f"📋 Извлеченный CID: {cid}")
         
         # ПРИОРИТЕТ 1: Прямое API подключение
-        data = await ipfs_client.fetch_via_api(cid)
-        if data:
-            print("✓ Успешно получено через прямое API")
-            return data
+        if ipfs_client and ipfs_client.api_client:
+            print("🚀 Пробуем прямое API подключение...")
+            data = await ipfs_client.fetch_via_api(cid)
+            if data:
+                print("✅ Успешно получено через прямое API")
+                return data
+            else:
+                print("❌ Прямое API не сработало")
+        else:
+            print("⚠️ IPFS API клиент недоступен")
         
         # ПРИОРИТЕТ 2: Локальный шлюз
         print("🔄 Пробуем через шлюзы...")
@@ -438,7 +484,7 @@ async def get_twitter_data(session, uri, ipfs_client: IPFSClient):
 
     return twitter_name, community_id
 
-async def process_create(data):
+async def process_create(data, ipfs_client=None):
     """Создает UserDev и Token из полученных данных с гарантированным получением мета"""
     session = None
     try:
@@ -458,8 +504,10 @@ async def process_create(data):
             timeout=aiohttp.ClientTimeout(total=30)  # Увеличиваем общий timeout
         )
 
-        # Создаем IPFS клиент
-        ipfs_client = IPFSClient()
+        # Используем переданный IPFS клиент или создаем новый если не передан
+        if ipfs_client is None:
+            print("⚠️ IPFS клиент не передан, создаем новый...")
+            ipfs_client = IPFSClient()
         
         # Гарантированно получаем Twitter данные
         twitter_name, community_id = await get_twitter_data(session, uri, ipfs_client)
@@ -566,8 +614,8 @@ async def process_create(data):
         if session:
             await session.close()
             print("Session closed")
-        # Закрываем IPFS клиент если он был создан
-        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.api_client:
+        # Закрываем IPFS клиент только если он был создан локально
+        if 'ipfs_client' in locals() and ipfs_client and ipfs_client.api_client and ipfs_client != globals().get('ipfs_client'):
             try:
                 ipfs_client.api_client.close()
                 print("IPFS client closed")
