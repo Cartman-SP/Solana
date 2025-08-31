@@ -15,7 +15,7 @@ from asgiref.sync import sync_to_async
 from mainapp.models import Token, Twitter
 
 # Константы для ограничения нагрузки
-MAX_CONCURRENT_REQUESTS = 40
+MAX_CONCURRENT_REQUESTS = 100
 REQUEST_DELAY = 1  # 100ms между запросами
 IPFS_GATEWAY = "http://205.172.58.34/ipfs/"
 IRYS_NODES = [
