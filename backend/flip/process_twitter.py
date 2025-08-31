@@ -12,16 +12,26 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from asgiref.sync import sync_to_async
-from mainapp.models import Token
+from mainapp.models import Token, Twitter
 
 # Константы для ограничения нагрузки
-MAX_CONCURRENT_REQUESTS = 15
+MAX_CONCURRENT_REQUESTS = 40
 REQUEST_DELAY = 1  # 100ms между запросами
 IPFS_GATEWAY = "http://205.172.58.34/ipfs/"
 IRYS_NODES = [
     "https://node1.irys.xyz/",
     "https://node2.irys.xyz/"
 ]
+
+# Telegram константы
+TELEGRAM_BOT_TOKEN = "8361879327:AAHFHe2qm0dEQpsvfyZSB_vCJYukmEWJ_tc"
+TELEGRAM_USER_IDS = [612594627, 784111198]
+MAX_RETRIES = 3
+
+# Twitter API константы
+TW_API_KEY = "8879aa53d815484ebea0313718172fea"
+TW_BASE = "https://api.twitterapi.io"
+TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
 class TokenProcessor:
     def __init__(self):
@@ -40,11 +50,109 @@ class TokenProcessor:
             await self.session.close()
     
     async def get_tokens_batch(self, limit: int = 20) -> List[Token]:
-        """Получить батч токенов с twitter_got = False"""
+        """Получить батч токенов с twitter_got = False, отсортированных по дате создания (новые сначала)"""
         tokens = await sync_to_async(list)(
-            Token.objects.filter(twitter_got=False)[:limit]
+            Token.objects.filter(twitter_got=False).order_by('-created_at')[:limit]
         )
         return tokens
+    
+    async def get_twitter_username(self, community_id: str) -> Optional[str]:
+        """Получить Twitter username из community_id"""
+        try:
+            # Пробуем получить информацию о community
+            url = f"{TW_BASE}/twitter/community/info"
+            params = {"community_id": community_id}
+            
+            async with self.session.get(url, headers=TW_HEADERS, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    community_info = data.get("community_info", {})
+                    
+                    # Ищем username в creator или first_member
+                    for user_key in ["creator", "first_member"]:
+                        user_data = community_info.get(user_key, {})
+                        username = user_data.get("screen_name") or user_data.get("userName") or user_data.get("username")
+                        if username:
+                            print(f"✅ Найден Twitter username: @{username} из {user_key}")
+                            return f"@{username}"
+            
+            # Если не нашли в info, пробуем через members
+            url = f"{TW_BASE}/twitter/community/members"
+            params = {"community_id": community_id, "limit": 1}
+            
+            async with self.session.get(url, headers=TW_HEADERS, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Ищем в разных структурах ответа
+                    members = []
+                    for key in ["members", "data", "users"]:
+                        if key in data and isinstance(data[key], list):
+                            members.extend(data[key])
+                    
+                    if members:
+                        user_data = members[0]
+                        username = user_data.get("screen_name") or user_data.get("userName") or user_data.get("username")
+                        if username:
+                            print(f"✅ Найден Twitter username: @{username} из members")
+                            return f"@{username}"
+            
+            print(f"❌ Twitter username не найден для community {community_id}")
+            return None
+            
+        except Exception as e:
+            print(f"❌ Ошибка при получении Twitter username: {e}")
+            return None
+    
+    async def create_or_get_twitter(self, username: str) -> Optional[Twitter]:
+        """Создать или получить Twitter запись"""
+        try:
+            twitter, created = await sync_to_async(Twitter.objects.get_or_create)(name=username)
+            if created:
+                print(f"✅ Создана новая Twitter запись: {username}")
+            else:
+                print(f"✅ Найдена существующая Twitter запись: {username}")
+            return twitter
+        except Exception as e:
+            print(f"❌ Ошибка при создании/получении Twitter: {e}")
+            return None
+    
+    async def send_telegram_notification(self, token_mint: str) -> None:
+        """Отправить уведомление в Telegram о проблеме с метаданными"""
+        message = f"проблема с метой, uri, https://trade.padre.gg/trade/solana/{token_mint}"
+        
+        for user_id in TELEGRAM_USER_IDS:
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                data = {
+                    "chat_id": user_id,
+                    "text": message,
+                    "parse_mode": "HTML"
+                }
+                
+                async with self.session.post(url, json=data) as response:
+                    if response.status == 200:
+                        print(f"📱 Telegram уведомление отправлено пользователю {user_id}")
+                    else:
+                        print(f"❌ Ошибка отправки Telegram уведомления пользователю {user_id}: {response.status}")
+                        
+            except Exception as e:
+                print(f"❌ Ошибка при отправке Telegram уведомления пользователю {user_id}: {e}")
+    
+    async def increment_retries(self, token: Token) -> None:
+        """Увеличить счетчик попыток обработки токена"""
+        try:
+            new_retries = token.retries + 1
+            await sync_to_async(Token.objects.filter(id=token.id).update)(retries=new_retries)
+            print(f"🔄 Попытка {new_retries}/{MAX_RETRIES} для токена {token.name}")
+            
+            # Если достигнут лимит попыток, отправляем уведомление в Telegram
+            if new_retries >= MAX_RETRIES:
+                print(f"🚨 Достигнут лимит попыток для токена {token.name}, отправляю уведомление в Telegram")
+                await self.send_telegram_notification(token.address)
+                
+        except Exception as e:
+            print(f"❌ Ошибка при увеличении счетчика попыток: {e}")
     
     def extract_ipfs_hash(self, uri: str) -> Optional[str]:
         """Извлечь IPFS хеш из URI"""
@@ -128,6 +236,7 @@ class TokenProcessor:
         """Обработать один токен"""
         print(f"\n🔍 Обрабатываю токен: {token.name} ({token.symbol})")
         print(f"URI: {token.uri}")
+        print(f"🔄 Попытки: {token.retries}/{MAX_RETRIES}")
         
         if not token.uri:
             print("❌ URI отсутствует")
@@ -155,13 +264,38 @@ class TokenProcessor:
                 print(f"🏘️ Community ID: {community_id}")
                 # Сохраняем community_id в базу данных
                 await self.save_community_id(token, community_id)
+                
+                # Пытаемся получить Twitter username
+                twitter_username = await self.get_twitter_username(community_id)
+                if twitter_username:
+                    # Создаем или получаем Twitter запись
+                    twitter = await self.create_or_get_twitter(twitter_username)
+                    if twitter:
+                        # Обновляем токен с Twitter
+                        await self.update_token_twitter(token, twitter)
+                        print(f"✅ Twitter обновлен для токена: {twitter_username}")
+                    else:
+                        print(f"❌ Не удалось создать/получить Twitter запись для {twitter_username}")
+                else:
+                    print(f"❌ Twitter username не найден для community {community_id}")
+                
+                # Помечаем токен как обработанный для twitter
+                await self.mark_token_processed(token, twitter_got=True, processed=False)
             else:
                 print("❌ Community ID не найден в метаданных")
+                # Если community_id не найден, помечаем как полностью обработанный
+                await self.mark_token_processed(token, twitter_got=True, processed=True)
         else:
             print("❌ Метаданные не получены (None)")
-        
-        # Помечаем токен как обработанный
-        await self.mark_token_processed(token)
+            # Увеличиваем счетчик попыток
+            await self.increment_retries(token)
+            
+            # Если достигнут лимит попыток, помечаем как полностью обработанный
+            if token.retries >= MAX_RETRIES:
+                print(f"🚨 Токен {token.name} достиг лимита попыток, помечаю как полностью обработанный")
+                await self.mark_token_processed(token, twitter_got=True, processed=True)
+            else:
+                print(f"⚠️ Токен {token.name} остается в очереди для повторной обработки")
     
     def extract_community_id(self, metadata: dict) -> Optional[str]:
         """Извлечь community_id из метаданных"""
@@ -218,13 +352,30 @@ class TokenProcessor:
         except Exception as e:
             print(f"❌ Ошибка при сохранении community_id: {e}")
     
-    async def mark_token_processed(self, token: Token) -> None:
-        """Пометить токен как обработанный"""
+    async def update_token_twitter(self, token: Token, twitter: Twitter) -> None:
+        """Обновить токен с Twitter записью"""
         try:
             await sync_to_async(Token.objects.filter(id=token.id).update)(
-                twitter_got=True
+                twitter=twitter
             )
-            print(f"✅ Токен помечен как обработанный")
+            print(f"💾 Twitter обновлен для токена: {twitter.name}")
+        except Exception as e:
+            print(f"❌ Ошибка при обновлении Twitter: {e}")
+    
+    async def mark_token_processed(self, token: Token, twitter_got: bool = True, processed: bool = False) -> None:
+        """Пометить токен как обработанный"""
+        try:
+            update_data = {'twitter_got': twitter_got}
+            if processed:
+                update_data['processed'] = True
+            
+            await sync_to_async(Token.objects.filter(id=token.id).update)(**update_data)
+            
+            if processed:
+                print(f"✅ Токен помечен как полностью обработанный (twitter_got=True, processed=True)")
+            else:
+                print(f"✅ Токен помечен как обработанный для twitter (twitter_got=True)")
+                
         except Exception as e:
             print(f"❌ Ошибка при пометке токена: {e}")
     
