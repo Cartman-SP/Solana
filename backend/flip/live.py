@@ -291,7 +291,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             pass
 
         if total_tokens > settings_obj.dev_tokens:
-#            return False
+            return False
         if twitter_obj.blacklist:
             return False
 #        if settings_obj.whitelist_enabled and twitter_obj.whitelist:
