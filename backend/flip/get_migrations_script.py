@@ -105,52 +105,52 @@ async def subscribe():
       
       async with aiohttp.ClientSession() as http_session:
         async for message in websocket:
-        try:
-          data = json.loads(message)
-          mint = data.get('mint')
-          print(f"Получен mint: {mint}")
-          
-          # Проверяем, существует ли токен
-          token_exists = await sync_to_async(Token.objects.filter(address=mint).exists)()
-          
-          if token_exists:
-              # Если токен существует, обновляем его
-              await sync_to_async(Token.objects.filter(address=mint).update)(migrated=True)
-              print(f"Токен {mint} обновлен (migrated=True)")
-          else:
-              # Если токена нет, создаем новый
-              new_token = await sync_to_async(Token.objects.create)(
-                  address=mint,
-                  migrated=True,
-                  created_at=timezone.now()
-              )
-              print(f"Создан новый токен: {mint}")
-          
-          # Дополнительно: если у токена нет твиттера, пытаемся получить через DexScreener -> community -> Twitter
-          token = await sync_to_async(Token.objects.select_related('twitter').get)(address=mint)
-          has_twitter = getattr(token, 'twitter_id', None) is not None
-          if not has_twitter:
-            pair_id = data.get('bondingCurveKey')
-            if pair_id:
-              dex_data = await fetch_dex_info(http_session, pair_id)
-              community_id = extract_community_id_from_dex(dex_data or {}) if dex_data else None
-              if community_id:
-                # сохраним community_id для токена
-                await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
-                username = await get_twitter_username(http_session, community_id)
-                if username:
-                  twitter, _ = await sync_to_async(Twitter.objects.get_or_create)(name=username)
-                  await sync_to_async(Token.objects.filter(id=token.id).update)(twitter=twitter)
-                  print(f"Твиттер {username} привязан к токену {mint}")
-                else:
-                  print(f"Не удалось получить Twitter username по community_id {community_id}")
-              else:
-                print("В DexScreener не найден community_id в socials")
+          try:
+            data = json.loads(message)
+            mint = data.get('mint')
+            print(f"Получен mint: {mint}")
+            
+            # Проверяем, существует ли токен
+            token_exists = await sync_to_async(Token.objects.filter(address=mint).exists)()
+            
+            if token_exists:
+                # Если токен существует, обновляем его
+                await sync_to_async(Token.objects.filter(address=mint).update)(migrated=True)
+                print(f"Токен {mint} обновлен (migrated=True)")
             else:
-              print("В сообщении отсутствует bondingCurveKey для получения pairId")
-              
-        except Exception as e:
-          print(f"Ошибка при обработке mint {mint}: {e}")
+                # Если токена нет, создаем новый
+                new_token = await sync_to_async(Token.objects.create)(
+                    address=mint,
+                    migrated=True,
+                    created_at=timezone.now()
+                )
+                print(f"Создан новый токен: {mint}")
+            
+            # Дополнительно: если у токена нет твиттера, пытаемся получить через DexScreener -> community -> Twitter
+            token = await sync_to_async(Token.objects.select_related('twitter').get)(address=mint)
+            has_twitter = getattr(token, 'twitter_id', None) is not None
+            if not has_twitter:
+              pair_id = data.get('bondingCurveKey')
+              if pair_id:
+                dex_data = await fetch_dex_info(http_session, pair_id)
+                community_id = extract_community_id_from_dex(dex_data or {}) if dex_data else None
+                if community_id:
+                  # сохраним community_id для токена
+                  await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
+                  username = await get_twitter_username(http_session, community_id)
+                  if username:
+                    twitter, _ = await sync_to_async(Twitter.objects.get_or_create)(name=username)
+                    await sync_to_async(Token.objects.filter(id=token.id).update)(twitter=twitter)
+                    print(f"Твиттер {username} привязан к токену {mint}")
+                  else:
+                    print(f"Не удалось получить Twitter username по community_id {community_id}")
+                else:
+                  print("В DexScreener не найден community_id в socials")
+              else:
+                print("В сообщении отсутствует bondingCurveKey для получения pairId")
+                
+          except Exception as e:
+            print(f"Ошибка при обработке mint {mint}: {e}")
 
 # Run the subscribe function
 asyncio.get_event_loop().run_until_complete(subscribe())
