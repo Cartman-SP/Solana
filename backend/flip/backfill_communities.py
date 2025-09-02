@@ -108,7 +108,6 @@ async def process_token(session: aiohttp.ClientSession, token: Token):
   try:
     pair_id = token.bonding_curve
     if not pair_id:
-      print(f"Пропуск {token.address}: нет bonding_curve")
       return
 
     dex_data = await fetch_dex_info(session, pair_id)
@@ -118,7 +117,6 @@ async def process_token(session: aiohttp.ClientSession, token: Token):
 
     community_id = extract_community_id_from_dex(dex_data)
     if not community_id:
-      print(f"Не найден community_id для {token.address}")
       return
 
     await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
