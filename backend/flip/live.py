@@ -312,7 +312,6 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             lambda: list(
                 Token.objects.filter(
                     twitter=twitter_obj,
-                    processed=True
                 ).exclude(address=mint)
                 .order_by('-created_at')
                 .only('ath', 'total_trans', 'total_fees', 'created_at','migrated')[:3]
