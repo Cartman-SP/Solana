@@ -290,20 +290,20 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
         except:
             pass
 
-        if total_tokens > settings_obj.dev_tokens:
-            return False
+#        if total_tokens > settings_obj.dev_tokens:
+#            return False
         if twitter_obj.blacklist:
             return False
-        if settings_obj.whitelist_enabled and twitter_obj.whitelist:
-            return True
-        same_tokens = 0    
-        try:
-            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
-        except Exception as e:
-            same_tokens = 0
-        
-        if(same_tokens>0):
-            return False
+#        if settings_obj.whitelist_enabled and twitter_obj.whitelist:
+#            return True
+#        same_tokens = 0    
+#        try:
+#            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
+#        except Exception as e:
+#            same_tokens = 0
+#        
+#        if(same_tokens>0):
+#            return False
 
 
 
@@ -327,45 +327,45 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
 
 
         # Проверяем возраст самого свежего токена
-        if recent_tokens:
-            newest_token = recent_tokens[0]  # Первый токен в списке (самый свежий)
-            time_diff = timezone.now() - newest_token.created_at
-            
-            if time_diff < timedelta(minutes=30):
-                print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
-                return False
-        
+#        if recent_tokens:
+#            newest_token = recent_tokens[0]  # Первый токен в списке (самый свежий)
+#            time_diff = timezone.now() - newest_token.created_at
+#            
+#            if time_diff < timedelta(minutes=30):
+#                print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
+#                return False
+#        
         # Рассчитываем средние значения
-        if recent_tokens:
-            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
-            avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens)
-            avg_total_fees = sum(token.total_fees for token in recent_tokens) / len(recent_tokens)
-            check_median = all(token.total_trans >= settings_obj.median for token in recent_tokens)
-        else:
-            avg_ath = avg_total_trans = avg_total_fees = 0
-            check_median = False
-        
-        # Проверяем все условия
-        if not check_median:
-            return False
-        
-        
-        if avg_ath < settings_obj.ath_from:
-            print(f"ATH не подходят: {avg_ath} < {settings_obj.ath_from}")
-            return False
-        
-        if avg_total_trans < settings_obj.total_trans_from:
-            print(f"Тотал транс не подходят: {avg_total_trans} < {settings_obj.total_trans_from}")
-            return False
-        
-        if avg_total_fees < settings_obj.total_fees_from:
-            print(f"Тотал фис не подходят: {avg_total_fees} < {settings_obj.total_fees_from}")
-            return False
-        
-        print(f"\nАТХ: {avg_ath} > {settings_obj.ath_from}\n"
-              f"Total Trans: {avg_total_trans} > {settings_obj.total_trans_from}\n"
-              f"Total Fees: {avg_total_fees} > {settings_obj.total_fees_from}\n"
-              f"Всего токенов: {total_tokens}")
+#        if recent_tokens:
+#            avg_ath = sum(token.ath for token in recent_tokens) / len(recent_tokens)
+#            avg_total_trans = sum(token.total_trans for token in recent_tokens) / len(recent_tokens)
+#            avg_total_fees = sum(token.total_fees for token in recent_tokens) / len(recent_tokens)
+#            check_median = all(token.total_trans >= settings_obj.median for token in recent_tokens)
+#        else:
+#            avg_ath = avg_total_trans = avg_total_fees = 0
+#            check_median = False
+#        
+#        # Проверяем все условия
+#        if not check_median:
+#            return False
+#        
+#        
+#        if avg_ath < settings_obj.ath_from:
+#            print(f"ATH не подходят: {avg_ath} < {settings_obj.ath_from}")
+#            return False
+#        
+#        if avg_total_trans < settings_obj.total_trans_from:
+#            print(f"Тотал транс не подходят: {avg_total_trans} < {settings_obj.total_trans_from}")
+#            return False
+#        
+#        if avg_total_fees < settings_obj.total_fees_from:
+#            print(f"Тотал фис не подходят: {avg_total_fees} < {settings_obj.total_fees_from}")
+#            return False
+#        
+#        print(f"\nАТХ: {avg_ath} > {settings_obj.ath_from}\n"
+#              f"Total Trans: {avg_total_trans} > {settings_obj.total_trans_from}\n"
+#              f"Total Fees: {avg_total_fees} > {settings_obj.total_fees_from}\n"
+#              f"Всего токенов: {total_tokens}")
                 
         return True
         
