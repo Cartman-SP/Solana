@@ -367,8 +367,12 @@ async def get_token_info(tokenAddress: str, session: aiohttp.ClientSession):
             print(f"No pools found for {tokenAddress}")
             return None, None
         
-        # Получаем общее количество транзакций
-        total_trans = data.get("txns", 0)
+        # Получаем общее количество транзакций из всех пулов
+        total_trans = 0
+        if data.get("pools"):
+            for pool in data["pools"]:
+                if pool.get("txns") and pool["txns"].get("total"):
+                    total_trans += pool["txns"]["total"]
         
         # Получаем ATH цену
         ath_url = f"{TRACKER_BASE_URL}/tokens/{tokenAddress}/ath"
