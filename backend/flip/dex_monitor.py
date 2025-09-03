@@ -55,6 +55,9 @@ async def get_twitter_username(session: aiohttp.ClientSession, community_id: str
 def extract_community_id_from_data(data: dict) -> Optional[str]:
     """Извлекает community_id из данных WebSocket сообщения"""
     try:
+        print(f"🔍 Анализирую данные для извлечения community_id:")
+        print(f"   Доступные ключи: {list(data.keys())}")
+        
         # Ищем community_id в различных возможных местах данных
         community_id = data.get('community_id') or data.get('communityId') or data.get('community')
         
@@ -62,6 +65,7 @@ def extract_community_id_from_data(data: dict) -> Optional[str]:
             # Попробуем найти в socials если есть
             socials = data.get('socials', [])
             if isinstance(socials, list):
+                print(f"   Проверяю socials: {socials}")
                 for social in socials:
                     if isinstance(social, dict):
                         url = social.get('url', '')
@@ -71,10 +75,33 @@ def extract_community_id_from_data(data: dict) -> Optional[str]:
                                 community_id = parts[-1].strip()
                                 community_id = community_id.strip('.,;:!?()[]{}"\'')
                                 if community_id:
+                                    print(f"   ✅ Найден community_id в socials: {community_id}")
                                     return community_id
         
+        # Новый способ: ищем в links для Twitter
+        if not community_id:
+            links = data.get('links', [])
+            if isinstance(links, list):
+                print(f"   Проверяю links: {links}")
+                for link in links:
+                    if isinstance(link, dict) and link.get('type') == 'twitter':
+                        url = link.get('url', '')
+                        print(f"   Анализирую Twitter URL: {url}")
+                        if isinstance(url, str) and "communities" in url.lower():
+                            parts = url.rstrip("/").split("/")
+                            print(f"   Части URL: {parts}")
+                            if parts:
+                                community_id = parts[-1].strip()
+                                community_id = community_id.strip('.,;:!?()[]{}"\'')
+                                if community_id:
+                                    print(f"   ✅ Найден community_id в links: {community_id}")
+                                    return community_id
+        
+        if not community_id:
+            print(f"   ❌ community_id не найден")
         return community_id
-    except Exception:
+    except Exception as e:
+        print(f"   ❌ Ошибка при извлечении community_id: {e}")
         return None
 
 async def process_token_data(data: dict, http_session: aiohttp.ClientSession):
