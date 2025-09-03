@@ -3,6 +3,7 @@ import sys
 import django
 import asyncio
 import aiohttp
+import time
 from typing import Optional, List
 
 # Настройка Django
@@ -84,8 +85,15 @@ async def fetch_dex_info(session: aiohttp.ClientSession, pair_id: str) -> Option
     async with session.get(url, timeout=aiohttp.ClientTimeout(total=6)) as resp:
       if resp.status == 200:
         return await resp.json()
-      return None
-  except Exception:
+      elif resp.status == 429:  # Rate limit exceeded
+        print(f"Превышен лимит запросов к DexScreener. Ждем 60 секунд...")
+        await asyncio.sleep(60)
+        return None
+      else:
+        print(f"DexScreener вернул статус {resp.status} для {pair_id}")
+        return None
+  except Exception as e:
+    print(f"Ошибка при запросе к DexScreener для {pair_id}: {e}")
     return None
 
 
@@ -112,7 +120,6 @@ async def process_token(session: aiohttp.ClientSession, token: Token):
 
     dex_data = await fetch_dex_info(session, pair_id)
     if not dex_data:
-      print(f"DexScreener не вернул данные для {pair_id}")
       return
 
     community_id = extract_community_id_from_dex(dex_data)
@@ -135,16 +142,26 @@ async def process_token(session: aiohttp.ClientSession, token: Token):
 
 async def main():
   print("Запуск бэкапа community/twitter для мигрированных токенов без community...")
+  processed_count = 0
+  
   async with aiohttp.ClientSession() as session:
     while True:
       tokens = await get_tokens_to_process(200)
       if not tokens:
-        print("Нет токенов для обработки. Завершаю.")
+        print(f"Нет токенов для обработки. Всего обработано: {processed_count}. Завершаю.")
         break
+      
       print(f"Найдено {len(tokens)} токенов для обработки")
+      
       for idx, token in enumerate(tokens, 1):
+        print(f"Обрабатываю токен {idx}/{len(tokens)}: {token.address}")
         await process_token(session, token)
+        processed_count += 1
+        
+        # Небольшая пауза между запросами
         await asyncio.sleep(0.2)
+      
+      print(f"Обработано {processed_count} токенов. Проверяю наличие новых...")
 
 
 if __name__ == "__main__":
