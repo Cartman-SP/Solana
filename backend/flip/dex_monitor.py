@@ -141,15 +141,14 @@ async def dex_websocket_client():
                 # Бесконечный цикл для получения сообщений
                 while True:
                     message = await websocket.recv()
-                    data = json.loads(message)
-                    
-                    # Выводим данные в консоль
-                    print(json.dumps(data, indent=2, ensure_ascii=False))
-                    print("-" * 50)
-                    
-                    # Обрабатываем данные токена
-                    await process_token_data(data, http_session)
-                    
+                    data = json.loads(message).get('data')
+                    for i in data:
+                        print(json.dumps(data, indent=2, ensure_ascii=False))
+                        print("-" * 50)
+                        
+                        # Обрабатываем данные токена
+                        await process_token_data(data, http_session)
+                        
     except websockets.exceptions.ConnectionClosed:
         print("❌ Соединение закрыто")
     except Exception as e:
