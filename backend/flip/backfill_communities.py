@@ -98,7 +98,7 @@ async def get_tokens_to_process(limit: int = 200) -> List[Token]:
       ).filter(
         models.Q(community_id__isnull=True) | models.Q(community_id="")
       ).exclude(bonding_curve__isnull=True).exclude(bonding_curve="")
-      .order_by('-created_at')[:limit]
+      .order_by('-created_at')
     )
   from django.db import models
   return await sync_to_async(_qs)()
@@ -143,7 +143,6 @@ async def main():
         break
       print(f"Найдено {len(tokens)} токенов для обработки")
       for idx, token in enumerate(tokens, 1):
-        print(f"[{idx}/{len(tokens)}] Обрабатываю {token.address}")
         await process_token(session, token)
         await asyncio.sleep(0.2)
 
