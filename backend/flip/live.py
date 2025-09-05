@@ -296,15 +296,14 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             return False
 #        if settings_obj.whitelist_enabled and twitter_obj.whitelist:
 #            return True
-#        same_tokens = 0    
-#        try:
-#            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
-#        except Exception as e:
-#            same_tokens = 0
-#        
-#        if(same_tokens>0):
-#            return False
-
+        same_tokens = 0    
+        try:
+            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
+        except Exception as e:
+            same_tokens = 0
+        
+        if(same_tokens>0):
+            return False
 
 
         print(twitter_name)
@@ -312,6 +311,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             lambda: list(
                 Token.objects.filter(
                     twitter=twitter_obj,
+                    unique_community = True,
                 ).exclude(address=mint)
                 .order_by('-created_at')
                 .only('ath', 'total_trans', 'total_fees', 'created_at','migrated')[:3]
