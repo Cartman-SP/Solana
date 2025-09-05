@@ -494,9 +494,9 @@ async def buy(mint):
                 data=payload,
                 timeout=timeout
             ) as response:
-    print(payload)
+                print(payload)
                 data = await response.json()
-    print(data)       # Tx signature or error(s)
+                print(data)       # Tx signature or error(s)
                 return data
         except Exception as e:
             print(f"Error buying {mint}: {e}")
