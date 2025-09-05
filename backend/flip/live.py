@@ -468,6 +468,39 @@ async def get_creator_username(session: aiohttp.ClientSession, community_id: str
     
     return None
 
+async def buy(mint):
+    settings_obj = await sync_to_async(Settings.objects.first)()
+    api_private = settings_obj.buyer_pubkey
+    ammonut_to_buy = settings_obj.sol_amount
+    slippage = settings_obj.slippage_percent
+    priorityFee = settings_obj.priority_fee_sol
+    
+    payload = {
+        "action": "buy",             # "buy" or "sell"
+        "mint": mint,      # contract address of the token you want to trade
+        "amount": ammonut_to_buy,            # amount of SOL or tokens to trade
+        "denominatedInSol": "true", # "true" if amount is amount of SOL, "false" if amount is number of tokens
+        "slippage": slippage,              # percent slippage allowed
+        "priorityFee": priorityFee,        # amount used to enhance transaction speed
+        "pool": "pump"               # exchange to trade on. "pump", "raydium", "pump-amm", "launchlab", "raydium-cpmm", "bonk" or "auto"
+    }
+    
+    # Используем aiohttp для асинхронного запроса
+    async with aiohttp.ClientSession() as session:
+        try:
+            timeout = aiohttp.ClientTimeout(total=5)  # 5 секунд на покупку
+            async with session.post(
+                url=f"https://pumpportal.fun/api/trade?api-key={api_private}", 
+                data=payload,
+                timeout=timeout
+            ) as response:
+    print(payload)
+                data = await response.json()
+    print(data)       # Tx signature or error(s)
+                return data
+        except Exception as e:
+            print(f"Error buying {mint}: {e}")
+            return None
 
 
 
@@ -632,13 +665,15 @@ async def process_live(data):
         if not(twitter) or twitter == "@" or twitter=="@None":
             return
 
+        autobuy = await check_twitter_whitelist(twitter, user, mint, community_id)
+        if(autobuy):
+            await buy(mint)
         results = await asyncio.gather(
-            check_twitter_whitelist(twitter, user,mint,community_id),
             get_user_dev_data(user, mint),
             get_twitter_data(twitter, mint),
         )
 
-        autobuy, user_dev_data, twitter_data = results
+        user_dev_data, twitter_data = results
         extension_data = {
             'mint': mint,
             'user': user,

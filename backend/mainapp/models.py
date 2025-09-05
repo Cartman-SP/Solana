@@ -56,6 +56,10 @@ class Token(models.Model):
     symbol = models.CharField(max_length=50, null=True, blank=True)
     twitter_got = models.BooleanField(default=False)
     retries = models.IntegerField(default=0)
+    unique_community = models.BooleanField(default=False)
+    def __str__(self):
+        return self.address
+
 class Settings(models.Model):
     buyer_pubkey = models.CharField(max_length=255)
     sol_amount = models.DecimalField(max_digits=16, decimal_places=8, default=0)
