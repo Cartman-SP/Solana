@@ -28,7 +28,8 @@ from base58 import b58encode, b58decode
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 from mainapp.models import UserDev, Token, Twitter, Settings
 from asgiref.sync import sync_to_async
@@ -298,7 +299,9 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
 #            return True
         same_tokens = 0    
         try:
-            same_tokens = Token.objects.filter(community_id = community_id).exclude(address=mint).count()
+            same_tokens = await sync_to_async(
+                lambda: Token.objects.filter(community_id = community_id).exclude(address=mint).count()
+            )()
         except Exception as e:
             print(e)
             same_tokens = 0
