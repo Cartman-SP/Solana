@@ -345,7 +345,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             time_diff = current_time - newest_token.created_at
             
             if time_diff < timedelta(minutes=5):
-                print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
+                print(f"Токен слишком новый: {newest_token.created_at}, {time_diff}")
                 return False
 #        
         # Рассчитываем средние значения
@@ -525,7 +525,6 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
         
     try:
         if('https://ipfs.io/ipfs/' in uri or "https://gateway.pinata.cloud/ipfs/" in uri):
-            print(123,uri)
             code = uri.split('/')[-1]
             uri = f"http://205.172.58.34/ipfs/{code}"
             async with session.get(uri, timeout=aiohttp.ClientTimeout(total=5)) as r:
@@ -533,7 +532,6 @@ async def fetch_meta_with_retries(session: aiohttp.ClientSession, uri: str) -> d
                 if(data):
                     return data
                 else:
-                    print('ipfs говно')
                     return data
         elif 'irys' in uri:
             code = uri.split('/')[-1]
@@ -642,8 +640,6 @@ def canonicalize_community_url(url_or_id: str) -> tuple[str|None, str|None]:
 async def get_twitter_data_manualy(session,uri):
     community_id = None
     meta = await fetch_meta_with_retries(session, uri)
-    if not(meta):
-        print(uri)
     if meta:
         community_url, community_id, _ = find_community_anywhere_with_src(meta)
         
@@ -675,7 +671,6 @@ async def process_live(data):
 
         twitter,twitter_followers,community_id = await get_twitter_data_manualy(session,uri)
 
-        print('\n-------------------------------------------------\n',twitter,'\n-------------------------------------------------\n')
         if not(twitter) or twitter == "@" or twitter=="@None":
             return
 
