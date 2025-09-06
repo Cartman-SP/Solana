@@ -322,8 +322,12 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
             )
         )()
         
+
+        if(len(recent_tokens) == 0):
+            return False
+        
         # Проверяем, есть ли хотя бы один токен с migrated = True
-        if recent_tokens and not any(token.migrated for token in recent_tokens):
+        if not any(token.migrated for token in recent_tokens):
             print(f"Нет токенов с migrated = True для {twitter_name}")
             return False
 
