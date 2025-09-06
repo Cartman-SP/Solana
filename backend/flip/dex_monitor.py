@@ -19,6 +19,49 @@ TW_API_KEY = "8879aa53d815484ebea0313718172fea"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 
+async def check_and_set_unique_community(token):
+    """Проверяет и устанавливает unique_community для токена"""
+    try:
+        # Если у токена нет community_id, пропускаем проверку
+        if not token.community_id or token.community_id == '':
+            return
+        
+        # Получаем все токены с таким же community_id, отсортированные по дате создания
+        community_tokens = await sync_to_async(list)(
+            Token.objects.filter(
+                community_id=token.community_id,
+                community_id__isnull=False,
+                community_id__gt=''
+            ).order_by('created_at')
+        )
+        
+        # Если это первый токен в community, он уникальный
+        if len(community_tokens) == 1:
+            token.unique_community = True
+            await sync_to_async(token.save)()
+            print(f"Токен {token.address} - первый в community {token.community_id}, помечен как уникальный")
+            return
+        
+        # Проверяем, есть ли более старые токены с таким же community_id
+        has_older_tokens = any(
+            t.community_id == token.community_id and 
+            t.created_at < token.created_at and
+            t.id != token.id
+            for t in community_tokens
+        )
+        
+        # Токен уникальный, если нет более старых токенов с таким же community_id
+        is_unique = not has_older_tokens
+        
+        if token.unique_community != is_unique:
+            token.unique_community = is_unique
+            await sync_to_async(token.save)()
+            status = "уникальный" if is_unique else "не уникальный"
+            print(f"Токен {token.address} помечен как {status} в community {token.community_id}")
+        
+    except Exception as e:
+        print(f"Ошибка при проверке unique_community для токена {token.address}: {e}")
+
 async def get_twitter_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
     try:
         url = f"{TW_BASE}/twitter/community/info"
@@ -140,6 +183,12 @@ async def process_token_data(data: dict, http_session: aiohttp.ClientSession):
         
         # Сохраняем community_id для токена
         await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
+        
+        # Обновляем объект токена с новым community_id
+        token.community_id = community_id
+        
+        # Проверяем и устанавливаем unique_community
+        await check_and_set_unique_community(token)
         
         # Получаем твиттер username
         username = await get_twitter_username(http_session, community_id)
