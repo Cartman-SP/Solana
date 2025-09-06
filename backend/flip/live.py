@@ -337,8 +337,9 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
 
         # Проверяем возраст самого свежего токена
         if all_recent_tokens:
-            newest_token = recent_tokens[0]  # Первый токен в списке (самый свежий)
-            time_diff = timezone.now() - newest_token.created_at
+            newest_token = all_recent_tokens[0]  # Первый токен в списке (самый свежий)
+            current_time = await sync_to_async(timezone.now)()
+            time_diff = current_time - newest_token.created_at
             
             if time_diff < timedelta(minutes=5):
                 print(f"Токен слишком старый: {newest_token.created_at}, {time_diff}")
