@@ -379,7 +379,7 @@ async def check_twitter_whitelist(twitter_name, creator,mint,community_id):
         return True
         
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"Ошибка АВТОБАЯ!!!!!!!!!!!!!!: {e}")
         return False
 
 
