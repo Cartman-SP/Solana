@@ -261,6 +261,10 @@ class TokenProcessor:
             print(f"📊 Метаданные: {metadata}")
             # Ищем community_id в метаданных
             community_id = self.extract_community_id(metadata)
+            if not community_id:
+                print("❌ Community ID не найден в метаданных, пробую через pump.fun API")
+                community_id = await self.fallback_community_id_from_pumpfun(token.address)
+
             if community_id:
                 print(f"🏘️ Community ID: {community_id}")
                 # Сохраняем community_id в базу данных
@@ -283,7 +287,7 @@ class TokenProcessor:
                 # Помечаем токен как обработанный для twitter
                 await self.mark_token_processed(token, twitter_got=True, processed=False)
             else:
-                print("❌ Community ID не найден в метаданных")
+                print("❌ Community ID не найден ни в метаданных, ни через pump.fun API")
                 # Если community_id не найден, помечаем как полностью обработанный
                 await self.mark_token_processed(token, twitter_got=True, processed=True)
         else:
@@ -342,6 +346,68 @@ class TokenProcessor:
         
         print("❌ 'communities' не найдено в метаданных")
         return None
+
+    async def fetch_pumpfun_coin(self, mint: str) -> Optional[dict]:
+        """Запросить coin-информацию с pump.fun (frontend API)."""
+        url = f"https://frontend-api-v3.pump.fun/coins/{mint}"
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) aiohttp-client",
+            "Accept-Language": "ru,en;q=0.9",
+        }
+        async with self.semaphore:
+            try:
+                async with self.session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=8)) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    print(f"❌ pump.fun API вернул статус {response.status} для {mint}")
+                    return None
+            except Exception as e:
+                print(f"❌ Ошибка запроса к pump.fun API: {e}")
+                return None
+            finally:
+                await asyncio.sleep(REQUEST_DELAY)
+
+    def extract_community_id_from_obj(self, obj) -> Optional[str]:
+        """Извлечь community_id из любого объекта, ища только по путям /community/<id> или /communities/<id>."""
+        patterns = (
+            r"/communities/([A-Za-z0-9_-]+)",
+            r"/community/([A-Za-z0-9_-]+)",
+        )
+
+        def scan_string(value: str) -> Optional[str]:
+            for pattern in patterns:
+                m = re.search(pattern, value)
+                if m:
+                    return m.group(1)
+            return None
+
+        def walk(node) -> Optional[str]:
+            if isinstance(node, dict):
+                for _, v in node.items():
+                    res = walk(v)
+                    if res:
+                        return res
+            elif isinstance(node, list):
+                for v in node:
+                    res = walk(v)
+                    if res:
+                        return res
+            elif isinstance(node, str):
+                return scan_string(node)
+            return None
+
+        return walk(obj)
+
+    async def fallback_community_id_from_pumpfun(self, mint: str) -> Optional[str]:
+        """Фолбэк: получить community_id через pump.fun API."""
+        data = await self.fetch_pumpfun_coin(mint)
+        if not data:
+            return None
+        cid = self.extract_community_id_from_obj(data)
+        if cid:
+            print(f"✅ Найден community_id через pump.fun API: {cid}")
+        return cid
     
     async def save_community_id(self, token: Token, community_id: str) -> None:
         """Сохранить community_id в базу данных"""
