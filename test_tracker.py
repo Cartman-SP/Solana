@@ -25,7 +25,7 @@ def fetch_coin_info(mint: str, timeout_seconds: float = 10.0) -> Optional[dict]:
 
 
 def main() -> None:
-    default_mint = "buZheLAT1QdL7C1nfiLUbLhVzvKbg4Ro9VW4BbBpump"
+    default_mint = "BwC4NhHGfT5GrzUSjiYe2LcUeyWqSRt5JY5EqHH8pump"
     mint = sys.argv[1] if len(sys.argv) > 1 else default_mint
 
     data = fetch_coin_info(mint)

@@ -63,25 +63,30 @@ async def check_and_set_unique_community(token):
         print(f"Ошибка при проверке unique_community для токена {token.address}: {e}")
 
 async def get_twitter_username(session: aiohttp.ClientSession, community_id: str) -> Optional[str]:
+    """Получить Twitter username из community_id (логика из process_twitter.py)."""
     try:
+        # Пробуем получить информацию о community
         url = f"{TW_BASE}/twitter/community/info"
         params = {"community_id": community_id}
         async with session.get(url, headers=TW_HEADERS, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
             if response.status == 200:
                 data = await response.json()
                 community_info = data.get("community_info", {})
+                # Ищем username в creator или first_member
                 for user_key in ["creator", "first_member"]:
                     user_data = community_info.get(user_key, {})
                     username = user_data.get("screen_name") or user_data.get("userName") or user_data.get("username")
                     if username:
+                        print(f"✅ Найден Twitter username: @{username} из {user_key}")
                         return f"@{username}"
-        
-        # fallback через members
+
+        # Если не нашли в info, пробуем через members
         url = f"{TW_BASE}/twitter/community/members"
         params = {"community_id": community_id, "limit": 1}
         async with session.get(url, headers=TW_HEADERS, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
             if response.status == 200:
                 data = await response.json()
+                # Ищем в разных структурах ответа
                 members = []
                 for key in ["members", "data", "users"]:
                     if key in data and isinstance(data[key], list):
@@ -90,9 +95,13 @@ async def get_twitter_username(session: aiohttp.ClientSession, community_id: str
                     user_data = members[0]
                     username = user_data.get("screen_name") or user_data.get("userName") or user_data.get("username")
                     if username:
+                        print(f"✅ Найден Twitter username: @{username} из members")
                         return f"@{username}"
+
+        print(f"❌ Twitter username не найден для community {community_id}")
         return None
-    except Exception:
+    except Exception as e:
+        print(f"❌ Ошибка при получении Twitter username: {e}")
         return None
 
 def extract_community_id_from_data(data: dict) -> Optional[str]:
@@ -150,7 +159,8 @@ def extract_community_id_from_data(data: dict) -> Optional[str]:
 async def process_token_data(data: dict, http_session: aiohttp.ClientSession):
     """Обрабатывает данные токена и получает твиттер если нужно"""
     try:
-        token_address = data.get('tokenAddress')
+        # Берем адрес токена из нескольких возможных ключей
+        token_address = data.get('tokenAddress') or data.get('mint')
         if not token_address:
             print("❌ В данных отсутствует tokenAddress/mint")
             return
@@ -166,38 +176,36 @@ async def process_token_data(data: dict, http_session: aiohttp.ClientSession):
         
         # Получаем токен
         token = await sync_to_async(Token.objects.select_related('twitter').get)(address=token_address)
-        
+
+        # Извлекаем community_id из данных (делаем это до любых выходов из функции)
+        community_id = extract_community_id_from_data(data)
+        if community_id:
+            print(f"🔗 Найден community_id: {community_id}")
+            # Сохраняем community_id для токена немедленно
+            await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
+            token.community_id = community_id
+            # Обновляем unique_community вне зависимости от наличия твиттера
+            await check_and_set_unique_community(token)
+        else:
+            print(f"❌ Не удалось извлечь community_id для токена {token_address}")
+
         # Проверяем, есть ли уже твиттер
         has_twitter = getattr(token, 'twitter_id', None) is not None
         if has_twitter:
-            print(f"✅ У токена {token_address} уже есть твиттер")
+            print(f"✅ У токена {token_address} уже есть твиттер — пропускаю получение")
             return
-        
-        # Извлекаем community_id из данных
-        community_id = extract_community_id_from_data(data)
-        if not community_id:
-            print(f"❌ Не удалось извлечь community_id для токена {token_address}")
-            return
-        
-        print(f"🔗 Найден community_id: {community_id}")
-        
-        # Сохраняем community_id для токена
-        await sync_to_async(Token.objects.filter(id=token.id).update)(community_id=community_id)
-        
-        # Обновляем объект токена с новым community_id
-        token.community_id = community_id
-        
-        # Проверяем и устанавливаем unique_community
-        await check_and_set_unique_community(token)
-        
-        # Получаем твиттер username
-        username = await get_twitter_username(http_session, community_id)
-        if username:
-            twitter, _ = await sync_to_async(Twitter.objects.get_or_create)(name=username)
-            await sync_to_async(Token.objects.filter(id=token.id).update)(twitter=twitter)
-            print(f"✅ Твиттер {username} привязан к токену {token_address}")
+
+        # Если community_id найден — пытаемся получить username
+        if community_id:
+            username = await get_twitter_username(http_session, community_id)
+            if username:
+                twitter, _ = await sync_to_async(Twitter.objects.get_or_create)(name=username)
+                await sync_to_async(Token.objects.filter(id=token.id).update)(twitter=twitter)
+                print(f"✅ Твиттер {username} привязан к токену {token_address}")
+            else:
+                print(f"❌ Не удалось получить Twitter username по community_id {community_id}")
         else:
-            print(f"❌ Не удалось получить Twitter username по community_id {community_id}")
+            print("ℹ️ Пропускаю попытку привязки твиттера: нет community_id")
             
     except Exception as e:
         print(f"❌ Ошибка при обработке токена: {e}")
@@ -213,7 +221,8 @@ async def dex_websocket_client():
             print("-" * 50)
             
             # Создаем HTTP сессию для API запросов
-            async with aiohttp.ClientSession() as http_session:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as http_session:
                 # Бесконечный цикл для получения сообщений
                 while True:
                     message = await websocket.recv()
