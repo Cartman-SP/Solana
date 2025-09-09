@@ -271,21 +271,30 @@ class TokenProcessor:
                 await self.save_community_id(token, community_id)
                 
                 # Пытаемся получить Twitter username
-                twitter_username = await self.get_twitter_username(community_id)
-                if twitter_username:
-                    # Создаем или получаем Twitter запись
-                    twitter = await self.create_or_get_twitter(twitter_username)
-                    if twitter:
-                        # Обновляем токен с Twitter
-                        await self.update_token_twitter(token, twitter)
-                        print(f"✅ Twitter обновлен для токена: {twitter_username}")
+                try:
+                    twitter_username = await self.get_twitter_username(community_id)
+                    if twitter_username:
+                        # Создаем или получаем Twitter запись
+                        twitter = await self.create_or_get_twitter(twitter_username)
+                        if twitter:
+                            # Обновляем токен с Twitter
+                            await self.update_token_twitter(token, twitter)
+                            print(f"✅ Twitter обновлен для токена: {twitter_username}")
+                        else:
+                            print(f"❌ Не удалось создать/получить Twitter запись для {twitter_username}")
+                            # Community найден, но Twitter не удалось создать - помечаем как обработанный
+                            print(f"💾 Community ID сохранен, но Twitter не найден - помечаю как обработанный")
+                            await self.mark_token_processed(token, twitter_got=True, processed=True)
                     else:
-                        print(f"❌ Не удалось создать/получить Twitter запись для {twitter_username}")
-                else:
-                    print(f"❌ Twitter username не найден для community {community_id}")
-                
-                # Помечаем токен как обработанный для twitter
-                await self.mark_token_processed(token, twitter_got=True, processed=False)
+                        print(f"❌ Twitter username не найден для community {community_id}")
+                        # Community найден, но Twitter не найден - помечаем как обработанный
+                        print(f"💾 Community ID сохранен, но Twitter не найден - помечаю как обработанный")
+                        await self.mark_token_processed(token, twitter_got=True, processed=True)
+                except Exception as e:
+                    print(f"❌ Ошибка при получении Twitter username: {e}")
+                    # Community найден, но произошла ошибка при получении Twitter - помечаем как обработанный
+                    print(f"💾 Community ID сохранен, но произошла ошибка при получении Twitter - помечаю как обработанный")
+                    await self.mark_token_processed(token, twitter_got=True, processed=True)
             else:
                 print("❌ Community ID не найден ни в метаданных, ни через pump.fun API")
                 # Если community_id не найден, помечаем как полностью обработанный
