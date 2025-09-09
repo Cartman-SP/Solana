@@ -29,12 +29,10 @@ async def get_last_week_tokens_without_twitter(limit: Optional[int] = None) -> L
         community_id__gt="",
         twitter__isnull=True,
     ).order_by("-created_at")
-    if limit:
-        queryset = queryset[:limit]
     return await sync_to_async(list)(queryset)
 
 
-async def process_tokens_last_week(limit_per_batch: int = 50) -> None:
+async def process_tokens_last_week(limit_per_batch: int = 50000) -> None:
     """Resolve and attach Twitter for last-week tokens with community_id and no twitter."""
     async with TokenProcessor() as processor:
         while True:
