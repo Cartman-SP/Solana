@@ -15,7 +15,7 @@ from asgiref.sync import sync_to_async
 from mainapp.models import Token, Twitter
 
 # Константы для ограничения нагрузки
-MAX_CONCURRENT_REQUESTS = 100
+MAX_CONCURRENT_REQUESTS = 200
 REQUEST_DELAY = 1  # 100ms между запросами
 IPFS_GATEWAY = "http://205.172.58.34/ipfs/"
 IRYS_NODES = [
@@ -447,7 +447,7 @@ class TokenProcessor:
             print(f"❌ Ошибка при пометке токена: {e}")
     
     async def process_batch(self, batch_size: int = 200):
-        """Обработать батч токенов"""
+        """Обработать батч токенов параллельно"""
         print(f"🚀 Начинаю обработку батча из {batch_size} токенов...")
         
         # Получаем токены
@@ -459,16 +459,35 @@ class TokenProcessor:
         
         print(f"📋 Найдено {len(tokens)} токенов для обработки")
         
-        # Обрабатываем токены последовательно для контроля нагрузки
+        # Создаем задачи для параллельной обработки всех токенов
+        tasks = []
         for i, token in enumerate(tokens, 1):
-            print(f"\n--- Токен {i}/{len(tokens)} ---")
-            await self.process_token(token)
-            
-            # Дополнительная задержка между токенами
-            if i < len(tokens):
-                await asyncio.sleep(0.5)
+            print(f"📝 Создаю задачу для токена {i}/{len(tokens)}: {token.name}")
+            task = asyncio.create_task(self.process_token(token))
+            tasks.append(task)
+        
+        print(f"🔄 Запускаю параллельную обработку {len(tasks)} токенов...")
+        
+        # Ждем завершения всех задач с обработкой ошибок
+        completed_count = 0
+        failed_count = 0
+        
+        try:
+            # Используем asyncio.as_completed для отслеживания прогресса
+            for coro in asyncio.as_completed(tasks):
+                try:
+                    await coro
+                    completed_count += 1
+                    print(f"✅ Завершено: {completed_count}/{len(tasks)} токенов")
+                except Exception as e:
+                    failed_count += 1
+                    print(f"❌ Ошибка при обработке токена: {e}")
+                    print(f"⚠️ Ошибок: {failed_count}/{len(tasks)} токенов")
+        except Exception as e:
+            print(f"❌ Критическая ошибка в параллельной обработке: {e}")
         
         print(f"\n✅ Обработка батча завершена!")
+        print(f"📊 Статистика: {completed_count} успешно, {failed_count} с ошибками из {len(tokens)} токенов")
 
 async def main():
     """Основная функция"""
