@@ -446,7 +446,7 @@ class TokenProcessor:
         except Exception as e:
             print(f"❌ Ошибка при пометке токена: {e}")
     
-    async def process_batch(self, batch_size: int = 20):
+    async def process_batch(self, batch_size: int = 200):
         """Обработать батч токенов"""
         print(f"🚀 Начинаю обработку батча из {batch_size} токенов...")
         
@@ -477,7 +477,7 @@ async def main():
     async with TokenProcessor() as processor:
         while True:
             try:
-                await processor.process_batch(20)
+                await processor.process_batch(200)
                 print("\n⏳ Ожидание 30 секунд перед следующим батчем...")
                 await asyncio.sleep(30)
             except KeyboardInterrupt:
