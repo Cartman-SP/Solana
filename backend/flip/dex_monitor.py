@@ -15,7 +15,7 @@ django.setup()
 from mainapp.models import Token, Twitter
 from asgiref.sync import sync_to_async
 
-TW_API_KEY = "8879aa53d815484ebea0313718172fea"
+TW_API_KEY = "new1_cdb5e73eb7174341be73ad05d22d69d9"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 

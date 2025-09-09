@@ -36,7 +36,7 @@ HELIUS_API_KEY = "5bce1ed6-a93a-4392-bac8-c42190249194"
 WS_URL = f"wss://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
 HELIUS_HTTP = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
 PUMPPORTAL_TRADE_LOCAL = "https://pumpportal.fun/api/trade-local"
-TW_API_KEY = "8879aa53d815484ebea0313718172fea"
+TW_API_KEY = "new1_cdb5e73eb7174341be73ad05d22d69d9"
 TW_BASE = "https://api.twitterapi.io"
 TW_HEADERS = {"X-API-Key": TW_API_KEY}
 COMMUNITY_ID_RE = re.compile(r"/communities/(\d+)", re.IGNORECASE)
