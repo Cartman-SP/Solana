@@ -508,6 +508,14 @@ class TokenMonitor {
         tokenElement.querySelector('.twitter-name').textContent = token.twitter_name || 'N/A';
         tokenElement.querySelector('.twitter-followers').textContent = token.followers ? `${this.formatNumber(token.followers)}` : 'N/A';
         
+        // Показываем/скрываем новые теги
+        if (token.new_twitter === true) {
+            tokenElement.querySelector('.new-twitter-tag').style.display = 'inline-block';
+        }
+        if (token.unique_community === true) {
+            tokenElement.querySelector('.unique-community-tag').style.display = 'inline-block';
+        }
+        
         // Заполняем Recent Tokens
         this.populateRecentTokens(tokenElement, '.user-recent-tokens', token.user_recent_tokens);
         this.populateRecentTokens(tokenElement, '.twitter-recent-tokens', token.twitter_recent_tokens);

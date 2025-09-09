@@ -681,6 +681,30 @@ async def process_live(data):
         autobuy = await check_twitter_whitelist(twitter, user, mint, community_id)
         if(autobuy):
             await buy(mint)
+        
+        # Проверяем new_twitter - есть ли у этого твитера токены (исключая текущий)
+        new_twitter = True
+        if twitter and twitter != "@" and twitter != "@None":
+            try:
+                twitter_obj = await sync_to_async(Twitter.objects.get)(name=twitter)
+                existing_tokens_count = await sync_to_async(
+                    lambda: Token.objects.filter(twitter=twitter_obj).exclude(address=mint).count()
+                )()
+                new_twitter = existing_tokens_count == 0
+            except:
+                new_twitter = True
+        
+        # Проверяем unique_community - есть ли токены с таким же community_id (исключая текущий)
+        unique_community = True
+        if community_id:
+            try:
+                same_community_count = await sync_to_async(
+                    lambda: Token.objects.filter(community_id=community_id).exclude(address=mint).count()
+                )()
+                unique_community = same_community_count == 0
+            except:
+                unique_community = True
+        
         results = await asyncio.gather(
             get_user_dev_data(user, mint),
             get_twitter_data(twitter, mint),
@@ -712,7 +736,9 @@ async def process_live(data):
             'twitter_recent_tokens': twitter_data['recent_tokens'],
             'twitter_whitelisted': twitter_data['whitelist'],
             'twitter_blacklisted': twitter_data['blacklist'],
-            'autobuy': autobuy
+            'autobuy': autobuy,
+            'new_twitter': new_twitter,
+            'unique_community': unique_community
         }
         
         # Отправляем сообщение в Telegram если autobuy = True
