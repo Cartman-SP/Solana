@@ -50,7 +50,7 @@ class TokenProcessor:
         if self.session:
             await self.session.close()
     
-    async def get_tokens_batch(self, limit: int = 20) -> List[Token]:
+    async def get_tokens_batch(self, limit: int = 200) -> List[Token]:
         """Получить батч токенов с twitter_got = False, отсортированных по дате создания (новые сначала)"""
         tokens = await sync_to_async(list)(
             Token.objects.filter(twitter_got=False).order_by('-created_at')[:limit]
