@@ -245,7 +245,7 @@ class TokenProcessor:
             return
         
         metadata = None
-        
+        pumpfun_type = False
         # Определяем тип URI и обрабатываем соответственно
         if self.extract_ipfs_hash(token.uri):
             print("📁 Обнаружен IPFS URI, использую приватный шлюз")
@@ -257,16 +257,19 @@ class TokenProcessor:
             print("🔗 Обычный URI, прямой запрос")
             metadata = await self.process_regular_uri(token.uri)
             if not metadata:
-                community_id = await self.fallback_community_id_from_pumpfun(token.address)
+                print("❌ Метаданные не получены (None)")
+                metadatadata = await self.fetch_pumpfun_coin(token.address)
+                pumpfun_type = True
         
         
         if metadata:
             print(f"📊 Метаданные: {metadata}")
             # Ищем community_id в метаданных
-            community_id = self.extract_community_id(metadata)
-            if not community_id:
-                print("❌ Community ID не найден в метаданных, пробую через pump.fun API")
-                community_id = await self.fallback_community_id_from_pumpfun(token.address)
+            if pumpfun_type:
+                community_id = await self.self.extract_community_id_from_obj(metadata)
+            else:
+                community_id = self.extract_community_id(metadata)
+
 
             if community_id:
                 print(f"🏘️ Community ID: {community_id}")
@@ -407,7 +410,7 @@ class TokenProcessor:
         data = await self.fetch_pumpfun_coin(mint)
         if not data:
             return None
-        cid = self.extract_community_id_from_obj(data)
+        cid = 
         if cid:
             print(f"✅ Найден community_id через pump.fun API: {cid}")
         return cid
