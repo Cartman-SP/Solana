@@ -256,8 +256,10 @@ class TokenProcessor:
         else:
             print("🔗 Обычный URI, прямой запрос")
             metadata = await self.process_regular_uri(token.uri)
+            if not metadata:
+                community_id = await self.fallback_community_id_from_pumpfun(token.address)
         
-        # Выводим результат
+        
         if metadata:
             print(f"📊 Метаданные: {metadata}")
             # Ищем community_id в метаданных
