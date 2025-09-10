@@ -15,7 +15,7 @@ from asgiref.sync import sync_to_async
 from mainapp.models import Token, Twitter
 
 # Константы для ограничения нагрузки
-MAX_CONCURRENT_REQUESTS = 200
+MAX_CONCURRENT_REQUESTS = 20
 REQUEST_DELAY = 1  # 100ms между запросами
 IPFS_GATEWAY = "http://205.172.58.34/ipfs/"
 IRYS_NODES = [
@@ -37,6 +37,7 @@ TW_HEADERS = {"X-API-Key": TW_API_KEY}
 class TokenProcessor:
     def __init__(self):
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+        self.token_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
         self.session = None
     
     async def __aenter__(self):
@@ -50,7 +51,7 @@ class TokenProcessor:
         if self.session:
             await self.session.close()
     
-    async def get_tokens_batch(self, limit: int = 200) -> List[Token]:
+    async def get_tokens_batch(self, limit: int = 20) -> List[Token]:
         """Получить батч токенов с twitter_got = False, отсортированных по дате создания (новые сначала)"""
         tokens = await sync_to_async(list)(
             Token.objects.filter(twitter_got=False).order_by('-created_at')[:limit]
@@ -312,49 +313,40 @@ class TokenProcessor:
                 print(f"⚠️ Токен {token.name} остается в очереди для повторной обработки")
     
     def extract_community_id(self, metadata: dict) -> Optional[str]:
-        """Извлечь community_id из метаданных"""
+        """Извлечь community_id только из ссылок вида https://x.com/i/communities/<digits>/.
+
+        Проходим по всем строковым значениям метаданных и ищем шаблон с числовым идентификатором.
+        """
         if not isinstance(metadata, dict):
             return None
-        
-        def search_in_value(value, path=""):
-            """Рекурсивно искать 'communities' в значении"""
-            if isinstance(value, str):
-                if 'communities' in value.lower():
-                    print(f"🔍 Найдено 'communities' в строке: {value}")
-                    # Разбиваем по / и берем последнее значение
-                    parts = value.split('/')
-                    if parts:
-                        community_id = parts[-1].strip()
-                        # Убираем лишние символы и проверяем, что это не пустая строка
-                        community_id = community_id.strip('.,;:!?()[]{}"\'').strip()
-                        if community_id and len(community_id) > 0:
-                            print(f"✅ Извлечен community_id: '{community_id}' из пути: {path}")
-                            return community_id
-                        else:
-                            print(f"❌ Community ID пустой после очистки: '{parts[-1]}'")
-            elif isinstance(value, dict):
-                for k, v in value.items():
-                    current_path = f"{path}.{k}" if path else k
-                    result = search_in_value(v, current_path)
-                    if result:
-                        return result
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    current_path = f"{path}[{i}]" if path else f"[{i}]"
-                    result = search_in_value(item, current_path)
-                    if result:
-                        return result
+
+        pattern = re.compile(r"https?://(?:www\.)?x\.com/i/communities/(\d+)/?", re.IGNORECASE)
+
+        def scan_string(value: str) -> Optional[str]:
+            match = pattern.search(value)
+            if match:
+                cid = match.group(1)
+                print(f"✅ Извлечен community_id из x.com ссылки: {cid}")
+                return cid
             return None
-        
-        print(f"🔍 Начинаю поиск 'communities' в метаданных...")
-        # Ищем во всех значениях метаданных
-        for key, value in metadata.items():
-            result = search_in_value(value, key)
-            if result:
-                return result
-        
-        print("❌ 'communities' не найдено в метаданных")
-        return None
+
+        def walk(node) -> Optional[str]:
+            if isinstance(node, dict):
+                for v in node.values():
+                    res = walk(v)
+                    if res:
+                        return res
+            elif isinstance(node, list):
+                for v in node:
+                    res = walk(v)
+                    if res:
+                        return res
+            elif isinstance(node, str):
+                return scan_string(node)
+            return None
+
+        print("🔍 Ищу ссылку x.com/i/communities/<digits>/ в метаданных...")
+        return walk(metadata)
 
     async def fetch_pumpfun_coin(self, mint: str) -> Optional[dict]:
         """Запросить coin-информацию с pump.fun (frontend API)."""
@@ -468,11 +460,15 @@ class TokenProcessor:
         
         print(f"📋 Найдено {len(tokens)} токенов для обработки")
         
-        # Создаем задачи для параллельной обработки всех токенов
+        # Создаем задачи с ограничением одновременной обработки токенов
+        async def process_with_limit(t: Token):
+            async with self.token_semaphore:
+                await self.process_token(t)
+
         tasks = []
         for i, token in enumerate(tokens, 1):
             print(f"📝 Создаю задачу для токена {i}/{len(tokens)}: {token.name}")
-            task = asyncio.create_task(self.process_token(token))
+            task = asyncio.create_task(process_with_limit(token))
             tasks.append(task)
         
         print(f"🔄 Запускаю параллельную обработку {len(tasks)} токенов...")
@@ -505,9 +501,9 @@ async def main():
     async with TokenProcessor() as processor:
         while True:
             try:
-                await processor.process_batch(200)
+                await processor.process_batch(20)
                 print("\n⏳ Ожидание 30 секунд перед следующим батчем...")
-                await asyncio.sleep(30)
+                await asyncio.sleep(5)
             except KeyboardInterrupt:
                 print("\n🛑 Остановка по запросу пользователя")
                 break
